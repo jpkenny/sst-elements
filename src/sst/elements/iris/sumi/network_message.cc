@@ -48,6 +48,9 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #define enumcase(x) case x: return #x;
 
+extern template SST::TimeConverter* SST::Hg::HgBase<SST::SubComponent>::time_converter_;
+extern template SST::TimeConverter* SST::Hg::HgBase<SST::Component>::time_converter_;
+
 namespace SST::Iris::sumi {
 
 constexpr uintptr_t NetworkMessage::bad_recv_buffer;
