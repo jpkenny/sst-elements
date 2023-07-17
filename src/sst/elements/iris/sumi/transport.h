@@ -45,10 +45,10 @@ Questions? Contact sst-macro-help@sandia.gov
 #pragma once
 
 #include <sst/core/params.h>
-#include <sstmac/hardware/network/network_message_fwd.h>
 #include <mercury/operating_system/process/software_id.h>
 #include <mercury/operating_system/process/app_id.h>
 #include <mercury/common/timestamp.h>
+#include <mercury/hardware/network/network_message_fwd.h>
 #include <sumi/message_fwd.h>
 //#include <sumi/collective.h>
 //#include <sumi/comm_functions.h>

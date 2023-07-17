@@ -44,8 +44,11 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #pragma once
 
+#include <memory>
+
 namespace SST::Iris::sumi {
 
-class NetworkMessage;
+class Message;
 
-} // end namespace SST::Iris::sumi
+}
+

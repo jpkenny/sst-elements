@@ -14,14 +14,14 @@ AM_LIBTOOLFLAGS = --tag=CXX
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libsumi.la
 libsumi_la_SOURCES = \
-  sumi/network_message.cc
+  sumi/message.cc
 #  sumi/sim_transport.cc
 
 library_includedir=$(includedir)/sst/hg
 
 nobase_library_include_HEADERS = \
-  sumi/network_message.h \
-  sumi/network_message_fwd.h \
+  sumi/message.h \
+  sumi/message_fwd.h \
   sumi/null_buffer.h \
   sumi/sim_transport.h \
   sumi/transport.h
