@@ -215,6 +215,19 @@ void OperatingSystem::handleEvent(SST::Event *ev) {
     }
 }
 
+
+std::function<void(NetworkMessage*)>
+OperatingSystem::nicDataIoctl()
+{
+  return node_->nic()->dataIoctl();
+}
+
+std::function<void(NetworkMessage*)>
+OperatingSystem::nicCtrlIoctl()
+{
+  return node_->nic()->ctrlIoctl();
+}
+
 void
 OperatingSystem::addLaunchRequests(SST::Params& params)
 {

@@ -67,15 +67,15 @@ class Thread
 
   static Thread* current();
 
-//  template <class T> T* getApi(const std::string& name) {
-//    API* a = getAppApi(name);
-//    T* casted = dynamic_cast<T*>(a);
-//    if (!casted) {
-//      spkt_abort_printf("Failed to cast API to correct type for %s: got %s",
-//                        name.c_str(), typeid(a).name());
-//    }
-//    return casted;
-//  }
+  template <class T> T* getApi(const std::string& name) {
+    API* a = getAppApi(name);
+    T* casted = dynamic_cast<T*>(a);
+    if (!casted) {
+      sst_hg_abort_printf("Failed to cast API to correct type for %s: got %s",
+                        name.c_str(), typeid(a).name());
+    }
+    return casted;
+  }
 
   virtual App* parentApp() const {
     return parent_app_;
@@ -395,7 +395,7 @@ class Thread
 //  HostTimer* host_timer_;
 
  private:
-//  API* getAppApi(const std::string& name) const;
+  API* getAppApi(const std::string& name) const;
 
 //  CallGraphTrace backtrace_; //each function is labeled by unique integer
 

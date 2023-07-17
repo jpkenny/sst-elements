@@ -14,8 +14,8 @@ AM_LIBTOOLFLAGS = --tag=CXX
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libsumi.la
 libsumi_la_SOURCES = \
-  sumi/message.cc
-#  sumi/sim_transport.cc
+  sumi/message.cc \
+  sumi/sim_transport.cc
 
 library_includedir=$(includedir)/sst/hg
 

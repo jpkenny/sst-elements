@@ -19,18 +19,19 @@
 
 #include <sst/core/link.h>
 
-#include <common/factory.h>
-#include <components/node_fwd.h>
-#include <operating_system/threading/threading_interface.h>
-#include <operating_system/launch/app_launcher_fwd.h>
-#include <operating_system/launch/app_launch_request.h>
-#include <operating_system/process/app.h>
-#include <operating_system/process/thread.h>
-#include <operating_system/process/thread_info.h>
-#include <operating_system/process/mutex.h>
-#include <operating_system/process/tls.h>
-#include <operating_system/process/compute_scheduler.h>
-#include <operating_system/libraries/library.h>
+#include <mercury/common/factory.h>
+#include <mercury/components/node_fwd.h>
+#include <mercury/operating_system/threading/threading_interface.h>
+#include <mercury/operating_system/launch/app_launcher_fwd.h>
+#include <mercury/operating_system/launch/app_launch_request.h>
+#include <mercury/operating_system/process/app.h>
+#include <mercury/operating_system/process/thread.h>
+#include <mercury/operating_system/process/thread_info.h>
+#include <mercury/operating_system/process/mutex.h>
+#include <mercury/operating_system/process/tls.h>
+#include <mercury/operating_system/process/compute_scheduler.h>
+#include <mercury/operating_system/libraries/library.h>
+#include <mercury/hardware/network/network_message.h>
 
 #include <cstdint>
 #include <memory>
@@ -74,6 +75,10 @@ public:
   static size_t stacksize(){
     return sst_hg_global_stacksize;
   }
+
+  std::function<void(NetworkMessage*)> nicDataIoctl();
+
+  std::function<void(NetworkMessage*)> nicCtrlIoctl();
 
   /**
    * @brief block Block the currently running thread context.

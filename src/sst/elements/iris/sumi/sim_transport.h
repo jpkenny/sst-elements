@@ -42,38 +42,37 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#ifndef sumi_api_sim_TRANSPORT_H
-#define sumi_api_sim_TRANSPORT_H
+#pragma once
 
-#include <sstmac/common/stats/stat_spyplot_fwd.h>
-#include <sstmac/common/event_scheduler_fwd.h>
-#include <sstmac/software/api/api.h>
-#include <sstmac/software/launch/task_mapping.h>
-#include <sstmac/software/libraries/service.h>
-#include <sstmac/software/process/progress_queue.h>
-#include <sstmac/hardware/network/network_message_fwd.h>
-#include <sstmac/hardware/node/node_fwd.h>
+//#include <sstmac/common/stats/stat_spyplot_fwd.h>
+//#include <sstmac/common/event_scheduler_fwd.h>
+#include <mercury/operating_system/libraries/api.h>
+//#include <sstmac/software/launch/task_mapping.h>
+#include <mercury/operating_system/libraries/service.h>
+//#include <mercury/software/process/progress_queue.h>
+#include <mercury/hardware/network/network_message_fwd.h>
+#include <mercury/components/node_fwd.h>
 
 #include <sumi/message_fwd.h>
-#include <sumi/collective.h>
-#include <sumi/comm_functions.h>
+//#include <sumi/collective.h>
+//#include <sumi/comm_functions.h>
 #include <sumi/transport.h>
-#include <sumi/collective_message.h>
-#include <sumi/collective.h>
-#include <sumi/comm_functions.h>
-#include <sumi/options.h>
-#include <sumi/communicator_fwd.h>
+//#include <sumi/collective_message.h>
+//#include <sumi/collective.h>
+//#include <sumi/comm_functions.h>
+//#include <sumi/options.h>
+//#include <sumi/communicator_fwd.h>
 
-#include <sprockit/debug.h>
-#include <sprockit/factory.h>
-#include <sprockit/util.h>
+#include <mercury/common/errors.h>
+#include <mercury/common/factory.h>
+#include <mercury/common/util.h>
 
-#include <sstmac/null_buffer.h>
+#include <sumi/null_buffer.h>
 
 #include <unordered_map>
 #include <queue>
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 class QoSAnalysis {
 
@@ -88,26 +87,26 @@ class QoSAnalysis {
 
   virtual int selectQoS(Message* m) = 0;
 
-  virtual void logDelay(sstmac::TimeDelta delay, Message* m) = 0;
+  virtual void logDelay(SST::Hg::TimeDelta delay, Message* m) = 0;
 
 };
 
-class SimTransport : public Transport, public sstmac::sw::API {
+class SimTransport : public Transport, public SST::Hg::API {
 
  public:
   SST_ELI_REGISTER_DERIVED(
     API,
     SimTransport,
-    "macro",
+    "iris",
     "sumi",
     SST_ELI_ELEMENT_VERSION(1,0,0),
     "provides the SUMI transport API")
 
-  using DefaultProgressQueue = sstmac::sw::MultiProgressQueue<Message>;
+  //using DefaultProgressQueue = sstmac::sw::MultiProgressQueue<Message>;
 
-  SimTransport(SST::Params& params, sstmac::sw::App* parent, SST::Component* comp);
+  SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Hg::Component* comp);
 
-  sstmac::sw::SoftwareId sid() const {
+  SST::Hg::SoftwareId sid() const {
     return Transport::sid();
   }
 
@@ -117,8 +116,8 @@ class SimTransport : public Transport, public sstmac::sw::API {
 
   ~SimTransport() override;
 
-  sstmac::NodeId rankToNode(int rank) const override {
-    return rank_mapper_->rankToNode(rank);
+  SST::Hg::NodeId rankToNode(int rank) const override {
+    //return rank_mapper_->rankToNode(rank);
   }
 
   /**
@@ -163,7 +162,7 @@ class SimTransport : public Transport, public sstmac::sw::API {
     return now().sec();
   }
 
-  sstmac::Timestamp now() const override;
+  SST::Hg::Timestamp now() const override;
 
   void* allocateWorkspace(uint64_t size, void* parent) override;
 
@@ -175,13 +174,13 @@ class SimTransport : public Transport, public sstmac::sw::API {
 
   int* nidlist() const override;
 
-  void incomingEvent(sstmac::Event *ev);
+  void incomingEvent(SST::Event *ev);
 
-  void compute(sstmac::TimeDelta t);
+  void compute(SST::Hg::TimeDelta t);
 
   void incomingMessage(Message* msg);
 
-  void shutdownServer(int dest_rank, sstmac::NodeId dest_node, int dest_app);
+  void shutdownServer(int dest_rank, SST::Hg::NodeId dest_node, int dest_app);
 
   void pinRdma(uint64_t bytes);
 
@@ -204,7 +203,7 @@ class SimTransport : public Transport, public sstmac::sw::API {
   */
   Message* poll(bool blocking, int cq_id, double timeout = -1) override {
     configureNextPoll(blocking, timeout);
-    return default_progress_queue_.find(cq_id, blocking, timeout);
+    //return default_progress_queue_.find(cq_id, blocking, timeout);
   }
 
   /**
@@ -217,7 +216,7 @@ class SimTransport : public Transport, public sstmac::sw::API {
   */
   Message* poll(bool blocking, double timeout = -1) override {
     configureNextPoll(blocking, timeout);
-    return default_progress_queue_.find_any(blocking, timeout);
+    //return default_progress_queue_.find_any(blocking, timeout);
   }
 
   void setPragmaBlocking(bool cond, double timeout = -1){
@@ -256,9 +255,9 @@ class SimTransport : public Transport, public sstmac::sw::API {
 
   int allocateDefaultCq() override {
     int id = allocateCqId();
-    allocateCq(id, std::bind(&DefaultProgressQueue::incoming,
-                          &default_progress_queue_,
-                          id, std::placeholders::_1));
+//    allocateCq(id, std::bind(&DefaultProgressQueue::incoming,
+//                          &default_progress_queue_,
+//                          id, std::placeholders::_1));
     return id;
   }
 
@@ -273,16 +272,15 @@ class SimTransport : public Transport, public sstmac::sw::API {
 
   std::function<void(Message*)> null_completion_notify_;
 
-  sstmac::TimeDelta post_rdma_delay_;
+  SST::Hg::TimeDelta post_rdma_delay_;
 
-  sstmac::TimeDelta post_header_delay_;
+  SST::Hg::TimeDelta post_header_delay_;
+  SST::Hg::TimeDelta poll_delay_;
 
-  sstmac::TimeDelta poll_delay_;
+//  sstmac::StatSpyplot<int,uint64_t>* spy_bytes_;
 
-  sstmac::StatSpyplot<int,uint64_t>* spy_bytes_;
-
-  sstmac::TimeDelta rdma_pin_latency_;
-  sstmac::TimeDelta rdma_page_delay_;
+  SST::Hg::TimeDelta rdma_pin_latency_;
+  SST::Hg::TimeDelta rdma_page_delay_;
   int page_size_;
   bool pin_delay_;
 
@@ -297,13 +295,13 @@ class SimTransport : public Transport, public sstmac::sw::API {
 
   std::queue<int> free_cq_ids_;
 
-  sstmac::sw::App* parent_app_;
+  SST::Hg::App* parent_app_;
 
-  sstmac::sw::TaskMapping::ptr rank_mapper_;
+  //SST::Hg::TaskMapping::ptr rank_mapper_;
 
-  DefaultProgressQueue default_progress_queue_;
+//  DefaultProgressQueue default_progress_queue_;
 
-  std::function<void(sstmac::hw::NetworkMessage*)> nic_ioctl_;
+  std::function<void(SST::Hg::NetworkMessage*)> nic_ioctl_;
 
   QoSAnalysis* qos_analysis_;
 
@@ -320,8 +318,4 @@ class TerminateException : public std::exception
 {
 };
 
-}
-
-
-
-#endif // TRANSPORT_H
+} // end namespace SST::Iris::sumi
