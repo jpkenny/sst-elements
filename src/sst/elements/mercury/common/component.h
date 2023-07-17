@@ -24,6 +24,8 @@
 #include <common/timestamp.h>
 #include <cstdint>
 
+SST::Hg::HgBase<SST::Component>::time_converter_
+
 namespace SST {
 namespace Hg {
 
