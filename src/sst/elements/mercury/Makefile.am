@@ -3,7 +3,8 @@
 #
 
 AM_CPPFLAGS += \
-	$(MPI_CPPFLAGS)
+	$(MPI_CPPFLAGS) \
+        -I$(top_srcdir)/src/sst/elements
 
 # unpleasant hack to make vintage automake (e.g. 1.13.4) work
 AM_LIBTOOLFLAGS = --tag=CXX
@@ -17,6 +18,8 @@ libhg_la_SOURCES = \
   common/output.cc \
   common/util.cc \
   common/timestamp.cc \
+  common/connection.cc \
+  components/nic.cc \
   components/node.cc \
   components/operating_system.cc \
   hardware/common/packet.cc \
@@ -79,14 +82,19 @@ testme_la_SOURCES = \
 library_includedir=$(includedir)/sst/elements/hg
 
 nobase_library_include_HEADERS = \
-  common/thread_lock.h \
+  common/component.h \
+  common/connection.h \
+  common/connection_fwd.h \
+  common/event_link.h \
   common/events.h \
   common/hg_printf.h \
   common/errors.h \
-  common/thread_safe_new.h \
+  common/factory.h \
   common/node_address.h \
   common/serializable.h \
+  common/thread_lock.h \
   common/thread_safe_int.h \
+  common/thread_safe_new.h \
   common/output.h \
   common/skeleton.h \
   common/printable.h \
@@ -94,15 +102,16 @@ nobase_library_include_HEADERS = \
   common/request_fwd.h \
   common/util.h \
   common/request.h \
-  common/component.h \
   common/null_buffer.h \
   common/sim_thread_lock.h \
   common/timestamp.h \
-  common/factory.h \
   components/operating_system_fwd.h \
+  components/nic.h \
+  components/nic_fwd.h \
   components/node.h \
-  components/operating_system.h \
   components/node_fwd.h \
+  components/operating_system.h \
+  components/operating_system_fwd.h \
   external/json.hpp \
   hardware/network/network_id.h \
   hardware/network/network_message.h \

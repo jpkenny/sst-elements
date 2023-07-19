@@ -64,7 +64,9 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mercury/common/component.h>
 #include <mercury/common/util.h>
 //#include <sstmac/common/stats/stat_spyplot.h>
+#include <mercury/common/request.h>
 #include <mercury/operating_system/libraries/api.h>
+#include <mercury/common/errors.h>
 
 //RegisterKeywords(
 //{ "lazy_watch", "whether failure notifications can be receive without active pinging" },
@@ -217,7 +219,7 @@ Transport::logMessageDelay(Message * /*msg*/, uint64_t /*bytes*/, int /*stage*/,
 //  last_collection_ = now();
 //}
 
-SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Hg::Component* comp) :
+SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Component* comp) :
   //the name of the transport itself should be mapped to a unique name
   Transport("sumi", parent->sid(), parent->os()->addr()),
   API(params, parent, comp),
@@ -344,7 +346,7 @@ SimTransport::memcopyDelay(uint64_t bytes)
 }
 
 void
-SimTransport::incomingEvent(sstmac::Event * /*ev*/)
+SimTransport::incomingEvent(Event * /*ev*/)
 {
   sst_hg_abort_printf("sumi_transport::incoming_event: should not directly handle events");
 }
@@ -355,11 +357,12 @@ SimTransport::nidlist() const
   //just cast an int* - it's fine
   //the types are the same size and the bits can be
   //interpreted correctly
-  return (int*) rank_mapper_->rankToNode().data();
+  //return (int*) rank_mapper_->rankToNode().data();
+  sst_hg_abort_printf("nidlist unimplemented\n");
 }
 
 void
-SimTransport::compute(sstmac::TimeDelta t)
+SimTransport::compute(SST::Hg::TimeDelta t)
 {
   //parent_->compute(t);
 }
@@ -387,7 +390,7 @@ SimTransport::send(Message* m)
 //    }
 //  }
 
-  switch(m->SST::Hg::hw::NetworkMessage::type()){
+  switch(m->SST::Hg::NetworkMessage::type()){
     case SST::Hg::NetworkMessage::smsg_send:
       if (m->recver() == rank_){
         //deliver to self
@@ -1069,7 +1072,7 @@ class NullQoSAnalysis : public QoSAnalysis
     return m->qos();
   }
 
-  void logDelay(sstmac::TimeDelta /*delay*/, Message * /*m*/) override {
+  void logDelay(SST::Hg::TimeDelta /*delay*/, Message * /*m*/) override {
 
   }
 
@@ -1100,7 +1103,7 @@ class PatternQoSAnalysis : public QoSAnalysis
     return 0;
   }
 
-  void logDelay(sstmac::TimeDelta delay, Message *m) override {
+  void logDelay(SST::Hg::TimeDelta delay, Message *m) override {
     SST::Hg::TimeDelta acceptable_delay = allowedDelay_ + m->byteLength() * byteDelay_;
     if (m->byteLength() > rdmaCutoff_){
       acceptable_delay += rdmaLatency_ + 2*eagerLatency_ + 3*rtLatency_;
@@ -1123,9 +1126,9 @@ class PatternQoSAnalysis : public QoSAnalysis
   SST::Hg::TimeDelta allowedDelay_;
 };
 
-extern "C" void sstmac_blocking_call(int condition, double timeout, const char* api_name)
+extern "C" void sst_hg_blocking_call(int condition, double timeout, const char* api_name)
 {
-  SST::Hg::Thread* t = sstmac::sw::OperatingSystem::currentThread();
+  SST::Hg::Thread* t = SST::Hg::OperatingSystem::currentThread();
   auto* api = t->getApi<sumi::SimTransport>(api_name);
   api->setPragmaBlocking(condition, timeout);
 }

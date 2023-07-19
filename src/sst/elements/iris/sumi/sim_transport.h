@@ -104,7 +104,7 @@ class SimTransport : public Transport, public SST::Hg::API {
 
   //using DefaultProgressQueue = sstmac::sw::MultiProgressQueue<Message>;
 
-  SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Hg::Component* comp);
+  SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Component* comp);
 
   SST::Hg::SoftwareId sid() const {
     return Transport::sid();

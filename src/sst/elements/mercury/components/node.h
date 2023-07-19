@@ -19,8 +19,10 @@
 
 #include <sst/core/timeConverter.h>
 #include <sst/core/link.h>
-#include <components/operating_system_fwd.h>
-#include <common/node_address.h>
+#include <mercury/components/operating_system_fwd.h>
+#include <mercury/components/nic.h>
+#include <mercury/common/request_fwd.h>
+#include <mercury/common/node_address.h>
 #include <cstdint>
 #include <memory>
 
@@ -74,11 +76,20 @@ public:
     primaryComponentOKToEndSim();
   }
 
+  SST::Hg::OperatingSystem* os() const {
+    return os_;
+  }
+
   int ncores() { return ncores_; }
   int nsockets() { return nsockets_; }
 
+  void handle(Request* req);
+
+  SST::Hg::NIC* nic() { return nic_; }
+
 private:
 
+  SST::Hg::NIC* nic_;
   SST::Hg::OperatingSystem* os_;
   SST::Link* netLink_;
   std::unique_ptr<SST::Output> out_;

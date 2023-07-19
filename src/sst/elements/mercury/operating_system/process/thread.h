@@ -15,14 +15,15 @@
 
 #pragma once
 
-#include <common/errors.h>
-#include <common/node_address.h>
-#include <common/timestamp.h>
-#include <components/operating_system_fwd.h>
-#include <operating_system/process/process_context.h>
-#include <operating_system/process/software_id.h>
-#include <operating_system/process/app_fwd.h>
-#include <operating_system/threading/threading_interface.h>
+#include <mercury/common/errors.h>
+#include <mercury/common/node_address.h>
+#include <mercury/common/timestamp.h>
+#include <mercury/components/operating_system_fwd.h>
+#include <mercury/operating_system/process/process_context.h>
+#include <mercury/operating_system/process/software_id.h>
+#include <mercury/operating_system/process/app_fwd.h>
+#include <mercury/operating_system/libraries/api.h>
+#include <mercury/operating_system/threading/threading_interface.h>
 
 #include <queue>
 #include <map>

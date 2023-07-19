@@ -53,5 +53,11 @@ Node::setup()
   os_->setup();
 }
 
+void
+Node::handle(Request* req)
+{
+  os_->handleRequest(req);
+}
+
 } // namespace Hg
 } // namespace SST
