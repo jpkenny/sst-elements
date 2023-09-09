@@ -18,6 +18,7 @@
 #define _H_EMBER_TRAFFIC_GEN
 
 #include <sst/core/rng/gaussian.h>
+#include <sst/core/rng/marsaglia.h>
 
 #include "mpi/embermpigen.h"
 
@@ -71,22 +72,61 @@ public:
 public:
 	EmberTrafficGenGenerator(SST::ComponentId_t, Params& params);
     bool generate( std::queue<EmberEvent*>& evQ);
+    bool generate_plusOne( std::queue<EmberEvent*>& evQ);
     bool primary( ) {
         return false;
     }
     void configure();
+    void configure_plusOne();
+
+    // extended patterns
+    bool generate_random( std::queue<EmberEvent*>& evQ);
+    void recv_datareq();
+    void send_datareq();
+    void wait_for_any();
+    void compute();
 
 private:
-//    MessageResponse m_resp;
-    double  m_mean;
-    double  m_stddev;
-    double  m_startDelay;
-    void*    m_sendBuf;
-    void*    m_recvBuf;
+    std::string m_pattern;
+
+    uint32_t m_messageSize;
+    uint32_t m_maxMessageSize;
+    void* m_sendBuf;
+    void* m_recvBuf;
     MessageRequest m_req;
 
-	uint32_t m_messageSize;
+    // original "plusOne" pattern
+    //    MessageResponse m_resp;
+    double  m_startDelay;
+    double  m_mean;
+    double  m_stddev;
     SSTGaussianDistribution* m_random;
+
+    // extended patterns
+    enum {DATA_REQUEST, DATA};
+    std::queue<EmberEvent*>* evQ_;
+    bool m_dataReqRecvActive;
+    bool m_dataRecvActive;
+    bool m_needToWait;
+    bool m_testSends;
+    unsigned int m_generateLoopIndex;
+    Hermes::MemAddr m_sizeSendMemaddr;
+    Hermes::MemAddr m_sizeRecvMemaddr;
+    MessageRequest m_dataReqRecvRequest;
+    MessageRequest m_dataRecvRequest;
+    MessageRequest* m_allRequests;
+    std::list<MessageRequest*> m_sendRequests;
+    MessageResponse m_anyResponse;
+    uint32_t m_rank;
+    uint32_t m_debug;
+    int m_requestIndex;
+    double  m_meanMessageSize;
+    double  m_stddevMessageSize;
+    SSTGaussianDistribution* m_distMessageSize;
+    double  m_meanComputeDelay;
+    double  m_stddevComputeDelay;
+    SSTGaussianDistribution* m_distComputeDelay;
+    SST::RNG::MarsagliaRNG* m_distPartner;
 };
 
 }
