@@ -50,8 +50,10 @@ EmberTrafficGenGenerator::EmberTrafficGenGenerator(SST::ComponentId_t id,
         m_debug = params.find<int>("arg.debugLevel",0);
         m_meanMessageSize = params.find("arg.messageSizeMean", 1024);
         m_stddevMessageSize = params.find("arg.messageSizeStdDev", 1024);
-        m_meanComputeDelay = params.find("arg.computeDelayMean", 1024);
-        m_stddevComputeDelay = params.find("arg.computeDelayStdDev", 32);
+//        m_meanComputeDelay = params.find("arg.computeDelayMean", 1000);
+//        m_meanComputeDelay *= 1000; // scale to useconds
+//        m_stddevComputeDelay = params.find("arg.computeDelayStdDev", );
+        m_computeDelay = params.find("arg.computeDelay", 100);
         m_iterations = params.find<unsigned int>("arg.iterations", 1000);
     }
 
@@ -68,10 +70,7 @@ void EmberTrafficGenGenerator::configure()
     m_rank = rank();
 
     m_distMessageSize = new SSTGaussianDistribution(
-                m_meanMessageSize, m_stddevMessageSize, new RNG::MarsagliaRNG( 11 + rank(), 22 + getJobId() ) );
-    m_distComputeDelay = new SSTGaussianDistribution(
-                m_meanComputeDelay, m_stddevComputeDelay, new RNG::MarsagliaRNG( 11 + getJobId(), 22 + rank() ) );
-//    m_distPartner = new RNG::MarsagliaRNG( 41 * m_rank * m_rank + 1234 , 25 * m_rank + 1000 );
+                m_meanMessageSize, m_stddevMessageSize, new RNG::MarsagliaRNG( 11 + rank(), RAND_MAX / (rank() + 1) ) );
     std::srand(1+rank());
 
     memSetBacked();
@@ -231,20 +230,19 @@ void EmberTrafficGenGenerator::send_datareq() {
         partner = std::rand() % size();
 
     // determine size of data
-    uint64_t dataReqSize = int( abs( m_distMessageSize->getNextDouble() ) );
-    //std::cerr << "dist size: " << dataReqSize << std::endl;
-    if (dataReqSize < 1) dataReqSize = 1;
-    if (dataReqSize > m_maxMessageSize) dataReqSize = m_maxMessageSize;
+    m_dataSize = int( abs( m_distMessageSize->getNextDouble() ) );
+    if (m_dataSize < 1) m_dataSize = 1;
+    if (m_dataSize > m_maxMessageSize) m_dataSize = m_maxMessageSize;
     uint64_t* send_buffer = (uint64_t*) m_sizeSendMemaddr.getBacking();
-    *send_buffer = dataReqSize;
+    *send_buffer = m_dataSize;
 
     // fire off a recv for the data
     if (m_debug > 2) std::cerr << "rank " << m_rank << " start a datarecv\n";
-    enQ_irecv( evQ, m_recvBuf, dataReqSize, UINT64_T, partner, DATA, GroupWorld, &m_dataRecvRequest );
+    enQ_irecv( evQ, m_recvBuf, m_dataSize, UINT64_T, partner, DATA, GroupWorld, &m_dataRecvRequest );
     m_dataRecvActive = true;
 
     // send the request
-    if (m_debug > 1) std::cerr << "rank " << m_rank << " sending data request (size=" << dataReqSize << ") to rank " << partner << std::endl;
+    if (m_debug > 1) std::cerr << "rank " << m_rank << " sending data request (size=" << m_dataSize << ") to rank " << partner << std::endl;
     enQ_isend( evQ, m_sizeSendMemaddr, 1, UINT64_T, partner, DATA_REQUEST, GroupWorld, &m_dataReqSendRequest);
 }
 
@@ -272,8 +270,7 @@ void EmberTrafficGenGenerator::wait_for_any() {
 
 void EmberTrafficGenGenerator::compute() {
     std::queue<EmberEvent*>& evQ = *evQ_;
-    int delay = int( abs( m_distComputeDelay->getNextDouble() ) );
-    if (delay < 0) delay = 1;
+    uint64_t delay = m_dataSize * m_computeDelay;
     if (m_debug > 0) std::cerr << "rank " << m_rank <<  " computing for " << delay << std::endl;
     enQ_compute( evQ, delay);
     return;
