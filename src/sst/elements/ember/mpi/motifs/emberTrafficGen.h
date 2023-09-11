@@ -74,7 +74,9 @@ public:
     bool generate( std::queue<EmberEvent*>& evQ);
     bool generate_plusOne( std::queue<EmberEvent*>& evQ);
     bool primary( ) {
-        return false;
+        if (m_pattern == "plusOne")
+            return false;
+        return true;
     }
     void configure();
     void configure_plusOne();
@@ -82,9 +84,11 @@ public:
     // extended patterns
     bool generate_random( std::queue<EmberEvent*>& evQ);
     void recv_datareq();
+    void recv_stop();
     void send_datareq();
     void wait_for_any();
     void compute();
+    void send_stop();
 
 private:
     std::string m_pattern;
@@ -103,23 +107,27 @@ private:
     SSTGaussianDistribution* m_random;
 
     // extended patterns
-    enum {DATA_REQUEST, DATA};
+    enum {DATA_REQUEST, DATA, STOP};
     std::queue<EmberEvent*>* evQ_;
     bool m_dataReqRecvActive;
     bool m_dataRecvActive;
     bool m_needToWait;
     bool m_testSends;
     unsigned int m_generateLoopIndex;
+    unsigned int m_iterations;
     Hermes::MemAddr m_sizeSendMemaddr;
     Hermes::MemAddr m_sizeRecvMemaddr;
     MessageRequest m_dataReqRecvRequest;
+    MessageRequest m_dataReqSendRequest;
     MessageRequest m_dataRecvRequest;
+    MessageRequest m_stopRequest;
     MessageRequest* m_allRequests;
     std::list<MessageRequest*> m_sendRequests;
     MessageResponse m_anyResponse;
     uint32_t m_rank;
     uint32_t m_debug;
     int m_requestIndex;
+    int m_sendRequestFlag;
     double  m_meanMessageSize;
     double  m_stddevMessageSize;
     SSTGaussianDistribution* m_distMessageSize;
