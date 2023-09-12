@@ -128,6 +128,12 @@ private:
     std::list<MessageRequest*> m_sendRequests;
     MessageResponse m_anyResponse;
     uint32_t m_rank;
+    uint32_t m_hotSpots;
+    uint32_t m_hotSpotsRatio;
+    std::vector<uint32_t> m_hotRanks;
+    std::set<uint32_t> m_hotRanks_set;
+    uint32_t m_hotCounter;
+    uint32_t m_hotCounterInitial;
     uint32_t m_debug;
     uint64_t m_dataSize;
     uint64_t m_computeDelay;

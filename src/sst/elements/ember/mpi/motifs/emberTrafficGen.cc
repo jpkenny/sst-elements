@@ -54,6 +54,8 @@ EmberTrafficGenGenerator::EmberTrafficGenGenerator(SST::ComponentId_t id,
         m_computeDelay = params.find("arg.computeDelay", 100);
         m_iterations = params.find<unsigned int>("arg.iterations", 1000);
         m_stopTime = params.find<unsigned int>("arg.stopTimeUs", 100);
+        m_hotSpots = params.find<unsigned int>("arg.hotSpots",0);
+        m_hotSpotsRatio = params.find<unsigned int>("arg.hotSpotsRatio",99);
     }
 
     configure();
@@ -70,7 +72,18 @@ void EmberTrafficGenGenerator::configure()
 
     m_distMessageSize = new SSTGaussianDistribution(
                 m_meanMessageSize, m_stddevMessageSize, new RNG::MarsagliaRNG( 11 + rank(), RAND_MAX / (rank() + 1) ) );
-    std::srand(1+rank());
+
+    std::srand(1); // want same hotRanks on every node
+    if (m_hotSpots) {
+        while (m_hotRanks_set.size() < m_hotSpots) {
+            uint32_t rank = std::rand() % size();
+            m_hotRanks_set.insert( rank );
+        }
+        std::copy(m_hotRanks_set.begin(), m_hotRanks_set.end(), std::back_inserter(m_hotRanks));
+
+        m_hotCounterInitial = m_hotSpotsRatio;
+        m_hotCounter = m_hotCounterInitial;
+    }
 
     memSetBacked();
     m_sizeSendMemaddr = memAlloc(sizeofDataType(UINT64_T));
@@ -240,8 +253,17 @@ void EmberTrafficGenGenerator::send_datareq() {
 
     // determine rank to request data from
     uint32_t partner = (uint32_t) m_rank;
-    while (partner == m_rank)
-        partner = std::rand() % size();
+    if (m_hotSpots && !m_hotCounter && !m_hotRanks_set.count(m_rank) ) {
+        partner = m_hotRanks[std::rand() % m_hotSpots];
+    }
+    else {
+        while (partner == m_rank)
+            partner = std::rand() % size();
+    }
+    if (m_hotSpots) {
+        if (m_hotCounter) --m_hotCounter;
+        else m_hotCounter = m_hotCounterInitial;
+    }
 
     // determine size of data
     m_dataSize = int( abs( m_distMessageSize->getNextDouble() ) );
