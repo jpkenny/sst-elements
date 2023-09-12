@@ -113,10 +113,13 @@ private:
     bool m_dataRecvActive;
     bool m_needToWait;
     bool m_testSends;
+    bool m_stopped;
     unsigned int m_generateLoopIndex;
     unsigned int m_iterations;
     Hermes::MemAddr m_sizeSendMemaddr;
     Hermes::MemAddr m_sizeRecvMemaddr;
+    Hermes::MemAddr m_rankBytes;
+    Hermes::MemAddr m_totalBytes;
     MessageRequest m_dataReqRecvRequest;
     MessageRequest m_dataReqSendRequest;
     MessageRequest m_dataRecvRequest;
@@ -126,6 +129,11 @@ private:
     MessageResponse m_anyResponse;
     uint32_t m_rank;
     uint32_t m_debug;
+    uint64_t m_dataSize;
+    uint64_t m_computeDelay;
+    uint64_t m_startTime;
+    uint64_t m_currentTime;
+    uint64_t m_stopTime;
     int m_requestIndex;
     int m_sendRequestFlag;
     double  m_meanMessageSize;
