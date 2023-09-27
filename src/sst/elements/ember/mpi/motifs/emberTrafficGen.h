@@ -84,11 +84,11 @@ public:
     // extended patterns
     bool generate_random( std::queue<EmberEvent*>& evQ);
     void recv_datareq();
-    void recv_stop();
     void send_datareq();
     void wait_for_any();
-    void compute();
-    void send_stop();
+    void recv_stopping();
+    void recv_allstopped();
+    bool check_stop();
 
 private:
     std::string m_pattern;
@@ -107,19 +107,23 @@ private:
     SSTGaussianDistribution* m_random;
 
     // extended patterns
-    enum {DATA_REQUEST, DATA, STOP};
+    enum {DATA_REQUEST, DATA, STOPPING, ALLSTOPPED};
     std::queue<EmberEvent*>* evQ_;
     bool m_dataReqRecvActive;
     bool m_dataRecvActive;
     bool m_needToWait;
+    bool m_needToRequestData;
     bool m_testSends;
     bool m_stopped;
     unsigned int m_generateLoopIndex;
     unsigned int m_iterations;
+    unsigned int m_currentIteration;
+    unsigned int m_numStopped;
     Hermes::MemAddr m_sizeSendMemaddr;
     Hermes::MemAddr m_sizeRecvMemaddr;
     Hermes::MemAddr m_rankBytes;
     Hermes::MemAddr m_totalBytes;
+    Hermes::MemAddr m_allStopped;
     MessageRequest m_dataReqRecvRequest;
     MessageRequest m_dataReqSendRequest;
     MessageRequest m_dataRecvRequest;
@@ -140,6 +144,7 @@ private:
     uint64_t m_startTime;
     uint64_t m_currentTime;
     uint64_t m_stopTime;
+    uint64_t m_stopTimeActual;
     int m_requestIndex;
     int m_sendRequestFlag;
     double  m_meanMessageSize;
