@@ -55,8 +55,13 @@ EmberTrafficGenGenerator::EmberTrafficGenGenerator(SST::ComponentId_t id,
         m_computeDelay = params.find("arg.computeDelay", 100);
         m_hotSpots = params.find<unsigned int>("arg.hotSpots",0);
         m_hotSpotsRatio = params.find<unsigned int>("arg.hotSpotsRatio",99);
-        m_iterations = params.find<unsigned int>("arg.iterations", std::numeric_limits<unsigned int>::max());
+        m_iterations = params.find<unsigned int>("arg.stopIterations", std::numeric_limits<unsigned int>::max());
         m_stopTime = params.find<uint64_t>("arg.stopTimeUs", std::numeric_limits<uint64_t>::max());
+        if (m_iterations != std::numeric_limits<unsigned int>::max() && m_stopTime != std::numeric_limits<uint64_t>::max()) {
+            std::cerr << "Please set either stopIterations or stopTimeUs, not both\n";
+            abort();
+        }
+        if (m_stopTime != std::numeric_limits<uint64_t>::max()) m_stopTime *= 1000;
         if (m_iterations == std::numeric_limits<unsigned int>::max() && m_stopTime == std::numeric_limits<uint64_t>::max()) {
             m_iterations = 1000;
         }
@@ -141,17 +146,19 @@ bool EmberTrafficGenGenerator::generate_plusOne( std::queue<EmberEvent*>& evQ)
 bool EmberTrafficGenGenerator::generate_random( std::queue<EmberEvent*>& evQ)
 {
     evQ_ = &evQ;
+    m_currentTime = getCurrentSimTimeNano();
 
     // report results when complete (only rank 0 does final generate)
     if(m_stopped) {
+        if (m_iterations != std::numeric_limits<unsigned int>::max())
+            m_stopTime = m_currentTime;
         uint64_t bytes = m_totalBytes.at<uint64_t>(0);
-        std::cerr << "Total system observed bandwidth: " << (double) bytes / (double) m_stopTime * (double) 1e-3  << " GB/s\n";
+        std::cerr << "Total observed bandwidth: " << (double) bytes / (double) m_stopTime  << " GB/s\n";
         return true;
     }
 
-    m_currentTime = getCurrentSimTimeMicro();
     if (m_debug > 2) std::cerr << "rank " << m_rank << " entering loop " << m_generateLoopIndex
-                               << " (t=" << m_currentTime <<"ns)" << std::endl;
+                               << " (t=" << m_currentTime / 1000.0 <<"us)" << std::endl;
 
     if (m_generateLoopIndex == 0) {
         enQ_getTime( evQ, &m_startTime );
@@ -233,7 +240,7 @@ bool EmberTrafficGenGenerator::generate_random( std::queue<EmberEvent*>& evQ)
 
         m_dataRecvActive = false;
         if (m_debug > 0) std::cerr << "rank " << m_rank << " received data from " << m_anyResponse.src << std::endl;
-        m_currentTime = getCurrentSimTimeMicro();
+        m_currentTime = getCurrentSimTimeNano();
         if (m_currentTime < m_stopTime && m_currentIteration <= m_iterations) {
             if (m_debug > 2) std::cerr << "rank " << m_rank << " accumulating " << m_dataSize << " bytes at time " << m_currentTime << std::endl;
             ++m_currentIteration;
@@ -350,7 +357,7 @@ bool EmberTrafficGenGenerator::check_stop() {
     if (m_numStopped == size() - 1 && (m_currentTime >= m_stopTime || m_currentIteration > m_iterations)){
         if (m_debug > 1) std::cerr << "rank " << m_rank << " all ranks complete, stopping with bytes " << m_rankBytes.at<uint64_t>(0) << std::endl;
         m_stopped = true;
-        m_stopTimeActual = getCurrentSimTimeMicro();
+        m_stopTimeActual = getCurrentSimTimeNano();
         for (int i=1; i < size(); ++i) {
             enQ_send(evQ, m_allStopped, 1, CHAR, i, ALLSTOPPED, GroupWorld);
         }
