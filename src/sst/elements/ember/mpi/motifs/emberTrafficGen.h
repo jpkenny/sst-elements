@@ -89,6 +89,8 @@ public:
     void recv_stopping();
     void recv_allstopped();
     bool check_stop();
+    void test_send_requests();
+    void wait_send_requests();
 
 private:
     std::string m_pattern;
@@ -130,6 +132,7 @@ private:
     MessageRequest m_stopRequest;
     MessageRequest* m_allRequests;
     std::list<MessageRequest*> m_sendRequests;
+    MessageRequest* m_sendRequestArray;
     MessageResponse m_anyResponse;
     uint32_t m_rank;
     uint32_t m_hotSpots;
@@ -147,6 +150,7 @@ private:
     uint64_t m_stopTimeActual;
     int m_requestIndex;
     int m_sendRequestFlag;
+    int m_sendRequestIndex;
     double  m_meanMessageSize;
     double  m_stddevMessageSize;
     SSTGaussianDistribution* m_distMessageSize;
