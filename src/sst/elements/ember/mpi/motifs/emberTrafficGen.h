@@ -127,7 +127,6 @@ private:
     Hermes::MemAddr m_totalBytes;
     Hermes::MemAddr m_allStopped;
     MessageRequest m_dataReqRecvRequest;
-    MessageRequest m_dataReqSendRequest;
     MessageRequest m_dataRecvRequest;
     MessageRequest m_stopRequest;
     MessageRequest* m_allRequests;

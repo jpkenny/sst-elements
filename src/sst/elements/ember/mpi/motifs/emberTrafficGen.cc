@@ -356,7 +356,7 @@ void EmberTrafficGenGenerator::send_datareq() {
 
     // send the request
     if (m_debug > 1) std::cerr << "rank " << m_rank << " sending data request (size=" << m_dataSize << ") to rank " << partner << std::endl;
-    enQ_isend( evQ, m_sizeSendMemaddr, 1, UINT64_T, partner, DATA_REQUEST, GroupWorld, &m_dataReqSendRequest);
+    enQ_send( evQ, m_sizeSendMemaddr, 1, UINT64_T, partner, DATA_REQUEST, GroupWorld);
 }
 
 void EmberTrafficGenGenerator::wait_for_any() {
