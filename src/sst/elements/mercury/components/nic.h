@@ -53,6 +53,7 @@ Questions? Contact sst-macro-help@sandia.gov
 //#include <sstmac/hardware/common/failable.h>
 #include <mercury/common/connection.h>
 #include <mercury/hardware/common/packet_fwd.h>
+#include <mercury/hardware/common/recv_cq.h>
 #include <mercury/hardware/network/network_message_fwd.h>
 //#include <sstmac/hardware/logp/logp_switch_fwd.h>
 //#include <sstmac/common/stats/stat_spyplot_fwd.h>
@@ -65,7 +66,11 @@ Questions? Contact sst-macro-help@sandia.gov
 //#include <sprockit/debug.h>
 #include <mercury/common/factory.h>
 #include <mercury/common/event_handler.h>
+#include <mercury/hardware/network/network_message.h>
+#include <sst/core/interfaces/simpleNetwork.h>
 
+#include <vector>
+#include <queue>
 #include <functional>
 
 //DeclareDebugSlot(nic);
@@ -112,6 +117,39 @@ class NIC : public ConnectableSubcomponent
     LogP
   } Port;
 
+  struct MyRequest : public SST::Interfaces::SimpleNetwork::Request {
+    uint64_t flow_id;
+    Timestamp start;
+  };
+
+  struct MessageEvent : public Event {
+    NotSerializable(MessageEvent)
+    MessageEvent(NetworkMessage* msg) :
+      msg_(msg)
+    {
+    }
+
+    NetworkMessage* msg() const {
+      return msg_;
+    }
+
+   private:
+    NetworkMessage*  msg_;
+  };
+
+private:
+  struct Pending {
+    NetworkMessage* payload;
+    uint64_t bytesLeft;
+    Pending(NetworkMessage* p) :
+      payload(p),
+      bytesLeft(p->byteLength())
+    {
+    }
+  };
+
+public:
+
   virtual ~NIC();
 
   /**
@@ -120,6 +158,34 @@ class NIC : public ConnectableSubcomponent
   NodeId addr() const {
     return my_addr_;
   }
+
+  std::string toString();
+
+  void init(unsigned int phase);
+
+  void inject(int vn, NetworkMessage* payload);
+
+  void setup();
+
+  void complete(unsigned int phase);
+
+  void finish();
+
+  bool incomingCredit(int vn);
+
+  bool incomingPacket(int vn);
+
+  void connectOutput(int  /*src_outport*/, int  /*dst_inport*/, EventLink::ptr&&  /*link*/);
+
+  void connectInput(int  /*src_outport*/, int  /*dst_inport*/, EventLink::ptr&&  /*link*/);
+
+  SST::Event::HandlerBase* creditHandler(int  /*port*/);
+
+  SST::Event::HandlerBase* payloadHandler(int  /*port*/);
+
+  void sendWhatYouCan(int vn);
+
+  bool sendWhatYouCan(int vn, Pending& p);
 
 //  Topology* topology() const {
 //    return top_;
@@ -175,7 +241,7 @@ class NIC : public ConnectableSubcomponent
 
   virtual void deadlockCheck(){}
 
-  //virtual void sendManagerMsg(NetworkMessage* msg);
+  virtual void sendManagerMsg(NetworkMessage* msg);
 
   virtual std::function<void(NetworkMessage*)> ctrlIoctl();
 
@@ -213,9 +279,17 @@ protected:
   //Topology* top_;
 
  private:
+
   //StatSpyplot<int,uint64_t>* spy_bytes_;
   //Statistic<uint64_t>* xmit_flows_;
   //sw::SingleProgressQueue<NetworkMessage> queue_;
+  SST::Interfaces::SimpleNetwork* link_control_;
+  std::vector<std::queue<Pending>> pending_;
+  std::vector<std::queue<NetworkMessage*>> ack_queue_;
+  uint32_t mtu_;
+  RecvCQ cq_;
+  int vns_;
+  int test_size_;
 
  protected:
   SST::Hg::OperatingSystem* os_;

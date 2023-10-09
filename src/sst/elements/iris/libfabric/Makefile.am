@@ -150,14 +150,14 @@ nodist_rdmainclude_headers = \
   prov/sstmac/include/rdma/fi_direct_trigger.h \
   prov/sstmac/include/rdma/fi_direct.h
 
-compdir = $(pkglibdir)
-comp_LTLIBRARIES = libfabric.la
-libfabric_la_SOURCES = \
-  $(sstmac_sources) \
-  $(sstmac_headers) \
-  $(sstmac_rdma_headers) \
-  $(common_sources) \
-  $(libfabric_sources) \
-  $(libfabric_headers) \
-  $(rdmainclude_headers) \
-  $(nodist_rdmainclude_headers)
+#compdir = $(pkglibdir)
+#comp_LTLIBRARIES = libfabric.la
+#libfabric_la_SOURCES = \
+#  $(sstmac_sources) \
+#  $(sstmac_headers) \
+#  $(sstmac_rdma_headers) \
+#  $(common_sources) \
+#  $(libfabric_sources) \
+#  $(libfabric_headers) \
+#  $(rdmainclude_headers) \
+#  $(nodist_rdmainclude_headers)
