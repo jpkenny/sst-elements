@@ -89,6 +89,8 @@ public:
    */
   void block();
 
+  void blockTimeout(TimeDelta delay);
+
   void startApp(App* theapp, const std::string&  /*unique_name*/);
   void startThread(Thread* t);
   void joinThread(Thread* t);

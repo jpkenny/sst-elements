@@ -33,6 +33,7 @@ libhg_la_SOURCES = \
   operating_system/process/app.cc \
   operating_system/process/simple_compute_scheduler.cc \
   operating_system/process/loadlib.cc \
+  operating_system/process/progress_queue.cc \
   operating_system/process/thread.cc \
   operating_system/process/thread_info.cc \
   operating_system/threading/context_util.cc \
@@ -79,7 +80,7 @@ libsystemapi_la_SOURCES = \
 testme_la_SOURCES = \
   tests/testme.cc
 
-library_includedir=$(includedir)/sst/elements/hg
+library_includedir=$(includedir)/sst/elements/mercury
 
 nobase_library_include_HEADERS = \
   common/component.h \
@@ -92,6 +93,7 @@ nobase_library_include_HEADERS = \
   common/factory.h \
   common/node_address.h \
   common/serializable.h \
+  common/stl_string.h \
   common/thread_lock.h \
   common/thread_safe_int.h \
   common/thread_safe_new.h \
@@ -160,6 +162,7 @@ nobase_library_include_HEADERS = \
   operating_system/process/thread.h \
   operating_system/process/simple_compute_scheduler.h \
   operating_system/process/loadlib.h \
+  operating_system/process/progress_queue.h \
   operating_system/process/thread_id.h \
   operating_system/process/app_id.h \
   operating_system/process/task_id.h \

@@ -16,12 +16,15 @@ AM_LIBTOOLFLAGS = --tag=CXX
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libsumi.la
 libsumi_la_SOURCES = \
+  sumi/communicator.cc \
   sumi/message.cc \
   sumi/sim_transport.cc
 
-library_includedir=$(includedir)/sst/hg
+library_includedir=$(includedir)/sst/elements/iris
 
 nobase_library_include_HEADERS = \
+  sumi/communicator.h \
+  sumi/communicator_fwd.h \
   sumi/message.h \
   sumi/message_fwd.h \
   sumi/null_buffer.h \

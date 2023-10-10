@@ -24,6 +24,7 @@
 #include <operating_system/process/app.h>
 #include <operating_system/process/thread_id.h>
 #include <operating_system/threading/stack_alloc.h>
+#include <operating_system/libraries/unblock_event.h>
 #include <stdlib.h>
 #include <sys/mman.h>
 
@@ -382,6 +383,13 @@ OperatingSystem::block()
 //  if (elapsed.ticks()){
 //    active_thread_->collectStats(before, elapsed);
 //  }
+}
+
+void
+OperatingSystem::blockTimeout(TimeDelta delay)
+{
+  sendDelayedExecutionEvent(delay, new TimeoutEvent(this, active_thread_));
+  block();
 }
 
 void
