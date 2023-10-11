@@ -16,20 +16,67 @@ AM_LIBTOOLFLAGS = --tag=CXX
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libsumi.la
 libsumi_la_SOURCES = \
+  sumi/allgather.cc \        
+  sumi/allgatherv.cc  \        
+  sumi/allreduce.cc \
+  sumi/alltoall.cc \
+  sumi/alltoallv.cc \
+  sumi/bcast.cc \        
+  sumi/collective.cc \
+  sumi/collective_actor.cc \
+  sumi/collective_message.cc \
   sumi/communicator.cc \
+  sumi/dense_rank_map.cc \       
+  sumi/gather.cc \
+  sumi/gatherv.cc \ 
   sumi/message.cc \
-  sumi/sim_transport.cc
+  sumi/monitor.cc \
+  sumi/reduce.cc \
+  sumi/reduce_scatter.c \
+  sumi/scan.cc \
+  sumi/scatter.cc \
+  sumi/scatterv.cc  \    
+  sumi/sim_transport.cc \
+  sumi/sumi.cc \
+  sumi/sumi_thread.cc
 
 library_includedir=$(includedir)/sst/elements/iris
 
 nobase_library_include_HEADERS = \
+  sumi/allgather.h \
+  sumi/allgatherv.h \
+  sumi/allreduce.h \ 
+  sumi/alltoall.h \
+  sumi/alltoallv.h \
+  sumi/bcast.h \
+  sumi/collective.h \
+  sumi/collective_actor.h \
+  sumi/collective_actor_fwd.h \
+  sumi/collective_message.h \
+  sumi/collective_message_fwd.h \
+  sumi/comm_functions.h \
   sumi/communicator.h \
   sumi/communicator_fwd.h \
+  sumi/dense_rank_map.h \
+  sumi/gather.h \
+  sumi/gatherv.h \
   sumi/message.h \
   sumi/message_fwd.h \
+  sumi/monitor.h \
+  sumi/network_id.h \
   sumi/null_buffer.h \
+  sumi/options.h \
+  sumi/reduce.h \
+  sumi/reduce_scatter.h \
+  sumi/scan.h \
+  sumi/scatter.h \
+  sumi/scatterv.h \
   sumi/sim_transport.h \
-  sumi/transport.h
+  sumi/sumi.h \
+  sumi/sumi_thread.h \
+  sumi/timeout.h \
+  sumi/transport.h \
+  sumi/transport_fwd.h
 
 if !SST_ENABLE_PREVIEW_BUILD
 libsumi_la_SOURCES += $(deprecated_libsumi_sources)
