@@ -45,8 +45,8 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <sumi/allreduce.h>
 #include <sumi/transport.h>
 #include <sumi/communicator.h>
-#include <sprockit/output.h>
-#include <sprockit/stl_string.h>
+//#include <sprockit/output.h>
+#include <mercury/common/stl_string.h>
 #include <cstring>
 
 #define divide_by_2_round_up(x) ((x/2) + (x%2))
@@ -55,7 +55,7 @@ Questions? Contact sst-macro-help@sandia.gov
 
 using namespace sprockit::dbg;
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 void
 WilkeAllreduceActor::finalizeBuffers()

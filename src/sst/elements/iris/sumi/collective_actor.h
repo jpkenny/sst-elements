@@ -42,8 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#ifndef sumi_api_COLLECTIVE_ACTOR_H
-#define sumi_api_COLLECTIVE_ACTOR_H
+#pragma once
 
 #include <sumi/collective.h>
 #include <sumi/collective_message.h>
@@ -52,10 +51,10 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <set>
 #include <map>
 #include <stdint.h>
-#include <sstmac/common/sstmac_config.h>
-#include <sprockit/allocator.h>
+//#include <sstmac/common/sstmac_config.h>
+#include <mercury/common/allocator.h>
 
-DeclareDebugSlot(sumi_collective_buffer)
+//DeclareDebugSlot(sumi_collective_buffer)
 
 #define sumi_case(x) case x: return #x
 
@@ -65,7 +64,7 @@ DeclareDebugSlot(sumi_collective_buffer)
    debug_print(__VA_ARGS__)
  */
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 void debug_print(const char* info, const std::string& rank_str,
             int partner, int round, int offset,

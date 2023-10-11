@@ -43,9 +43,9 @@ Questions? Contact sst-macro-help@sandia.gov
 */
 
 #include <sumi/sumi_thread.h>
-#include <sstmac/software/process/operating_system.h>
+#include <mercury/components/operating_system.h>
 
-namespace sstmac {
+namespace SST::Iris::sumi {
 
 uint64_t SumiThread::num_threads_ = 0;
 

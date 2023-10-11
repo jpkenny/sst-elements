@@ -53,7 +53,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <sumi/communicator.h>
 #include <sumi/transport.h>
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 sumi::Transport* sumi_api();
 

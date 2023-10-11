@@ -107,6 +107,7 @@ nobase_library_include_HEADERS = \
   common/null_buffer.h \
   common/sim_thread_lock.h \
   common/timestamp.h \
+  common/unusedvariablemacro.h \
   components/operating_system_fwd.h \
   components/nic.h \
   components/nic_fwd.h \

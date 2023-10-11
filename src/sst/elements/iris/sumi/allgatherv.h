@@ -42,8 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#ifndef sstmac_sw_api_simpsg_ALLGATHERV_H
-#define sstmac_sw_api_simpsg_ALLGATHERV_H
+#pragma once
 
 #include <sumi/collective.h>
 #include <sumi/collective_actor.h>
@@ -51,7 +50,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <sumi/comm_functions.h>
 #include <sumi/allgather.h>
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 class BruckAllgathervActor : public DagCollectiveActor
 {
@@ -117,5 +116,3 @@ class BruckAllgathervCollective :
 };
 
 }
-
-#endif // ALLGATHER_H

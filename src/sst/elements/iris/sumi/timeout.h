@@ -42,10 +42,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#ifndef sumi_api_TIMEOUT_H
-#define sumi_api_TIMEOUT_H
+#pragma once
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 /**
  * @class timeout_function
@@ -62,5 +61,3 @@ class TimeoutFunction
 };
 
 }
-
-#endif // TIMEOUT_H

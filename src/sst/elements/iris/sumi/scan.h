@@ -42,15 +42,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#ifndef sumi_scan_h
-#define sumi_scan_h
+#pragma once
 
 #include <sumi/collective.h>
 #include <sumi/collective_actor.h>
 #include <sumi/collective_message.h>
 #include <sumi/comm_functions.h>
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 class SimultaneousBtreeScanActor :
   public DagCollectiveActor
@@ -111,6 +110,3 @@ class SimultaneousBtreeScan :
 
 
 }
-
-
-#endif

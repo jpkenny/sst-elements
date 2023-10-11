@@ -42,15 +42,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#include <sstmac/software/process/app.h>
-#include <sstmac/software/process/operating_system.h>
-#include <sprockit/util.h>
+#include <mercury/operating_system/process/app.h>
+#include <mercury/components/operating_system.h>
+#include <mercury/common/util.h>
 #include <sumi/transport.h>
 #include <sumi/sim_transport.h>
 
-using namespace sstmac;
-using namespace sstmac::sw;
-
+using namespace SST::Hg;
 
 //this redirection macro foobars things here
 #ifdef sleep
@@ -59,7 +57,7 @@ using namespace sstmac::sw;
 #endif
 #endif
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 static SimTransport* current_transport()
 {

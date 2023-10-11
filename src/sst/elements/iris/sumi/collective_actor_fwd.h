@@ -42,14 +42,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#ifndef COLLECTIVE_ACTOR_FWD_H
-#define COLLECTIVE_ACTOR_FWD_H
+#pragma once
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 class CollectiveActor;
 class DagCollectiveActor;
 
 }
-
-#endif // COLLECTIVE_ACTOR_FWD_H

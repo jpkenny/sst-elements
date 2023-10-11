@@ -42,13 +42,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#ifndef sumi_api_DENSE_RANK_MAP_H
-#define sumi_api_DENSE_RANK_MAP_H
+#pragma once
 
 #include <set>
 #include <sumi/communicator_fwd.h>
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 /**
 * @class dense_rank_map
@@ -104,5 +103,3 @@ class DenseRankMap {
 };
 
 }
-
-#endif // DENSE_RANK_MAP_H

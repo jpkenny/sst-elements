@@ -42,8 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#ifndef sumi_api_COLLECTIVE_H
-#define sumi_api_COLLECTIVE_H
+#pragma once
 
 #include <sumi/timeout.h>
 #include <sumi/collective_message_fwd.h>
@@ -52,15 +51,15 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <sumi/collective_actor_fwd.h>
 #include <sumi/comm_functions.h>
 #include <sumi/options.h>
-#include <sprockit/factory.h>
-#include <sprockit/debug.h>
+#include <mercury/common/factory.h>
+//#include <sprockit/debug.h>
 #include <list>
 
-DeclareDebugSlot(sumi_collective)
-DeclareDebugSlot(sumi_vote)
-DeclareDebugSlot(sumi_collective_init)
+//DeclareDebugSlot(sumi_collective)
+//DeclareDebugSlot(sumi_vote)
+//DeclareDebugSlot(sumi_collective_init)
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 class Collective
 {
@@ -232,5 +231,3 @@ class DagCollective :
 };
 
 }
-
-#endif // COLLECTIVE_H

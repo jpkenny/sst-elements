@@ -45,7 +45,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <sumi/allgatherv.h>
 #include <sumi/transport.h>
 #include <sumi/communicator.h>
-#include <sprockit/output.h>
+//#include <sprockit/output.h>
 #include <cstring>
 
 #define divide_by_2_round_up(x) \

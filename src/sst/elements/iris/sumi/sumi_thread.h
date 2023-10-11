@@ -42,12 +42,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#ifndef SUMI_THREAD_H
-#define SUMI_THREAD_H
+#pragma once
 
-#include <sstmac/software/process/app.h>
+#include <mercury/operating_system/process/app.h>
 
-namespace sstmac {
+namespace SST::Iris::sumi {
 
 class SumiThread :
   public sstmac::sw::Thread
@@ -69,5 +68,3 @@ class SumiThread :
 };
 
 }
-
-#endif // SUMI_THREAD_H

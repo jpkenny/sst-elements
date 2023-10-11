@@ -44,10 +44,10 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #include <sumi/dense_rank_map.h>
 #include <sumi/communicator.h>
-#include <sprockit/errors.h>
+#include <mercury/common/errors.h>
 #include <algorithm>
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 DenseRankMap::DenseRankMap(const std::set<int>& failed,
   Communicator* dom) :

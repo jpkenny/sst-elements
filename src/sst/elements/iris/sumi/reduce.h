@@ -42,15 +42,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#ifndef REDUCE_H
-#define REDUCE_H
+#pragma once
 
 #include <sumi/collective.h>
 #include <sumi/collective_actor.h>
 #include <sumi/collective_message.h>
 #include <sumi/comm_functions.h>
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 class WilkeReduceActor :
   public DagCollectiveActor
@@ -120,6 +119,3 @@ class WilkeHalvingReduce :
 
 
 }
-
-
-#endif // REDUCE_H

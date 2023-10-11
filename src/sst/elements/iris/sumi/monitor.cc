@@ -45,12 +45,12 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <sumi/monitor.h>
 #include <sumi/transport.h>
 
-RegisterDebugSlot(sumi_ping,
-  "print all debug output associated with ping/timeout operations in the sumi framework");
-RegisterDebugSlot(sumi_failure,
-  "print all the debug output associated with all node failures detected by the sumi framework");
+//RegisterDebugSlot(sumi_ping,
+//  "print all debug output associated with ping/timeout operations in the sumi framework");
+//RegisterDebugSlot(sumi_failure,
+//  "print all the debug output associated with all node failures detected by the sumi framework");
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 void
 FunctionSet::timeoutAllListeners(int dst)

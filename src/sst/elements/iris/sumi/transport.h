@@ -51,13 +51,13 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mercury/components/node.h>
 #include <mercury/hardware/network/network_message_fwd.h>
 #include <sumi/message.h>
-//#include <sumi/collective.h>
-//#include <sumi/comm_functions.h>
-//#include <sumi/collective_message.h>
-//#include <sumi/collective.h>
-//#include <sumi/comm_functions.h>
-//#include <sumi/options.h>
-//#include <sumi/communicator_fwd.h>
+#include <sumi/collective.h>
+#include <sumi/comm_functions.h>
+#include <sumi/collective_message.h>
+#include <sumi/collective.h>
+#include <sumi/comm_functions.h>
+#include <sumi/options.h>
+#include <sumi/communicator_fwd.h>
 
 #include <unordered_map>
 #include <queue>

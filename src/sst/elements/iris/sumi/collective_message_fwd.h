@@ -42,17 +42,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#ifndef sumi_api_COLLECTIVE_MESSAGE_FWD_H
-#define sumi_api_COLLECTIVE_MESSAGE_FWD_H
+#pragma once
 
 #include <memory>
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 class CollectiveWorkMessage;
 
 class CollectiveDoneMessage;
 
 }
-
-#endif // COLLECTIVE_MESSAGE_FWD_H

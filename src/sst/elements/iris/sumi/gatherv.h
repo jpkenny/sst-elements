@@ -42,16 +42,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#ifndef GATHERV_H
-#define GATHERV_H
+#pragma once
 
 #include <sumi/collective.h>
 #include <sumi/collective_actor.h>
 #include <sumi/collective_message.h>
 #include <sumi/comm_functions.h>
-#include <unusedvariablemacro.h>
+#include <mercury/common/unusedvariablemacro.h>
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 class BtreeGathervActor :
   public DagCollectiveActor
@@ -112,5 +111,3 @@ class BtreeGatherv :
 };
 
 }
-
-#endif // GATHER_H

@@ -43,9 +43,9 @@ Questions? Contact sst-macro-help@sandia.gov
 */
 
 #include <sumi/collective_message.h>
-#include <sstmac/common/serializable.h>
+#include <mercury/common/serializable.h>
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 #define enumcase(x) case x: return #x;
 const char*

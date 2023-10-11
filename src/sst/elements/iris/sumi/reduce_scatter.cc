@@ -45,8 +45,8 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <sumi/reduce_scatter.h>
 #include <sumi/transport.h>
 #include <sumi/communicator.h>
-#include <sprockit/output.h>
-#include <sprockit/stl_string.h>
+//#include <sprockit/output.h>
+#include <mercury/common/stl_string.h>
 #include <cstring>
 
 #define divide_by_2_round_up(x) ((x/2) + (x%2))

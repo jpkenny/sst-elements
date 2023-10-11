@@ -42,15 +42,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#ifndef sstmac_sw_api_simpsg_REDUCE_SCATTER_H
-#define sstmac_sw_api_simpsg_REDUCE_SCATTER_H
+#pragma
 
 #include <sumi/collective.h>
 #include <sumi/collective_actor.h>
 #include <sumi/collective_message.h>
 #include <sumi/comm_functions.h>
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 class HalvingReduceScatterActor :
   public DagCollectiveActor
@@ -107,5 +106,3 @@ class HalvingReduceScatter :
 };
 
 }
-
-#endif

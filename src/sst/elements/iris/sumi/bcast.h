@@ -42,8 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#ifndef sumi_bcast_included_h
-#define sumi_bcast_included_h
+#pragma once
 
 #include <sumi/collective.h>
 #include <sumi/collective_actor.h>
@@ -107,5 +106,3 @@ class BinaryTreeBcastCollective :
 };
 
 }
-
-#endif // BCAST_H

@@ -42,20 +42,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#ifndef sumi_api_MONITOR_H
-#define sumi_api_MONITOR_H
+#pragma once
 
-#include <sprockit/factory.h>
-#include <sprockit/debug.h>
-#include <sprockit/sim_parameters_fwd.h>
+#include <mercury/common/factory.h>
+//#include <sprockit/debug.h>
+#include <sst/core/params.h>
 #include <sumi/message.h>
 #include <sumi/timeout.h>
 #include <sumi/transport_fwd.h>
 
-DeclareDebugSlot(sumi_ping)
-DeclareDebugSlot(sumi_failure)
+//DeclareDebugSlot(sumi_ping)
+//DeclareDebugSlot(sumi_failure)
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 class FunctionSet {
  public:
@@ -105,5 +104,3 @@ class ActivityMonitor
 };
 
 }
-
-#endif // MONITOR_H

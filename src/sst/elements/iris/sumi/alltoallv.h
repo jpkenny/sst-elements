@@ -42,15 +42,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#ifndef ALLTOALLV_H
-#define ALLTOALLV_H
+#pragma once
 
 #include <sumi/collective.h>
 #include <sumi/collective_actor.h>
 #include <sumi/collective_message.h>
 #include <sumi/comm_functions.h>
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 class DirectAlltoallvActor :
   public DagCollectiveActor
@@ -116,5 +115,3 @@ class DirectAlltoallvCollective :
 };
 
 }
-
-#endif // ALLGATHER_H

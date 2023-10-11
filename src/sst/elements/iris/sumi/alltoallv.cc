@@ -45,21 +45,21 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <sumi/alltoallv.h>
 #include <sumi/transport.h>
 #include <sumi/communicator.h>
-#include <sprockit/output.h>
+//#include <sprockit/output.h>
 #include <cstring>
 
 #define divide_by_2_round_up(x) ((x/2) + (x%2))
 
 #define divide_by_2_round_down(x) (x/2)
 
-using namespace sprockit::dbg;
+//using namespace sprockit::dbg;
 
 #define SEND_SHUFFLE 0
 #define RECV_SHUFFLE 1
 
 #define MAX_UNROLL =
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 void
 DirectAlltoallvActor::initBuffers()

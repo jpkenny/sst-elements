@@ -45,14 +45,14 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <sumi/collective_actor.h>
 #include <sumi/transport.h>
 #include <sumi/communicator.h>
-#include <sprockit/output.h>
-#include <sstmac/null_buffer.h>
+//#include <sprockit/output.h>
+#include <mercury/common/null_buffer.h>
 #include <cstring>
 #include <utility>
 
-RegisterDebugSlot(sumi_collective_buffer);
+//RegisterDebugSlot(sumi_collective_buffer);
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 reduce_fxn Slicer::null_reduce_fxn = [](void*,const void*,int){};
 

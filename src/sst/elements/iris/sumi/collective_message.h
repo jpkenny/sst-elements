@@ -42,14 +42,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#ifndef sumi_api_COLLECTIVE_MESSAGE_H
-#define sumi_api_COLLECTIVE_MESSAGE_H
+#pragma once
 
 #include <sumi/message.h>
 #include <sumi/collective.h>
-#include <sprockit/thread_safe_new.h>
+#include <mercury/common/thread_safe_new.h>
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 /**
  * @class collective_done_message
@@ -224,6 +223,3 @@ class CollectiveWorkMessage final :
 };
 
 }
-
-
-#endif // COLLECTIVE_MESSAGE_H
