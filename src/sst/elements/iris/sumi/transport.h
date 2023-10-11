@@ -51,13 +51,13 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mercury/components/node.h>
 #include <mercury/hardware/network/network_message_fwd.h>
 #include <sumi/message.h>
-//#include <sumi/collective.h>
-//#include <sumi/comm_functions.h>
-//#include <sumi/collective_message.h>
-//#include <sumi/collective.h>
-//#include <sumi/comm_functions.h>
-//#include <sumi/options.h>
-//#include <sumi/communicator_fwd.h>
+#include <sumi/collective.h>
+#include <sumi/comm_functions.h>
+#include <sumi/collective_message.h>
+#include <sumi/collective.h>
+#include <sumi/comm_functions.h>
+#include <sumi/options.h>
+#include <sumi/communicator_fwd.h>
 
 #include <unordered_map>
 #include <queue>
@@ -269,9 +269,9 @@ class Transport {
 
   virtual int allocateDefaultCq() = 0;
 
-//  CollectiveEngine* engine() const {
-//    return engine_;
-//  }
+  CollectiveEngine* engine() const {
+    return engine_;
+  }
 
   virtual void logMessageDelay(Message *msg, uint64_t size, int stage,
                                SST::Hg::TimeDelta sync_delay, SST::Hg::TimeDelta active_delay,
@@ -292,8 +292,8 @@ class Transport {
     sid_(sid),
     nid_(nid),
     rank_(sid.task_),
-    nproc_(-1)
-//    engine_(nullptr)
+    nproc_(-1),
+    engine_(nullptr)
   {
   }
 
@@ -309,258 +309,258 @@ class Transport {
 
   int nproc_;
 
-//  CollectiveEngine* engine_;
+  CollectiveEngine* engine_;
 
   SST::Hg::Timestamp last_collection_;
 
 };
 
-//class CollectiveEngine
-//{
-// public:
-//  CollectiveEngine(SST::Params& params,
-//                    Transport* tport);
+class CollectiveEngine
+{
+ public:
+  CollectiveEngine(SST::Params& params,
+                    Transport* tport);
 
-//  ~CollectiveEngine();
+  ~CollectiveEngine();
 
-//  CollectiveDoneMessage* incoming(Message* m);
+  CollectiveDoneMessage* incoming(Message* m);
 
-//  void initSmp(const std::set<int>& neighbors);
+  void initSmp(const std::set<int>& neighbors);
 
-//  int allocateGlobalCollectiveTag(){
-//    system_collective_tag_--;
-//    if (system_collective_tag_ >= 0)
-//      system_collective_tag_ = -1;
-//    return system_collective_tag_;
-//  }
+  int allocateGlobalCollectiveTag(){
+    system_collective_tag_--;
+    if (system_collective_tag_ >= 0)
+      system_collective_tag_ = -1;
+    return system_collective_tag_;
+  }
 
-//  Communicator* globalDom() const {
-//    return global_domain_;
-//  }
+  Communicator* globalDom() const {
+    return global_domain_;
+  }
 
-//  /**
-//   * The cutoff for message size in bytes
-//   * for switching between an eager protocol and a rendezvous RDMA protocol
-//   * @return
-//   */
-//  uint32_t eagerCutoff() const {
-//    return eager_cutoff_;
-//  }
+  /**
+   * The cutoff for message size in bytes
+   * for switching between an eager protocol and a rendezvous RDMA protocol
+   * @return
+   */
+  uint32_t eagerCutoff() const {
+    return eager_cutoff_;
+  }
 
-//  void notifyCollectiveDone(int rank, Collective::type_t ty, int tag);
+  void notifyCollectiveDone(int rank, Collective::type_t ty, int tag);
 
-//  bool useEagerProtocol(uint64_t byte_length) const {
-//    return byte_length < eager_cutoff_;
-//  }
+  bool useEagerProtocol(uint64_t byte_length) const {
+    return byte_length < eager_cutoff_;
+  }
 
-//  void setEagerCutoff(uint64_t bytes) {
-//    eager_cutoff_ = bytes;
-//  }
+  void setEagerCutoff(uint64_t bytes) {
+    eager_cutoff_ = bytes;
+  }
 
-//  bool usePutProtocol() const {
-//    return use_put_protocol_;
-//  }
+  bool usePutProtocol() const {
+    return use_put_protocol_;
+  }
 
-//  bool useGetProtocol() const {
-//    return !use_put_protocol_;
-//  }
+  bool useGetProtocol() const {
+    return !use_put_protocol_;
+  }
 
-//  void setPutProtocol(bool flag) {
-//    use_put_protocol_ = flag;
-//  }
+  void setPutProtocol(bool flag) {
+    use_put_protocol_ = flag;
+  }
 
-//  CollectiveDoneMessage* blockUntilNext(int cq_id);
+  CollectiveDoneMessage* blockUntilNext(int cq_id);
 
-//  /**
-//   * The total size of the input buffer in bytes is nelems*type_size*comm_size
-//   * @param dst  Buffer for the result. Can be NULL to ignore payloads.
-//   * @param src  Buffer for the input. Can be NULL to ignore payloads.
-//   *             Automatically memcpy from src to dst.
-//   * @param nelems The number of elements in the result buffer at the end
-//   * @param type_size The size of the input type, i.e. sizeof(int), sizeof(double)
-//   * @param tag A unique tag identifier for the collective
-//   * @param fxn The function that will actually perform the reduction
-//   * @param fault_aware Whether to execute in a fault-aware fashion to detect failures
-//   * @param context The context (i.e. initial set of failed procs)
-//   */
-//  CollectiveDoneMessage* reduceScatter(void* dst, void* src, int nelems, int type_size, int tag, reduce_fxn fxn,
-//                                          int cq_id, Communicator* comm = nullptr);
+  /**
+   * The total size of the input buffer in bytes is nelems*type_size*comm_size
+   * @param dst  Buffer for the result. Can be NULL to ignore payloads.
+   * @param src  Buffer for the input. Can be NULL to ignore payloads.
+   *             Automatically memcpy from src to dst.
+   * @param nelems The number of elements in the result buffer at the end
+   * @param type_size The size of the input type, i.e. sizeof(int), sizeof(double)
+   * @param tag A unique tag identifier for the collective
+   * @param fxn The function that will actually perform the reduction
+   * @param fault_aware Whether to execute in a fault-aware fashion to detect failures
+   * @param context The context (i.e. initial set of failed procs)
+   */
+  CollectiveDoneMessage* reduceScatter(void* dst, void* src, int nelems, int type_size, int tag, reduce_fxn fxn,
+                                          int cq_id, Communicator* comm = nullptr);
 
-//  template <typename data_t, template <typename> class Op>
-//  CollectiveDoneMessage* reduceScatter(void* dst, void* src, int nelems, int tag,
-//                                          int cq_id, Communicator* comm = nullptr){
-//    typedef ReduceOp<Op, data_t> op_class_type;
-//    return reduceScatter(dst, src, nelems, sizeof(data_t), tag, &op_class_type::op, cq_id, comm);
-//  }
+  template <typename data_t, template <typename> class Op>
+  CollectiveDoneMessage* reduceScatter(void* dst, void* src, int nelems, int tag,
+                                          int cq_id, Communicator* comm = nullptr){
+    typedef ReduceOp<Op, data_t> op_class_type;
+    return reduceScatter(dst, src, nelems, sizeof(data_t), tag, &op_class_type::op, cq_id, comm);
+  }
 
-//  /**
-//   * The total size of the input/result buffer in bytes is nelems*type_size
-//   * @param dst  Buffer for the result. Can be NULL to ignore payloads.
-//   * @param src  Buffer for the input. Can be NULL to ignore payloads.
-//   *             Automatically memcpy from src to dst.
-//   * @param nelems The number of elements in the input and result buffer.
-//   * @param type_size The size of the input type, i.e. sizeof(int), sizeof(double)
-//   * @param tag A unique tag identifier for the collective
-//   * @param fxn The function that will actually perform the reduction
-//   * @param fault_aware Whether to execute in a fault-aware fashion to detect failures
-//   * @param context The context (i.e. initial set of failed procs)
-//   */
-//  CollectiveDoneMessage* allreduce(void* dst, void* src, int nelems, int type_size, int tag, reduce_fxn fxn,
-//                                     int cq_id, Communicator* comm = nullptr);
+  /**
+   * The total size of the input/result buffer in bytes is nelems*type_size
+   * @param dst  Buffer for the result. Can be NULL to ignore payloads.
+   * @param src  Buffer for the input. Can be NULL to ignore payloads.
+   *             Automatically memcpy from src to dst.
+   * @param nelems The number of elements in the input and result buffer.
+   * @param type_size The size of the input type, i.e. sizeof(int), sizeof(double)
+   * @param tag A unique tag identifier for the collective
+   * @param fxn The function that will actually perform the reduction
+   * @param fault_aware Whether to execute in a fault-aware fashion to detect failures
+   * @param context The context (i.e. initial set of failed procs)
+   */
+  CollectiveDoneMessage* allreduce(void* dst, void* src, int nelems, int type_size, int tag, reduce_fxn fxn,
+                                     int cq_id, Communicator* comm = nullptr);
 
-//  template <typename data_t, template <typename> class Op>
-//  CollectiveDoneMessage* allreduce(void* dst, void* src, int nelems, int tag,
-//                                     int cq_id, Communicator* comm = nullptr){
-//    typedef ReduceOp<Op, data_t> op_class_type;
-//    return allreduce(dst, src, nelems, sizeof(data_t), tag, &op_class_type::op, cq_id, comm);
-//  }
+  template <typename data_t, template <typename> class Op>
+  CollectiveDoneMessage* allreduce(void* dst, void* src, int nelems, int tag,
+                                     int cq_id, Communicator* comm = nullptr){
+    typedef ReduceOp<Op, data_t> op_class_type;
+    return allreduce(dst, src, nelems, sizeof(data_t), tag, &op_class_type::op, cq_id, comm);
+  }
 
-//  /**
-//   * The total size of the input/result buffer in bytes is nelems*type_size
-//   * @param dst  Buffer for the result. Can be NULL to ignore payloads.
-//   * @param src  Buffer for the input. Can be NULL to ignore payloads.
-//   *             Automatically memcpy from src to dst.
-//   * @param nelems The number of elements in the input and result buffer.
-//   * @param type_size The size of the input type, i.e. sizeof(int), sizeof(double)
-//   * @param tag A unique tag identifier for the collective
-//   * @param fxn The function that will actually perform the reduction
-//   * @param fault_aware Whether to execute in a fault-aware fashion to detect failures
-//   * @param context The context (i.e. initial set of failed procs)
-//   */
-//  CollectiveDoneMessage* scan(void* dst, void* src, int nelems, int type_size, int tag, reduce_fxn fxn,
-//                                int cq_id, Communicator* comm = nullptr);
+  /**
+   * The total size of the input/result buffer in bytes is nelems*type_size
+   * @param dst  Buffer for the result. Can be NULL to ignore payloads.
+   * @param src  Buffer for the input. Can be NULL to ignore payloads.
+   *             Automatically memcpy from src to dst.
+   * @param nelems The number of elements in the input and result buffer.
+   * @param type_size The size of the input type, i.e. sizeof(int), sizeof(double)
+   * @param tag A unique tag identifier for the collective
+   * @param fxn The function that will actually perform the reduction
+   * @param fault_aware Whether to execute in a fault-aware fashion to detect failures
+   * @param context The context (i.e. initial set of failed procs)
+   */
+  CollectiveDoneMessage* scan(void* dst, void* src, int nelems, int type_size, int tag, reduce_fxn fxn,
+                                int cq_id, Communicator* comm = nullptr);
 
-//  template <typename data_t, template <typename> class Op>
-//  CollectiveDoneMessage* scan(void* dst, void* src, int nelems, int tag, int cq_id, Communicator* comm = nullptr){
-//    typedef ReduceOp<Op, data_t> op_class_type;
-//    return scan(dst, src, nelems, sizeof(data_t), tag, &op_class_type::op, cq_id, comm);
-//  }
+  template <typename data_t, template <typename> class Op>
+  CollectiveDoneMessage* scan(void* dst, void* src, int nelems, int tag, int cq_id, Communicator* comm = nullptr){
+    typedef ReduceOp<Op, data_t> op_class_type;
+    return scan(dst, src, nelems, sizeof(data_t), tag, &op_class_type::op, cq_id, comm);
+  }
 
-//  CollectiveDoneMessage* reduce(int root, void* dst, void* src, int nelems, int type_size, int tag,
-//                                  reduce_fxn fxn, int cq_id, Communicator* comm = nullptr);
+  CollectiveDoneMessage* reduce(int root, void* dst, void* src, int nelems, int type_size, int tag,
+                                  reduce_fxn fxn, int cq_id, Communicator* comm = nullptr);
 
-//  template <typename data_t, template <typename> class Op>
-//  CollectiveDoneMessage* reduce(int root, void* dst, void* src, int nelems, int tag, int cq_id, Communicator* comm = nullptr){
-//    typedef ReduceOp<Op, data_t> op_class_type;
-//    return reduce(root, dst, src, nelems, sizeof(data_t), tag, &op_class_type::op, cq_id, comm);
-//  }
+  template <typename data_t, template <typename> class Op>
+  CollectiveDoneMessage* reduce(int root, void* dst, void* src, int nelems, int tag, int cq_id, Communicator* comm = nullptr){
+    typedef ReduceOp<Op, data_t> op_class_type;
+    return reduce(root, dst, src, nelems, sizeof(data_t), tag, &op_class_type::op, cq_id, comm);
+  }
 
-//  Transport* tport() const {
-//    return tport_;
-//  }
+  Transport* tport() const {
+    return tport_;
+  }
 
-//  /**
-//   * The total size of the input/result buffer in bytes is nelems*type_size
-//   * @param dst  Buffer for the result. Can be NULL to ignore payloads.
-//   * @param src  Buffer for the input. Can be NULL to ignore payloads. This need not be public! Automatically memcpy from src to public facing dst.
-//   * @param nelems The number of elements in the input and result buffer.
-//   * @param type_size The size of the input type, i.e. sizeof(int), sizeof(double)
-//   * @param tag A unique tag identifier for the collective
-//   * @param fault_aware Whether to execute in a fault-aware fashion to detect failures
-//   * @param context The context (i.e. initial set of failed procs)
-//   */
-//  CollectiveDoneMessage* allgather(void* dst, void* src, int nelems, int type_size, int tag,
-//                                     int cq_id, Communicator* comm = nullptr);
+  /**
+   * The total size of the input/result buffer in bytes is nelems*type_size
+   * @param dst  Buffer for the result. Can be NULL to ignore payloads.
+   * @param src  Buffer for the input. Can be NULL to ignore payloads. This need not be public! Automatically memcpy from src to public facing dst.
+   * @param nelems The number of elements in the input and result buffer.
+   * @param type_size The size of the input type, i.e. sizeof(int), sizeof(double)
+   * @param tag A unique tag identifier for the collective
+   * @param fault_aware Whether to execute in a fault-aware fashion to detect failures
+   * @param context The context (i.e. initial set of failed procs)
+   */
+  CollectiveDoneMessage* allgather(void* dst, void* src, int nelems, int type_size, int tag,
+                                     int cq_id, Communicator* comm = nullptr);
 
-//  CollectiveDoneMessage* allgatherv(void* dst, void* src, int* recv_counts, int type_size, int tag,
-//                                      int cq_id, Communicator* comm = nullptr);
+  CollectiveDoneMessage* allgatherv(void* dst, void* src, int* recv_counts, int type_size, int tag,
+                                      int cq_id, Communicator* comm = nullptr);
 
-//  CollectiveDoneMessage* gather(int root, void* dst, void* src, int nelems, int type_size, int tag,
-//                                  int cq_id, Communicator* comm = nullptr);
+  CollectiveDoneMessage* gather(int root, void* dst, void* src, int nelems, int type_size, int tag,
+                                  int cq_id, Communicator* comm = nullptr);
 
-//  CollectiveDoneMessage* gatherv(int root, void* dst, void* src, int sendcnt, int* recv_counts, int type_size, int tag,
-//                                   int cq_id, Communicator* comm = nullptr);
+  CollectiveDoneMessage* gatherv(int root, void* dst, void* src, int sendcnt, int* recv_counts, int type_size, int tag,
+                                   int cq_id, Communicator* comm = nullptr);
 
-//  CollectiveDoneMessage* alltoall(void* dst, void* src, int nelems, int type_size, int tag,
-//                                    int cq_id, Communicator* comm = nullptr);
-//  CollectiveDoneMessage* alltoallv(void* dst, void* src, int* send_counts, int* recv_counts, int type_size, int tag,
-//                                     int cq_id, Communicator* comm = nullptr);
+  CollectiveDoneMessage* alltoall(void* dst, void* src, int nelems, int type_size, int tag,
+                                    int cq_id, Communicator* comm = nullptr);
+  CollectiveDoneMessage* alltoallv(void* dst, void* src, int* send_counts, int* recv_counts, int type_size, int tag,
+                                     int cq_id, Communicator* comm = nullptr);
 
-//  CollectiveDoneMessage* scatter(int root, void* dst, void* src, int nelems, int type_size, int tag,
-//                                   int cq_id, Communicator* comm = nullptr);
+  CollectiveDoneMessage* scatter(int root, void* dst, void* src, int nelems, int type_size, int tag,
+                                   int cq_id, Communicator* comm = nullptr);
 
-//  CollectiveDoneMessage* scatterv(int root, void* dst, void* src, int* send_counts, int recvcnt, int type_size, int tag,
-//                                    int cq_id, Communicator* comm = nullptr);
+  CollectiveDoneMessage* scatterv(int root, void* dst, void* src, int* send_counts, int recvcnt, int type_size, int tag,
+                                    int cq_id, Communicator* comm = nullptr);
 
-//  void waitBarrier(int tag);
+  void waitBarrier(int tag);
 
-//  /**
-//   * Essentially just executes a zero-byte allgather.
-//   * @param tag
-//   * @param fault_aware
-//   */
-//  CollectiveDoneMessage* barrier(int tag, int cq_id, Communicator* comm = nullptr);
+  /**
+   * Essentially just executes a zero-byte allgather.
+   * @param tag
+   * @param fault_aware
+   */
+  CollectiveDoneMessage* barrier(int tag, int cq_id, Communicator* comm = nullptr);
 
-//  CollectiveDoneMessage* bcast(int root, void* buf, int nelems, int type_size, int tag,
-//                                 int cq_id, Communicator* comm = nullptr);
+  CollectiveDoneMessage* bcast(int root, void* buf, int nelems, int type_size, int tag,
+                                 int cq_id, Communicator* comm = nullptr);
 
-//  void cleanUp();
+  void cleanUp();
 
-//  void deadlockCheck();
+  void deadlockCheck();
 
-//  int ackQos() const {
-//    return ack_qos_;
-//  }
+  int ackQos() const {
+    return ack_qos_;
+  }
 
-//  int rdmaGetQos() const {
-//    return rdma_get_qos_;
-//  }
+  int rdmaGetQos() const {
+    return rdma_get_qos_;
+  }
 
-//  int rdmaHeaderQos() const {
-//    return rdma_header_qos_;
-//  }
+  int rdmaHeaderQos() const {
+    return rdma_header_qos_;
+  }
 
-//  int smsgQos() const {
-//    return smsg_qos_;
-//  }
+  int smsgQos() const {
+    return smsg_qos_;
+  }
 
-// private:
-//  CollectiveDoneMessage* skipCollective(Collective::type_t ty,
-//                        int cq_id, Communicator* comm,
-//                        void* dst, void *src,
-//                        int nelems, int type_size,
-//                        int tag);
+ private:
+  CollectiveDoneMessage* skipCollective(Collective::type_t ty,
+                        int cq_id, Communicator* comm,
+                        void* dst, void *src,
+                        int nelems, int type_size,
+                        int tag);
 
-//  void finishCollective(Collective* coll, int rank, Collective::type_t ty, int tag);
+  void finishCollective(Collective* coll, int rank, Collective::type_t ty, int tag);
 
-//  CollectiveDoneMessage* startCollective(Collective* coll);
+  CollectiveDoneMessage* startCollective(Collective* coll);
 
-//  void validateCollective(Collective::type_t ty, int tag);
+  void validateCollective(Collective::type_t ty, int tag);
 
-//  CollectiveDoneMessage* deliverPending(Collective* coll, int tag, Collective::type_t ty);
+  CollectiveDoneMessage* deliverPending(Collective* coll, int tag, Collective::type_t ty);
 
-// private:
-//  Transport* tport_;
+ private:
+  Transport* tport_;
 
-//  template <typename Key, typename Value>
-//  using spkt_enum_map = std::unordered_map<Key, Value, enum_hash>;
+  template <typename Key, typename Value>
+  using spkt_enum_map = std::unordered_map<Key, Value, enum_hash>;
 
-//  typedef std::unordered_map<int,Collective*> tag_to_collective_map;
-//  typedef spkt_enum_map<Collective::type_t, tag_to_collective_map> collective_map;
-//  collective_map collectives_;
+  typedef std::unordered_map<int,Collective*> tag_to_collective_map;
+  typedef spkt_enum_map<Collective::type_t, tag_to_collective_map> collective_map;
+  collective_map collectives_;
 
-//  typedef std::unordered_map<int,std::list<CollectiveWorkMessage*>> tag_to_pending_map;
-//  typedef spkt_enum_map<Collective::type_t, tag_to_pending_map> pending_map;
-//  pending_map pending_collective_msgs_;
+  typedef std::unordered_map<int,std::list<CollectiveWorkMessage*>> tag_to_pending_map;
+  typedef spkt_enum_map<Collective::type_t, tag_to_pending_map> pending_map;
+  pending_map pending_collective_msgs_;
 
-//  std::list<Collective*> todel_;
+  std::list<Collective*> todel_;
 
-//  Communicator* global_domain_;
+  Communicator* global_domain_;
 
-//  uint32_t eager_cutoff_;
+  uint32_t eager_cutoff_;
 
-//  bool use_put_protocol_;
+  bool use_put_protocol_;
 
-//  int system_collective_tag_;
+  int system_collective_tag_;
 
-//  std::string alltoall_type_;
-//  std::string allgather_type_;
+  std::string alltoall_type_;
+  std::string allgather_type_;
 
-//  int rdma_header_qos_;
-//  int rdma_get_qos_;
-//  int smsg_qos_;
-//  int ack_qos_;
+  int rdma_header_qos_;
+  int rdma_get_qos_;
+  int smsg_qos_;
+  int ack_qos_;
 
-//};
+};
 
-} //end namespace SST::Iris::sumi
+}

@@ -68,9 +68,9 @@ class App : public Thread
 
   static void deleteStatics();
 
-//  void sleep(TimeDelta time);
+  void sleep(TimeDelta time);
 
-//  void compute(TimeDelta time);
+  void compute(TimeDelta time);
 
 //  void computeInst(ComputeEvent* cmsg);
 
@@ -226,6 +226,8 @@ class App : public Thread
   void dlcloseCheck(){
     dlcloseCheck(aid());
   }
+
+ OperatingSystem* os_;
 
   char* allocateDataSegment(bool tls);
 

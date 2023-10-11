@@ -49,19 +49,19 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mercury/operating_system/libraries/api.h>
 //#include <sstmac/software/launch/task_mapping.h>
 #include <mercury/operating_system/libraries/service.h>
-//#include <mercury/software/process/progress_queue.h>
+#include <mercury/operating_system/process/progress_queue.h>
 #include <mercury/hardware/network/network_message_fwd.h>
 #include <mercury/components/node_fwd.h>
 
 #include <sumi/message_fwd.h>
-//#include <sumi/collective.h>
-//#include <sumi/comm_functions.h>
+#include <sumi/collective.h>
+#include <sumi/comm_functions.h>
 #include <sumi/transport.h>
-//#include <sumi/collective_message.h>
-//#include <sumi/collective.h>
-//#include <sumi/comm_functions.h>
-//#include <sumi/options.h>
-//#include <sumi/communicator_fwd.h>
+#include <sumi/collective_message.h>
+#include <sumi/collective.h>
+#include <sumi/comm_functions.h>
+#include <sumi/options.h>
+#include <sumi/communicator_fwd.h>
 
 #include <mercury/common/errors.h>
 #include <mercury/common/factory.h>
