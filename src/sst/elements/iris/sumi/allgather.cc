@@ -107,9 +107,9 @@ BruckActor::initDag()
   int log2nproc, midpoint, nprocs_extra_round, num_rounds;
   BruckTree::computeTree(dom_nproc_, log2nproc, midpoint, num_rounds, nprocs_extra_round);
 
-  debug_printf(sumi_collective,
-    "Bruck %s: configured for %d rounds with an extra round exchanging %d proc segments on tag=%d ",
-    rankStr().c_str(), log2nproc, nprocs_extra_round, tag_);
+//  debug_printf(sumi_collective,
+//    "Bruck %s: configured for %d rounds with an extra round exchanging %d proc segments on tag=%d ",
+//    rankStr().c_str(), log2nproc, nprocs_extra_round, tag_);
 
   //in the last round, we send half of total data to nearest neighbor
   //in the penultimate round, we send 1/4 data to neighbor at distance=2

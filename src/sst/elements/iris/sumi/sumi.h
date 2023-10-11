@@ -171,6 +171,3 @@ void sleepUntil(double sec);
 double wall_time();
 
 }
-
-
-#endif // SIMPMSG_H

@@ -32,7 +32,7 @@ libsumi_la_SOURCES = \
   sumi/message.cc \
   sumi/monitor.cc \
   sumi/reduce.cc \
-  sumi/reduce_scatter.c \
+  sumi/reduce_scatter.cc \
   sumi/scan.cc \
   sumi/scatter.cc \
   sumi/scatterv.cc  \    

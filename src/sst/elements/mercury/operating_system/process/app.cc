@@ -271,6 +271,7 @@ App::App(SST::Params& params, SoftwareId sid,
   Thread(params, sid, os),
   params_(params),
 //  compute_lib_(nullptr),
+  os_(os),
   next_tls_key_(0),
   min_op_cutoff_(0),
   globals_storage_(nullptr),
@@ -500,17 +501,19 @@ App::cleanup()
   Thread::cleanup();
 }
 
-//void
-//App::sleep(TimeDelta time)
-//{
-//  computeLib()->sleep(time);
-//}
+void
+App::sleep(TimeDelta time)
+{
+  os_->blockTimeout(time);
+  //computeLib()->sleep(time);
+}
 
-//void
-//App::compute(TimeDelta time)
-//{
-//  computeLib()->compute(time);
-//}
+void
+App::compute(TimeDelta time)
+{
+  os_->blockTimeout(time);
+  //computeLib()->compute(time);
+}
 
 //void
 //App::computeInst(ComputeEvent* cmsg)

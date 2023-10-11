@@ -81,7 +81,7 @@ struct Action
   int offset;
   int nelems;
   uint32_t id;
-  sstmac::Timestamp start;
+  SST::Hg::Timestamp start;
 
   static const char*
   tostr(type_t ty){
@@ -93,7 +93,7 @@ struct Action
       sumi_case(resolve);
       sumi_case(join);
       default:
-       spkt_abort_printf("Bad action type %d", ty);
+       sst_hg_abort_printf("Bad action type %d", ty);
        return "";
     }
   }
@@ -289,7 +289,7 @@ class Slicer {
 
   virtual void unpackReduce(void*  /*packedBuf*/, void*  /*unpackedObj*/,
             int  /*offset*/, int  /*nelems*/) const {
-    sprockit::abort("slicer for collective does not implement a reduce op");
+    SST::Hg::abort("slicer for collective does not implement a reduce op");
   }
 
   virtual bool contiguous() const = 0;
@@ -368,7 +368,7 @@ class DagCollectiveActor :
   }
 
  private:
-  template <class T, class U> using alloc = sprockit::threadSafeAllocator<std::pair<const T,U>>;
+  template <class T, class U> using alloc = SST::Hg::threadSafeAllocator<std::pair<const T,U>>;
   typedef std::map<uint32_t, Action*, std::less<uint32_t>,
                    alloc<uint32_t,Action*>> active_map;
   typedef std::multimap<uint32_t, Action*, std::less<uint32_t>,
@@ -583,6 +583,3 @@ class VirtualRankMap
 
 
 }
-
-
-#endif // COLLECTIVE_ACTOR_H

@@ -52,7 +52,7 @@ using namespace SST::Hg;
 
 //this redirection macro foobars things here
 #ifdef sleep
-#if sleep == sstmac_sleep
+#if sleep == ssthg_sleep
 #undef sleep
 #endif
 #endif
@@ -89,12 +89,12 @@ void comm_init()
 
 void comm_kill_process()
 {
-  sprockit::abort("unimplemented: comm kill process");
+  SST::Hg::abort("unimplemented: comm kill process");
 }
 
 void comm_killNode()
 {
-  sstmac::sw::OperatingSystem::currentOs()->killNode();
+  //SST::Hg::OperatingSystem::currentOs()->killNode();
   throw TerminateException();
 }
 

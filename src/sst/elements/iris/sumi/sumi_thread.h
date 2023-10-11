@@ -49,7 +49,7 @@ Questions? Contact sst-macro-help@sandia.gov
 namespace SST::Iris::sumi {
 
 class SumiThread :
-  public sstmac::sw::Thread
+  public SST::Hg::Thread
 {
  private:
   static uint64_t num_threads_;
@@ -57,8 +57,8 @@ class SumiThread :
   virtual void run() = 0;
 
  public:
-  SumiThread(SST::Params& params, sw::SoftwareId sid,
-              sw::OperatingSystem* os);
+  SumiThread(SST::Params& params, SST::Hg::SoftwareId sid,
+              SST::Hg::OperatingSystem* os);
 
   virtual ~SumiThread(){}
 

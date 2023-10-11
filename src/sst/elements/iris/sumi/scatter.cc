@@ -81,25 +81,25 @@ BtreeScatterActor::initBuffers()
       recv_buffer_ = result_buffer_; //won't ever actually be used
       result_buffer_ = dst;
     }
-    debug_printf(sprockit::dbg::sumi_collective_buffer,
-      "Rank %d root scatter\n"
-      "Rank %d recv   buffer %p of size %d\n"
-      "Rank %d send   buffer %p of size %d\n"
-      "Rank %d result buffer %p of size %d",
-      me,
-      me, recv_buffer_, max_recv_buf_size,
-      me, send_buffer_, buf_size,
-      me, result_buffer_, result_size);
+//    debug_printf(sprockit::dbg::sumi_collective_buffer,
+//      "Rank %d root scatter\n"
+//      "Rank %d recv   buffer %p of size %d\n"
+//      "Rank %d send   buffer %p of size %d\n"
+//      "Rank %d result buffer %p of size %d",
+//      me,
+//      me, recv_buffer_, max_recv_buf_size,
+//      me, send_buffer_, buf_size,
+//      me, result_buffer_, result_size);
   } else {
     recv_buffer_ = my_api_->allocateWorkspace(max_recv_buf_size, dst);
     send_buffer_ = recv_buffer_;
-    debug_printf(sprockit::dbg::sumi_collective_buffer,
-      "Rank %d scatter from root %d\n"
-      "Rank %d recv   buffer %p of size %d\n"
-      "Rank %d result buffer %p of size %d",
-      me, root_,
-      me, recv_buffer_, max_recv_buf_size,
-      me, result_buffer_, result_size);
+//    debug_printf(sprockit::dbg::sumi_collective_buffer,
+//      "Rank %d scatter from root %d\n"
+//      "Rank %d recv   buffer %p of size %d\n"
+//      "Rank %d result buffer %p of size %d",
+//      me, root_,
+//      me, recv_buffer_, max_recv_buf_size,
+//      me, result_buffer_, result_size);
   }
 }
 

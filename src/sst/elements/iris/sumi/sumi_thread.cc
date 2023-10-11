@@ -49,8 +49,8 @@ namespace SST::Iris::sumi {
 
 uint64_t SumiThread::num_threads_ = 0;
 
-SumiThread::SumiThread(SST::Params& params, sw::SoftwareId sid,
-                         sw::OperatingSystem* os) :
+SumiThread::SumiThread(SST::Params& params, SST::Hg::SoftwareId sid,
+                         SST::Hg::OperatingSystem* os) :
   Thread(params, sid, os)
 {
 }
@@ -58,13 +58,13 @@ SumiThread::SumiThread(SST::Params& params, sw::SoftwareId sid,
 void
 SumiThread::start()
 {
-  sstmac::sw::OperatingSystem::currentThread()->spawn(this);
+  SST::Hg::OperatingSystem::currentThread()->spawn(this);
 }
 
 void
 SumiThread::compute(double sec)
 {
-  parent_app_->compute(TimeDelta(sec));
+  parent_app_->compute(SST::Hg::TimeDelta(sec));
 }
 
 }

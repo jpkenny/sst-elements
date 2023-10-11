@@ -56,7 +56,7 @@ namespace SST::Iris::sumi {
  * This encapsulates all the information about a collective that has completed in the background
  */
 class CollectiveDoneMessage :
-  public sprockit::thread_safe_new<CollectiveDoneMessage>
+  public SST::Hg::thread_safe_new<CollectiveDoneMessage>
 {
 
  public:
@@ -144,7 +144,7 @@ class CollectiveWorkMessage final :
     dom_recver_(dom_recver)
   {
     if (this->classType() != collective){
-      spkt_abort_printf("collective work message is not of type collect");
+      sst_hg_abort_printf("collective work message is not of type collect");
     }
   }
 
@@ -156,11 +156,7 @@ class CollectiveWorkMessage final :
 
   static const char* tostr(int p);
 
-  void serialize_order(sstmac::serializer& ser) override;
-
-#if !SSTMAC_INTEGRATED_SST_CORE
-  void validate_serialization(serializable *ser) override;
-#endif
+  void serialize_order(SST::Hg::serializer& ser) override;
 
   int tag() const {
     return tag_;
@@ -187,7 +183,7 @@ class CollectiveWorkMessage final :
      case NetworkMessage::rdma_put_sent_ack:
       return dom_sender_;
      default:
-      spkt_abort_printf("Bad payload type %d to CQ id", NetworkMessage::type());
+      sst_hg_abort_printf("Bad payload type %d to CQ id", NetworkMessage::type());
       return -1;
     }
   }
@@ -200,7 +196,7 @@ class CollectiveWorkMessage final :
     return type_;
   }
 
-  sstmac::hw::NetworkMessage* cloneInjectionAck() const override {
+  SST::Hg::NetworkMessage* cloneInjectionAck() const override {
     CollectiveWorkMessage* cln = new CollectiveWorkMessage(*this);
     cln->convertToAck();
     return cln;

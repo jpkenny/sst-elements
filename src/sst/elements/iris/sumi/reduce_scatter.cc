@@ -53,9 +53,9 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #define divide_by_2_round_down(x) (x/2)
 
-using namespace sprockit::dbg;
+//using namespace sprockit::dbg;
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 void
 HalvingReduceScatterActor::finalizeBuffers()
@@ -70,7 +70,7 @@ HalvingReduceScatterActor::initBuffers()
 void
 HalvingReduceScatterActor::initDag()
 {
-  sprockit::abort("halving_reduce_scatter: not implemented");
+  SST::Hg::abort("halving_reduce_scatter: not implemented");
 }
 
 bool

@@ -57,13 +57,13 @@ CollectiveWorkMessage::tostr(int p)
     enumcase(get);
     enumcase(put);
   }
-  spkt_throw_printf(sprockit::ValueError,
+  sst_hg_throw_printf(SST::Hg::ValueError,
     "collective_work_message::invalid action %d",
     p);
 }
 
 void
-CollectiveWorkMessage::serialize_order(sstmac::serializer &ser)
+CollectiveWorkMessage::serialize_order(SST::Hg::serializer &ser)
 {
   ProtocolMessage::serialize_order(ser);
   ser & tag_;
@@ -73,26 +73,13 @@ CollectiveWorkMessage::serialize_order(sstmac::serializer &ser)
   ser & dom_sender_;
 }
 
-#if !SSTMAC_INTEGRATED_SST_CORE
-void
-CollectiveWorkMessage::validate_serialization(serializable *ser)
-{
-  auto* msg = spkt_assert_ser_type(ser,CollectiveWorkMessage);
-  spkt_assert_ser_equal(msg,tag_);
-  spkt_assert_ser_equal(msg,type_);
-  spkt_assert_ser_equal(msg,round_);
-  spkt_assert_ser_equal(msg,dom_recver_);
-  spkt_assert_ser_equal(msg,dom_sender_);
-}
-#endif
-
 std::string
 CollectiveWorkMessage::toString() const
 {
-  return sprockit::sprintf(
+  return SST::Hg::sprintf(
     "message for collective %s recver=%d sender=%d nbytes=%d round=%d tag=%d %s %d->%d",
      Collective::tostr(type_), recver(), sender(), payloadBytes(), round_, tag_,
-     sstmac::hw::NetworkMessage::typeStr(), fromaddr(), toaddr());
+     SST::Hg::NetworkMessage::typeStr(), fromaddr(), toaddr());
 }
 
 

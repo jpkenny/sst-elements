@@ -59,14 +59,14 @@ Questions? Contact sst-macro-help@sandia.gov
   if (tag_ == 115 || tag_ == 114) std::cout << sprockit::spkt_printf(__VA_ARGS__) << std::endl
 */
 
-RegisterDebugSlot(sumi_collective_init,
- "print all debug output for collectives performed within the sumi framework")
-RegisterDebugSlot(sumi_collective,
- "print all debug output for collectives performed within the sumi framework")
-RegisterDebugSlot(sumi_vote,
- "print all debug output for fault-tolerant voting collectives within the sumi framework")
+//RegisterDebugSlot(sumi_collective_init,
+// "print all debug output for collectives performed within the sumi framework")
+//RegisterDebugSlot(sumi_collective,
+// "print all debug output for collectives performed within the sumi framework")
+//RegisterDebugSlot(sumi_vote,
+// "print all debug output for fault-tolerant voting collectives within the sumi framework")
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 #define enumcase(x) case x: return #x
 
@@ -91,7 +91,7 @@ Collective::tostr(type_t ty)
     enumcase(barrier);
     enumcase(bcast);
   }
-  spkt_throw_printf(sprockit::ValueError,
+  sst_hg_throw_printf(SST::Hg::ValueError,
       "collective::tostr: unknown type %d", ty);
 }
 
@@ -107,15 +107,15 @@ Collective::Collective(type_t ty, CollectiveEngine* engine, int tag, int cq_id, 
   type_(ty), 
   subsequent_(nullptr)
 {
-  debug_printf(sumi_collective | sumi_vote,
-    "Rank %d=%d built collective of size %d in role=%d, tag=%d",
-    my_api_->rank(), comm_->myCommRank(), comm_->nproc(), dom_me_, tag);
+//  debug_printf(sumi_collective | sumi_vote,
+//    "Rank %d=%d built collective of size %d in role=%d, tag=%d",
+//    my_api_->rank(), comm_->myCommRank(), comm_->nproc(), dom_me_, tag);
 }
 
 CollectiveDoneMessage*
 Collective::addActors(Collective * /*coll*/)
 {
-  sprockit::abort("collective:add_actors: collective should not dynamically add actors");
+  SST::Hg::abort("collective:add_actors: collective should not dynamically add actors");
   return nullptr;
 }
 
@@ -167,27 +167,27 @@ DagCollective::initActors()
 CollectiveDoneMessage*
 DagCollective::recv(int target, CollectiveWorkMessage* msg)
 {
-  debug_printf(sumi_collective | sprockit::dbg::sumi,
-    "Rank %d=%d %s got from %d on tag=%d for target %d",
-    my_api_->rank(), dom_me_,
-    Collective::tostr(type_),
-    msg->sender(), tag_, target);
+//  debug_printf(sumi_collective | sprockit::dbg::sumi,
+//    "Rank %d=%d %s got from %d on tag=%d for target %d",
+//    my_api_->rank(), dom_me_,
+//    Collective::tostr(type_),
+//    msg->sender(), tag_, target);
 
   DagCollectiveActor* vr = my_actors_[target];
   if (!vr){
     //data-centric collective - this actor does not exist
     pending_.push_back(msg);
-      debug_printf(sumi_collective | sprockit::dbg::sumi,
-                  "dag actor %d does not yet exit - queueing %s",
-                  target, msg->toString().c_str())
+//      debug_printf(sumi_collective | sprockit::dbg::sumi,
+//                  "dag actor %d does not yet exit - queueing %s",
+//                  target, msg->toString().c_str())
     return nullptr;
   } else {
     vr->recv(msg);
     if (vr->complete()){
-      debug_printf(sumi_collective, "Rank %d=%d returning completion", my_api_->rank(), dom_me_);
+//      debug_printf(sumi_collective, "Rank %d=%d returning completion", my_api_->rank(), dom_me_);
       return vr->doneMsg();
     } else {
-      debug_printf(sumi_collective, "Rank %d=%d not yet complete", my_api_->rank(), dom_me_);
+//      debug_printf(sumi_collective, "Rank %d=%d not yet complete", my_api_->rank(), dom_me_);
       return nullptr;
     }
   }
@@ -206,7 +206,7 @@ DagCollective::start()
 void
 DagCollective::deadlockCheck()
 {
-  std::cout << sprockit::sprintf("%s collective deadlocked on rank %d, tag %d",
+  std::cout << SST::Hg::sprintf("%s collective deadlocked on rank %d, tag %d",
                   tostr(type_), my_api_->rank(), tag_) << std::endl;
 
   actor_map::iterator it, end = my_actors_.end();
@@ -215,7 +215,7 @@ DagCollective::deadlockCheck()
     if (actor) {
       actor->deadlockCheck();
    } else {
-      spkt_abort_printf("%s collective deadlocked on rank %d, tag %d, with NULL actor %d",
+      sst_hg_abort_printf("%s collective deadlocked on rank %d, tag %d, with NULL actor %d",
               tostr(type_), my_api_->rank(), tag_, it->first);
     }
   }

@@ -61,18 +61,18 @@ FunctionSet::timeoutAllListeners(int dst)
   int idx = 0;
   for (it=tmp.begin(); it != end; ++it, ++idx){
     TimeoutFunction* func = *it;
-    debug_printf(sprockit::dbg::sumi_ping,
-     "\ttiming out ping %p to %d",
-      func, dst);
-    func->time_out(dst);
+//    debug_printf(sprockit::dbg::sumi_ping,
+//     "\ttiming out ping %p to %d",
+//      func, dst);
+//    func->time_out(dst);
   }
 }
 
 int
 FunctionSet::erase(TimeoutFunction* func)
 {
-  debug_printf(sprockit::dbg::sumi_ping,
-   "\terasing ping %p", func);
+//  debug_printf(sprockit::dbg::sumi_ping,
+//   "\terasing ping %p", func);
 
   std::list<TimeoutFunction*>::iterator tmp,
     it = listeners_.begin(),
@@ -89,7 +89,7 @@ FunctionSet::erase(TimeoutFunction* func)
   }
 
   if (!found){
-    spkt_throw_printf(sprockit::IllformedError,
+    sst_hg_throw_printf(SST::Hg::IllformedError,
         "pinger::cancel: unknown pinger %p",
         func);
   }

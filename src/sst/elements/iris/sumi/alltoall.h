@@ -54,9 +54,10 @@ namespace SST::Iris::sumi {
 
 class AllToAllCollective : public DagCollective {
  public:
-  SPKT_DECLARE_BASE(AllToAllCollective)
-  SPKT_DECLARE_CTOR(CollectiveEngine*, void*, void*,
-                    int, int, int, int, Communicator*)
+//FIXME
+//  SPKT_DECLARE_BASE(AllToAllCollective)
+//  SPKT_DECLARE_CTOR(CollectiveEngine*, void*, void*,
+//                    int, int, int, int, Communicator*)
 
   AllToAllCollective(CollectiveEngine* engine, void* dst, void* src,
                      int nelems, int type_size, int tag, int cq_id,
@@ -105,12 +106,13 @@ class BruckAlltoallCollective :
   public AllToAllCollective
 {
  public:
-  SPKT_REGISTER_DERIVED(
-    AllToAllCollective,
-    BruckAlltoallCollective,
-    "macro",
-    "bruck",
-    "Bruck log(N) all-to-all collective")
+//FIXME
+//  SPKT_REGISTER_DERIVED(
+//    AllToAllCollective,
+//    BruckAlltoallCollective,
+//    "macro",
+//    "bruck",
+//    "Bruck log(N) all-to-all collective")
 
   BruckAlltoallCollective(CollectiveEngine* engine, void* dst, void* src,
                             int nelems, int type_size, int tag, int cq_id, Communicator* comm)
@@ -170,12 +172,13 @@ class DirectAlltoallCollective :
   public AllToAllCollective
 {
  public:
-  SPKT_REGISTER_DERIVED(
-    AllToAllCollective,
-    DirectAlltoallCollective,
-    "macro",
-    "direct",
-    "direct all-to-all collective")
+//FIXME
+//  SPKT_REGISTER_DERIVED(
+//    AllToAllCollective,
+//    DirectAlltoallCollective,
+//    "macro",
+//    "direct",
+//    "direct all-to-all collective")
 
     DirectAlltoallCollective(CollectiveEngine* engine, void *dst, void *src, int nelems,
                               int type_size, int tag, int cq_id, Communicator* comm) :

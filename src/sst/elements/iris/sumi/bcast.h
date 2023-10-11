@@ -49,7 +49,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <sumi/collective_message.h>
 #include <sumi/comm_functions.h>
 
-namespace sumi {
+namespace SST::Iris::sumi {
 
 class BinaryTreeBcastActor :
   public DagCollectiveActor
