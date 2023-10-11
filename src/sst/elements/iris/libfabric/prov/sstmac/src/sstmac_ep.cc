@@ -389,7 +389,7 @@ static ssize_t sstmaci_ep_send(struct fid_ep* ep, const void* buf, size_t len,
 
   tport->postSend<FabricMessage>(dest_rank, len, const_cast<void*>(buf),
                                  ep_impl->send_cq->id, // rma operations go to the tx
-                                 remote_cq, sumi::Message::pt2pt, ep_impl->qos,
+                                 remote_cq, SST::Iris::sumi::Message::pt2pt, ep_impl->qos,
                                  tag, FabricMessage::no_imm_data, flags, context);
   return 0;
 }
@@ -454,7 +454,7 @@ static ssize_t sstmaci_ep_read(struct fid_ep *ep, void *buf, size_t len,
   uint32_t src_rank = ADDR_RANK(src_addr);
 
   uint64_t flags = 0;
-  int remote_cq = sumi::Message::no_ack;
+  int remote_cq = SST::Iris::sumi::Message::no_ack;
   if (ep_impl->op_flags & FI_REMOTE_READ){
     remote_cq = ADDR_CQ(src_addr);
     flags |= FI_REMOTE_READ;
@@ -464,7 +464,7 @@ static ssize_t sstmaci_ep_read(struct fid_ep *ep, void *buf, size_t len,
   tport->rdmaGet<FabricMessage>(src_rank, len, buf, (void*) addr,
                                 ep_impl->send_cq->id, // rma operations go to the tx
                                 remote_cq,
-                                sumi::Message::pt2pt, ep_impl->qos,
+                                SST::Iris::sumi::Message::pt2pt, ep_impl->qos,
                                 FabricMessage::no_tag, FabricMessage::no_imm_data, flags, context);
   return 0;
 }
@@ -501,7 +501,7 @@ static ssize_t sstmaci_ep_write(struct fid_ep *ep, const void *buf, size_t len,
   sstmac_fid_ep* ep_impl = (sstmac_fid_ep*) ep;
   FabricTransport* tport = (FabricTransport*) ep_impl->domain->fabric->tport;
 
-  int remote_cq = sumi::Message::no_ack;
+  int remote_cq = SST::Iris::sumi::Message::no_ack;
   if (ep_impl->op_flags & FI_REMOTE_WRITE){
     remote_cq = ADDR_CQ(dest_addr);
     flags |= FI_REMOTE_WRITE;
@@ -512,7 +512,7 @@ static ssize_t sstmaci_ep_write(struct fid_ep *ep, const void *buf, size_t len,
   tport->rdmaPut<FabricMessage>(src_rank, len, const_cast<void*>(buf), (void*) addr,
                                 ep_impl->send_cq->id, // rma operations go to the tx
                                 remote_cq,
-                                sumi::Message::pt2pt, ep_impl->qos,
+                                SST::Iris::sumi::Message::pt2pt, ep_impl->qos,
                                 FabricMessage::no_tag, data, flags, context);
   return 0;
 }

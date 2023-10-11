@@ -31,7 +31,7 @@
  * SOFTWARE.
  */
 
-#include "config.h"
+// #include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -643,8 +643,8 @@ static void ofi_tostr_collective_op(char *buf, enum fi_collective_op op)
 
 static void ofi_tostr_version(char *buf)
 {
-	ofi_strcatf(buf, VERSION);
-	ofi_strcatf(buf, BUILD_ID);
+	ofi_strcatf(buf, "?");
+	ofi_strcatf(buf, "");
 }
 
 static void ofi_tostr_eq_event(char *buf, int type)
