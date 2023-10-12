@@ -67,6 +67,8 @@ class BinaryTreeBcastActor :
 
   ~BinaryTreeBcastActor(){}
 
+  Output output;
+
  private:
   void finalizeBuffers() override;
   void initBuffers() override;

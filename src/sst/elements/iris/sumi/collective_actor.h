@@ -235,6 +235,8 @@ class CollectiveActor
 
   virtual void init() = 0;
 
+  Output output;
+
  protected:
   CollectiveActor(CollectiveEngine* engine, int tag, int cq_id, Communicator* comm);
 

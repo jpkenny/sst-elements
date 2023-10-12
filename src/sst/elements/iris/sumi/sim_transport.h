@@ -46,6 +46,7 @@ Questions? Contact sst-macro-help@sandia.gov
 
 //#include <sstmac/common/stats/stat_spyplot_fwd.h>
 //#include <sstmac/common/event_scheduler_fwd.h>
+#include <output.h>
 #include <mercury/operating_system/libraries/api.h>
 //#include <sstmac/software/launch/task_mapping.h>
 #include <mercury/operating_system/libraries/service.h>
@@ -115,6 +116,8 @@ class SimTransport : public Transport, public SST::Hg::API {
   void finish() override;
 
   ~SimTransport() override;
+
+  Output output;
 
   SST::Hg::NodeId rankToNode(int rank) const override {
     //return rank_mapper_->rankToNode(rank);

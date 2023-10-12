@@ -119,9 +119,8 @@ BruckAllgathervActor::initDag()
   int num_rounds = log2nproc;
   int nprocs_extra_round = num_extra_procs;
 
-//  debug_printf(sumi_collective,
-//    "Bruckv %s: configured for %d rounds with an extra round exchanging %d proc segments on tag=%d ",
-//    rankStr().c_str(), log2nproc, num_extra_procs, tag_);
+  output.output("Bruckv %s: configured for %d rounds with an extra round exchanging %d proc segments on tag=%d ",
+    rankStr().c_str(), log2nproc, num_extra_procs, tag_);
 
   //in the last round, we send half of total data to nearest neighbor
   //in the penultimate round, we send 1/4 data to neighbor at distance=2

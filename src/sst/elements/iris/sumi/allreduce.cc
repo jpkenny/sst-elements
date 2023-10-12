@@ -97,9 +97,8 @@ WilkeAllreduceActor::initDag()
 
   int num_doubling_rounds = log2nproc;
 
-//  debug_printf(sumi_collective,
-//    "Rank %s configured allreduce for tag=%d for nproc=%d(%d) virtualized to n=%d over %d rounds",
-//    rankStr().c_str(), tag_, dom_nproc_, my_api_->nproc(), virtual_nproc, log2nproc);
+  output.output("Rank %s configured allreduce for tag=%d for nproc=%d(%d) virtualized to n=%d over %d rounds",
+    rankStr().c_str(), tag_, dom_nproc_, my_api_->nproc(), virtual_nproc, log2nproc);
 
   //on my final wave of send/recvs, need to change behavior depending on
   //whether types are contiguous or not
@@ -130,9 +129,8 @@ WilkeAllreduceActor::initDag()
     int virtual_me = my_roles[role];
     bool i_am_even = (virtual_me % 2) == 0;
     int round_offset = 2*num_doubling_rounds;
-//    debug_printf(sumi_collective,
-//      "Rank %d configuring allreduce for virtual role=%d tag=%d for nproc=%d(%d) virtualized to n=%d over %d rounds ",
-//      my_api_->rank(), virtual_me, tag_, dom_nproc_, my_api_->nproc(), virtual_nproc, log2nproc);
+    output.output("Rank %d configuring allreduce for virtual role=%d tag=%d for nproc=%d(%d) virtualized to n=%d over %d rounds ",
+      my_api_->rank(), virtual_me, tag_, dom_nproc_, my_api_->nproc(), virtual_nproc, log2nproc);
     for (int i=0; i < num_doubling_rounds; ++i){
       //again, see comment above about weirndess of round numberings
       int rnd = (i == 0 || i_am_even) ? i : i + round_offset;
@@ -150,9 +148,8 @@ WilkeAllreduceActor::initDag()
         recv_offset = my_buffer_offset + send_nelems;
       }
 
-//      debug_printf(sumi_collective,
-//        "Rank %d:%d testing partner=%d tag=%d for round=%d,%d",
-//        my_api_->rank(), virtual_me, virtual_partner, tag_, i, rnd);
+      output.output("Rank %d:%d testing partner=%d tag=%d for round=%d,%d",
+        my_api_->rank(), virtual_me, virtual_partner, tag_, i, rnd);
 
       recv_nelems = round_nelems - send_nelems;
 
@@ -178,11 +175,9 @@ WilkeAllreduceActor::initDag()
         prev_recv = recv_ac;
         //end if not real send/recv
       } else {
-//        debug_printf(sumi_collective,
-//          "Rank %d:%d skipping partner=%d on round %d with send=(%d,%d) recv=(%d,%d)",
-//          my_api_->rank(), virtual_me, virtual_partner, i,
-//          send_offset, send_offset + send_nelems,
-//          recv_offset, recv_offset + recv_nelems);
+        output.output("Rank %d:%d skipping partner=%d on round %d with send=(%d,%d) recv=(%d,%d)",
+          my_api_->rank(), virtual_me, virtual_partner, i, send_offset, send_offset + send_nelems,
+          recv_offset, recv_offset + recv_nelems);
       }
 
       //whatever I recv becomes the subarray for the next iteration
