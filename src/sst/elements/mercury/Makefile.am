@@ -90,6 +90,7 @@ nobase_library_include_HEADERS = \
   common/events.h \
   common/hg_printf.h \
   common/errors.h \
+  common/event_handler.h \
   common/factory.h \
   common/node_address.h \
   common/serializable.h \
@@ -108,7 +109,6 @@ nobase_library_include_HEADERS = \
   common/sim_thread_lock.h \
   common/timestamp.h \
   common/unusedvariablemacro.h \
-  components/operating_system_fwd.h \
   components/nic.h \
   components/nic_fwd.h \
   components/node.h \
