@@ -57,7 +57,7 @@ class HgJob(Job):
         #logical_id = self._nid_map[nodeID]
         logical_id = 0
         print("logical_id %s\n" % logical_id)
-        networkif, port_name = self.network_interface.build(nic,"link_control_slot",0,self.job_id,self.size,logical_id,False)
+        networkif, port_name = self.network_interface.build(node,"link_control_slot",0,self.job_id,self.size,logical_id,False)
 
         print("got network interface with port_name %s\n" % port_name)
 

@@ -67,7 +67,6 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mercury/common/factory.h>
 #include <mercury/common/event_handler.h>
 #include <mercury/hardware/network/network_message.h>
-#include <merlin/interfaces/linkControl.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 
 #include <vector>
@@ -122,9 +121,9 @@ class NIC : public ConnectableSubcomponent
     SST::Hg::NIC
   )
 
-  SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-      {"link_control_slot", "Slot for a link control", "SST::Merlin::LinkControl" }
-  )
+//  SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+//      {"link_control_slot", "Slot for a link control", "SST::Interfaces::SimpleNetwork" }
+//  )
 
   typedef enum {
     Injection,
@@ -200,6 +199,10 @@ public:
   void sendWhatYouCan(int vn);
 
   bool sendWhatYouCan(int vn, Pending& p);
+
+  void set_link_control(SST::Interfaces::SimpleNetwork* link_control) {
+      link_control_ = link_control;
+  }
 
 //  Topology* topology() const {
 //    return top_;

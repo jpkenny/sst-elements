@@ -39,6 +39,11 @@ Node::Node(ComponentId_t id, Params &params)
   nic_ = loadUserSubComponent<NIC>("nic_slot", SST::ComponentInfo::SHARE_PORTS, this);
   assert(nic_);
 
+  link_control_ = loadUserSubComponent<SST::Interfaces::SimpleNetwork>("link_control_slot", SST::ComponentInfo::SHARE_NONE,1);
+  assert(link_control_);
+
+  nic_->set_link_control(link_control_);
+
   // currently unused (but needs to be there or multithread termination breaks)
   netLink_ = configureLink("network");
 
@@ -48,6 +53,14 @@ Node::Node(ComponentId_t id, Params &params)
 //  // Tell the simulation not to end until we're ready
   registerAsPrimaryComponent();
   primaryComponentDoNotEndSim();
+}
+
+void
+Node::init(unsigned int phase)
+{
+  os_->init(phase);
+  nic_->init(phase);
+  link_control_->init(phase);
 }
 
 void

@@ -146,12 +146,15 @@ NIC::sendManagerMsg(NetworkMessage *msg) {
 
 void
 NIC::init(unsigned int phase) {
-  link_control_ = loadUserSubComponent<SST::Interfaces::SimpleNetwork>("link_control_slot", SST::ComponentInfo::SHARE_PORTS,1);
-  assert(link_control_);
-  auto recv_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC>(this,&SST::Hg::NIC::incomingPacket);
-  auto send_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC>(this,&SST::Hg::NIC::incomingCredit);
-  link_control_->setNotifyOnReceive(recv_notify);
-  link_control_->setNotifyOnSend(send_notify);
+  if (phase == 0) {
+    std::cerr << "NIC init0 linkcontrol\n";
+//    link_control_ = loadUserSubComponent<SST::Interfaces::SimpleNetwork>("link_control_slot", SST::ComponentInfo::SHARE_PORTS,1);
+//    assert(link_control_);
+    auto recv_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC>(this,&SST::Hg::NIC::incomingPacket);
+    auto send_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC>(this,&SST::Hg::NIC::incomingCredit);
+    link_control_->setNotifyOnReceive(recv_notify);
+    link_control_->setNotifyOnSend(send_notify);
+  }
   link_control_->init(phase);
 }
 
