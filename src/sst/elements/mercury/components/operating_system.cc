@@ -66,7 +66,7 @@ protected:
   Thread* thr_;
 };
 
-OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Node* parent) :
+OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, SimpleNode* parent) :
   SST::Hg::SubComponent(id),
   node_(parent),
   des_context_(nullptr),

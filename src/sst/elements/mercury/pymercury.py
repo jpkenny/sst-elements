@@ -45,9 +45,7 @@ class HgJob(Job):
 #
 #           sst.addGlobalParam("params_%s"%self._instance_name, 'jobId', self.job_id)
 
-        node, rtr_slot = self.node.build(nodeID)
-
-        print("built node with rtr_slot %s" % rtr_slot)
+        node = self.node.build(nodeID)
 
         os = node.setSubComponent("os_slot", "hg.operating_system")
         nic = node.setSubComponent("nic_slot", "hg.nic")
@@ -69,8 +67,8 @@ class HgNodeConfiguration(TemplateBase):
         TemplateBase.__init__(self)
 
     def build(self,nID):
-        node = sst.Component("node" + str(nID), "hg.node")
-        return node, "rtrlink"
+        node = sst.Component("node" + str(nID), "hg.simplenode")
+        return node
 
 class HgNicConfiguration(TemplateBase):
 

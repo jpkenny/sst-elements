@@ -29,6 +29,56 @@
 namespace SST {
 namespace Hg {
 
+//class SimpleNode : public SST::Component {
+class SimpleNode : public SST::Hg::Component {
+
+public:
+
+    SST_ELI_REGISTER_COMPONENT(
+        SimpleNode,      // Component class
+        "hg", // Component library (for Python/library lookup)
+        "simplenode",    // Component name (for Python/library lookup)
+        SST_ELI_ELEMENT_VERSION(
+            0, 0, 1),   // Version of the component (not related to SST version)
+        "Bare-bones Mercury node", // Description
+        COMPONENT_CATEGORY_UNCATEGORIZED // Category
+    )
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+            {"os_slot", "The operating system", "hg.operating_system"},
+            {"nic_slot", "The nic", "hg.nic"},
+            {"link_control_slot", "Slot for a link control", "SST::Interfaces::SimpleNetwork" }
+        )
+
+    SimpleNode(SST::ComponentId_t id, SST::Params &params);
+
+    void init(unsigned int phase) override;
+
+    void setup() override;
+
+    NodeId addr() const {
+      return my_addr_;
+    }
+
+    int ncores() { return ncores_; }
+    int nsockets() { return nsockets_; }
+
+    SST::Hg::NIC* nic() { return nic_; }
+
+    void endSim() {
+      primaryComponentOKToEndSim();
+    }
+
+private:
+
+  SST::Hg::NIC* nic_;
+  SST::Hg::OperatingSystem* os_;
+  SST::Interfaces::SimpleNetwork* link_control_;
+  NodeId my_addr_;
+  int ncores_;
+  int nsockets_;
+};
+
 // Components inherit from SST::Component
 class Node : public SST::Hg::Component {
 public:

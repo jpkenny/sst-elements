@@ -57,9 +57,9 @@ public:
   )
 
   SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::OperatingSystem,
-                                    SST::Hg::Node*)
+                                    SST::Hg::SimpleNode*)
 
-  OperatingSystem(SST::ComponentId_t id, SST::Params& params, Node* parent);
+  OperatingSystem(SST::ComponentId_t id, SST::Params& params, SimpleNode* parent);
 
   virtual ~OperatingSystem();
 
@@ -143,7 +143,7 @@ public:
   /// to this context on every context switch.
   ThreadContext *des_context_;
 
-  Node* node_;
+  SimpleNode* node_;
   Thread* active_thread_;
   Thread* blocked_thread_;
   int next_condition_;
@@ -184,7 +184,7 @@ public:
 
  public:
 
-  Node* node() const {
+  SimpleNode* node() const {
     return node_;
   }
 
