@@ -35,6 +35,10 @@ Node::Node(ComponentId_t id, Params &params)
   os_ =  loadUserSubComponent<OperatingSystem>("os_slot", SST::ComponentInfo::SHARE_NONE, this);
   assert(os_);
 
+  out_->debug(CALL_INFO, 1, 0, "loading hg.NIC\n");
+  nic_ = loadUserSubComponent<NIC>("nic_slot", SST::ComponentInfo::SHARE_PORTS, this);
+  assert(nic_);
+
   // currently unused (but needs to be there or multithread termination breaks)
   netLink_ = configureLink("network");
 

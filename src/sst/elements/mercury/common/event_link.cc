@@ -44,42 +44,26 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #pragma once
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
-
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+#include <mercury/common/event_link.h>
 
 #define connect_str_case(x) case x: return #x
 
 namespace SST {
 namespace Hg {
 
-class EventLink {
- public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
-  }
 
-  using ptr = std::unique_ptr<EventLink>;
+std::string EventLink::toString() const {
+    return "self link: " + name_;
+}
 
-  virtual ~EventLink() {}
+void EventLink::send(TimeDelta delay, Event* ev){
+    //the link should have a time converter built-in?
+    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
+}
 
-  std::string toString() const;
-
-  void send(TimeDelta delay, Event* ev);
-
-  void send(Event* ev);
-
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
-};
+void EventLink::send(Event* ev){
+    send(selflat_, ev);
+}
 
 } // end of namespace Hg
 } // end of namespace SST

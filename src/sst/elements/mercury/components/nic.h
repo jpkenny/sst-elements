@@ -67,6 +67,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mercury/common/factory.h>
 #include <mercury/common/event_handler.h>
 #include <mercury/hardware/network/network_message.h>
+#include <merlin/interfaces/linkControl.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 
 #include <vector>
@@ -110,7 +111,20 @@ class NIC : public ConnectableSubcomponent
 {
  public:
 
-  SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::NIC,SST::Hg::Node*)
+  SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::NIC,SST::Hg::Node*);
+
+  SST_ELI_REGISTER_SUBCOMPONENT(
+    NIC,
+    "hg",
+    "nic",
+    SST_ELI_ELEMENT_VERSION(0,0,1),
+    "Mercury NIC",
+    SST::Hg::NIC
+  )
+
+  SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+      {"link_control_slot", "Slot for a link control", "SST::Merlin::LinkControl" }
+  )
 
   typedef enum {
     Injection,
@@ -249,8 +263,10 @@ public:
 
   virtual std::string toString() const { return "nic"; }
 
- protected:
+ public:
   NIC(uint32_t id, SST::Params& params, SST::Hg::Node* parent);
+
+ protected:
 
   void configureLogPLinks();
 
@@ -265,7 +281,7 @@ public:
     This performs all model-specific work
     @param payload The network message to send
   */
-  virtual void doSend(NetworkMessage* payload) = 0;
+  //virtual void doSend(NetworkMessage* payload) = 0;
 
   bool negligibleSize(int bytes) const {
     return bytes <= negligibleSize_;
@@ -305,7 +321,6 @@ protected:
   void recordMessage(NetworkMessage* msg);
 
   void finishMemcpy(NetworkMessage* msg);
-
 };
 
 class NullNIC : public NIC
@@ -314,21 +329,22 @@ class NullNIC : public NIC
 
   SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
     NullNIC,
-    "macro",
+    "hg",
     "null_nic",
     SST_ELI_ELEMENT_VERSION(1,0,0),
     "implements a nic that models nothing - stand-in only",
-    SST::Hg::NIC)
+    SST::Hg::NIC
+          )
 
   NullNIC(uint32_t id, SST::Params& params, SST::Hg::Node* parent) :
-    NIC(id, params, parent)
+      NIC(id, params, parent)
   {
   }
 
   std::string toString() const override { return "null nic"; }
   //std::string toString() const { return "null nic"; }
 
-  void doSend(NetworkMessage*) override {}
+  //void doSend(NetworkMessage*) override {}
 
   void connectOutput(int, int, EventLink::ptr&&) override {}
 

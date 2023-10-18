@@ -70,6 +70,8 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #define DEFAULT_NEGLIGIBLE_SIZE 256
 
+static std::string _tick_spacing_string_("1ps");
+
 namespace SST {
 namespace Hg {
 
@@ -83,7 +85,7 @@ NicEvent::serialize_order(serializer &ser)
 }
 
 NIC::NIC(uint32_t id, SST::Params& params, Node* parent) :
-  ConnectableSubcomponent(id, "nic", parent), 
+  ConnectableSubcomponent(id, "nic", parent),
   parent_(parent), 
   my_addr_(parent->addr()),
 //  logp_link_(nullptr),
@@ -107,25 +109,29 @@ NIC::NIC(uint32_t id, SST::Params& params, Node* parent) :
   int slot_id = 0;
   /** All bandwidth and other parameters get pulled in
       through params now, not through initialize */
-  link_control_ = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>(
-                               params.find<std::string>("module"),
-                               "LinkControl", slot_id,
-                               SST::ComponentInfo::SHARE_PORTS | SST::ComponentInfo::INSERT_STATS,
-                               params, vns_);
+//  link_control_ = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>(
+//                               "merlin.linkcontrol",
+//                               "LinkControl", slot_id,
+//                               SST::ComponentInfo::SHARE_PORTS | SST::ComponentInfo::INSERT_STATS,
+//                               params, vns_);
+
+  //out_->debug(CALL_INFO, 1, 0, "loading hg.NIC\n");
+//  link_control_ = loadUserSubComponent<SST::Interfaces::SimpleNetwork>("link_control_slot", SST::ComponentInfo::SHARE_PORTS,1);
+//  assert(link_control_);
 
   pending_.resize(vns_);
   ack_queue_.resize(vns_);
   mtu_ = params.find<SST::UnitAlgebra>("mtu").getRoundedValue();
 
-  auto recv_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC>(this,&SST::Hg::NIC::incomingPacket);
-  auto send_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC>(this,&SST::Hg::NIC::incomingCredit);
+//  auto recv_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC>(this,&SST::Hg::NIC::incomingPacket);
+//  auto send_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC>(this,&SST::Hg::NIC::incomingCredit);
 
   if (params.contains("test_size")){
     test_size_ = params.find<SST::UnitAlgebra>("test_size").getRoundedValue();
   }
 
-  link_control_->setNotifyOnReceive(recv_notify);
-  link_control_->setNotifyOnSend(send_notify);
+//  link_control_->setNotifyOnReceive(recv_notify);
+//  link_control_->setNotifyOnSend(send_notify);
 }
 
 std::string
@@ -140,6 +146,12 @@ NIC::sendManagerMsg(NetworkMessage *msg) {
 
 void
 NIC::init(unsigned int phase) {
+  link_control_ = loadUserSubComponent<SST::Interfaces::SimpleNetwork>("link_control_slot", SST::ComponentInfo::SHARE_PORTS,1);
+  assert(link_control_);
+  auto recv_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC>(this,&SST::Hg::NIC::incomingPacket);
+  auto send_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC>(this,&SST::Hg::NIC::incomingCredit);
+  link_control_->setNotifyOnReceive(recv_notify);
+  link_control_->setNotifyOnSend(send_notify);
   link_control_->init(phase);
 }
 
@@ -502,7 +514,7 @@ NIC::internodeSend(NetworkMessage* netmsg)
 //  } else {
 //    doSend(netmsg);
 //  }
-  doSend(netmsg);
+  //doSend(netmsg);
 }
 
 //void
