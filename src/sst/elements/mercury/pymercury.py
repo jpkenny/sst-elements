@@ -50,8 +50,8 @@ class HgJob(Job):
         print("built node with rtr_slot %s" % rtr_slot)
 
         os = node.setSubComponent("os_slot", "hg.operating_system")
-        #nic = node.setSubComponent("nic_slot", "hg.nic")
-        nic = self.nic.build(node,"nic_slot",0)
+        nic = node.setSubComponent("nic_slot", "hg.nic")
+        #nic = self.nic.build(node,"nic_slot",0)
 
         # Build NetworkInterface
         #logical_id = self._nid_map[nodeID]
@@ -61,10 +61,7 @@ class HgJob(Job):
 
         print("got network interface with port_name %s\n" % port_name)
 
-        # Store return value for later
-        retval = ( networkif, port_name )
-
-        return retval
+        return (networkif, port_name)
 
 class HgNodeConfiguration(TemplateBase):
 

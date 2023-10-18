@@ -110,7 +110,7 @@ class NIC : public ConnectableSubcomponent
 {
  public:
 
-  SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::NIC,SST::Hg::Node*);
+  SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::NIC, SST::Hg::Node*);
 
   SST_ELI_REGISTER_SUBCOMPONENT(
     NIC,

@@ -53,10 +53,9 @@ public:
                            "Output verbose level", 0},
                           )
 
-  SST_ELI_DOCUMENT_PORTS(
-      {"network", "Internode connection network", {}},
-
-  )
+//  SST_ELI_DOCUMENT_PORTS(
+//      {"rtr_port", "Port that connects to router", { "merlin.RtrEvent", "merlin.credit_event", "" } },
+//  )
 
   SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
       {"os_slot", "The operating system", "hg.operating_system"},

@@ -36,7 +36,7 @@ Node::Node(ComponentId_t id, Params &params)
   assert(os_);
 
   out_->debug(CALL_INFO, 1, 0, "loading hg.NIC\n");
-  nic_ = loadUserSubComponent<NIC>("nic_slot", SST::ComponentInfo::SHARE_PORTS, this);
+  nic_ = loadUserSubComponent<NIC>("nic_slot", SST::ComponentInfo::SHARE_NONE, this);
   assert(nic_);
 
   link_control_ = loadUserSubComponent<SST::Interfaces::SimpleNetwork>("link_control_slot", SST::ComponentInfo::SHARE_NONE,1);
@@ -68,6 +68,8 @@ Node::setup()
 {
   SST::Component::setup();
   os_->setup();
+  nic_->setup();
+  link_control_->setup();
 }
 
 void
