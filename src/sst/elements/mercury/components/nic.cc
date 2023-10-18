@@ -84,8 +84,10 @@ NicEvent::serialize_order(serializer &ser)
   ser & msg_;
 }
 
-NIC::NIC(uint32_t id, SST::Params& params, Node* parent) :
-  ConnectableSubcomponent(id, "nic", parent),
+NIC::NIC(uint32_t id, SST::Params& params, SimpleNode* parent) :
+  SST::Hg::SubComponent(id),
+//NIC::NIC(uint32_t id, SST::Params& params, Node* parent) :
+//    ConnectableSubcomponent(id, "nic", parent),
   parent_(parent), 
   my_addr_(parent->addr()),
 //  logp_link_(nullptr),
@@ -146,21 +148,21 @@ NIC::sendManagerMsg(NetworkMessage *msg) {
 
 void
 NIC::init(unsigned int phase) {
-  if (phase == 0) {
-    std::cerr << "NIC init0 linkcontrol\n";
+//  if (phase == 0) {
+//    std::cerr << "NIC init0 linkcontrol\n";
 //    link_control_ = loadUserSubComponent<SST::Interfaces::SimpleNetwork>("link_control_slot", SST::ComponentInfo::SHARE_PORTS,1);
 //    assert(link_control_);
-    auto recv_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC>(this,&SST::Hg::NIC::incomingPacket);
-    auto send_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC>(this,&SST::Hg::NIC::incomingCredit);
-    link_control_->setNotifyOnReceive(recv_notify);
-    link_control_->setNotifyOnSend(send_notify);
-  }
-  link_control_->init(phase);
+//    auto recv_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC>(this,&SST::Hg::NIC::incomingPacket);
+//    auto send_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC>(this,&SST::Hg::NIC::incomingCredit);
+//    link_control_->setNotifyOnReceive(recv_notify);
+//    link_control_->setNotifyOnSend(send_notify);
+//  }
+//  link_control_->init(phase);
 }
 
 void
 NIC::setup() {
-  link_control_->setup();
+//  link_control_->setup();
 #if MERLIN_DEBUG_PACKET
   if (test_size_ != 0 && addr() == 0){
     std::cout << "Injecting test messsage of size " << test_size_ << std::endl;
@@ -539,7 +541,7 @@ NIC::internodeSend(NetworkMessage* netmsg)
 void
 NIC::sendToNode(NetworkMessage* payload)
 {
-  auto forward_ev = newCallback(parent_, &Node::handle, payload);
+  auto forward_ev = newCallback(parent_, &SimpleNode::handle, payload);
   parent_->sendExecutionEventNow(forward_ev);
 }
 

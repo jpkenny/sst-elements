@@ -69,11 +69,18 @@ public:
       primaryComponentOKToEndSim();
     }
 
+    SST::Hg::OperatingSystem* os() const {
+      return os_;
+    }
+
+    void handle(Request* req);
+
 private:
 
   SST::Hg::NIC* nic_;
   SST::Hg::OperatingSystem* os_;
   SST::Interfaces::SimpleNetwork* link_control_;
+  SST::Link* netLink_;
   NodeId my_addr_;
   int ncores_;
   int nsockets_;

@@ -106,11 +106,13 @@ class NicEvent :
  * This object helps ornament network operations with information about
  * the process (ppid) involved.
  */
-class NIC : public ConnectableSubcomponent
+class NIC : public SST::Hg::SubComponent
+//class NIC : public ConnectableComponent
 {
  public:
 
-  SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::NIC, SST::Hg::Node*);
+  SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::NIC,
+                                    SST::Hg::SimpleNode*)
 
   SST_ELI_REGISTER_SUBCOMPONENT(
     NIC,
@@ -267,7 +269,7 @@ public:
   virtual std::string toString() const { return "nic"; }
 
  public:
-  NIC(uint32_t id, SST::Params& params, SST::Hg::Node* parent);
+  NIC(uint32_t id, SST::Params& params, SST::Hg::SimpleNode* parent);
 
  protected:
 
@@ -275,7 +277,7 @@ public:
 
   void configureLinks();
 
-  Node* parent() const {
+  SimpleNode* parent() const {
     return parent_;
   }
 
@@ -292,7 +294,7 @@ public:
 
 protected:
   int negligibleSize_;
-  Node* parent_;
+  SimpleNode* parent_;
   NodeId my_addr_;
   EventLink::ptr logp_link_;
   //Topology* top_;
@@ -326,37 +328,50 @@ protected:
   void finishMemcpy(NetworkMessage* msg);
 };
 
-class NullNIC : public NIC
-{
- public:
+//class NullNIC : public NIC
+//{
+// public:
 
-  SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
-    NullNIC,
-    "hg",
-    "null_nic",
-    SST_ELI_ELEMENT_VERSION(1,0,0),
-    "implements a nic that models nothing - stand-in only",
-    SST::Hg::NIC
-          )
+//  SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+//    NullNIC,
+//    "hg",
+//    "null_nic",
+//    SST_ELI_ELEMENT_VERSION(1,0,0),
+//    "implements a nic that models nothing - stand-in only",
+//    SST::Hg::NIC
+//          )
 
-  NullNIC(uint32_t id, SST::Params& params, SST::Hg::Node* parent) :
-      NIC(id, params, parent)
-  {
-  }
+////  SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+////    NullNIC,
+////    "hg",
+////    "nullnic",
+////    SST_ELI_ELEMENT_VERSION(0,0,1),
+////    "Mercury Null NIC",
+////    SST::Hg::NIC
+////  )
 
-  std::string toString() const override { return "null nic"; }
-  //std::string toString() const { return "null nic"; }
+//  NullNIC(uint32_t id, SST::Params& params, SST::Hg::SimpleNode* parent) :
+//      NIC(id, params, parent)
+//  {
+//  }
 
-  //void doSend(NetworkMessage*) override {}
+//  std::string toString() const override { return "null nic"; }
+//  //std::string toString() const { return "null nic"; }
 
-  void connectOutput(int, int, EventLink::ptr&&) override {}
+//  //void doSend(NetworkMessage*) override {}
 
-  void connectInput(int, int, EventLink::ptr&&) override {}
+////  void connectOutput(int, int, EventLink::ptr&&) override {}
 
-  SST::Event::HandlerBase* payloadHandler(int) override { return nullptr; }
+////  void connectInput(int, int, EventLink::ptr&&) override {}
 
-  SST::Event::HandlerBase* creditHandler(int) override { return nullptr; }
-};
+////  SST::Event::HandlerBase* payloadHandler(int) override { return nullptr; }
+
+////  SST::Event::HandlerBase* creditHandler(int) override { return nullptr; }
+
+//  SST::Event::HandlerBase* payloadHandler(int) { return nullptr; }
+
+//  SST::Event::HandlerBase* creditHandler(int) { return nullptr; }
+//};
 
 } // end of namespace Hg
 } // end of namespace SST

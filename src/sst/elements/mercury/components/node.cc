@@ -26,11 +26,14 @@ SimpleNode::SimpleNode(ComponentId_t id, SST::Params &params)
   os_ =  loadUserSubComponent<OperatingSystem>("os_slot", SST::ComponentInfo::SHARE_NONE, this);
   assert(os_);
 
-//  nic_ = loadUserSubComponent<NIC>("nic_slot", SST::ComponentInfo::SHARE_NONE, this);
-//  assert(nic_);
+  nic_ = loadUserSubComponent<NIC>("nic_slot", SST::ComponentInfo::SHARE_NONE, this);
+  assert(nic_);
 
   link_control_ = loadUserSubComponent<SST::Interfaces::SimpleNetwork>("link_control_slot", SST::ComponentInfo::SHARE_NONE,1);
   assert(link_control_);
+
+  // currently unused (but needs to be there or multithread termination breaks)
+  netLink_ = configureLink("network");
 
 //  // Tell the simulation not to end until we're ready
   registerAsPrimaryComponent();
@@ -41,8 +44,8 @@ void
 SimpleNode::init(unsigned int phase)
 {
   SST::Component::init(phase);
-//  os_->init(phase);
-//  nic_->init(phase);
+  os_->init(phase);
+  nic_->init(phase);
   link_control_->init(phase);
 }
 
@@ -50,9 +53,15 @@ void
 SimpleNode::setup()
 {
   SST::Component::setup();
-//  os_->setup();
-//  nic_->setup();
+  os_->setup();
+  nic_->setup();
   link_control_->setup();
+}
+
+void
+SimpleNode::handle(Request* req)
+{
+  os_->handleRequest(req);
 }
 
 extern template class  HgBase<SST::Component>;
@@ -69,9 +78,9 @@ Node::Node(ComponentId_t id, Params &params)
 //  os_ =  loadUserSubComponent<OperatingSystem>("os_slot", SST::ComponentInfo::SHARE_NONE, this);
 //  assert(os_);
 
-  out_->debug(CALL_INFO, 1, 0, "loading hg.NIC\n");
-  nic_ = loadUserSubComponent<NIC>("nic_slot", SST::ComponentInfo::SHARE_NONE, this);
-  assert(nic_);
+//  out_->debug(CALL_INFO, 1, 0, "loading hg.NIC\n");
+//  nic_ = loadUserSubComponent<NIC>("nic_slot", SST::ComponentInfo::SHARE_NONE, this);
+//  assert(nic_);
 
   link_control_ = loadUserSubComponent<SST::Interfaces::SimpleNetwork>("link_control_slot", SST::ComponentInfo::SHARE_NONE,1);
   assert(link_control_);
