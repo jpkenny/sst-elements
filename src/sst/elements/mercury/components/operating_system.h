@@ -47,6 +47,9 @@ class OperatingSystem : public SST::Hg::SubComponent {
 
 public:
 
+  SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::OperatingSystem,
+                                    SST::Hg::Node*)
+
   SST_ELI_REGISTER_SUBCOMPONENT(
     OperatingSystem,
     "hg",
@@ -55,9 +58,6 @@ public:
     "Mercury Operating System",
     SST::Hg::OperatingSystem
   )
-
-  SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::OperatingSystem,
-                                    SST::Hg::Node*)
 
   OperatingSystem(SST::ComponentId_t id, SST::Params& params, Node* parent);
 

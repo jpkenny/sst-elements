@@ -12,6 +12,7 @@ AM_LIBTOOLFLAGS = --tag=CXX
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libhg.la libsystemapi.la testme.la
 libhg_la_SOURCES = \
+  common/event_link.cc \
   common/component.cc \
   common/hg_string.cc \
   common/mercury.cc \

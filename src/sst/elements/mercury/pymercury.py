@@ -18,41 +18,19 @@
 import sys
 import sst
 from sst.merlin.base import *
-from sst.hg import *
-from sst.firefly import *
+from sst.merlin import *
 
 class HgJob(Job):
-    def __init__(self, job_id, num_nodes, apis, params, numCores = 1, nicsPerNode = 1):
+    def __init__(self, job_id, num_nodes, numCores = 1, nicsPerNode = 1):
         Job.__init__(self,job_id,num_nodes * nicsPerNode)
-        self._declareClassVariables(["_numCores","_nicsPerNode","nic","_loopBackDict","os","_apis","_params","_numNodes"])
-
-        # Not needed - the subclasses will set the nic to the correct type:
-        #x = self._createPrefixedParams("nic")
-        #x._declareParams("nic",_basic_nic_defaults.keys())
-        ##x._subscribeToPlatformParamSet("nic")
-
-        # Not sure what to do with this yet
-        #x = self._createPrefixedParams("ember")
-        #self._declareParamsWithUserPrefix("mercury","mercury",["verbose"])
-        #x._subscribeToPlatformParamSet("ember")
-
-        # Not clear what to do with this yet. Don't think we need it
-        # since it's already captured throuch ctrl params??
-        #x = self.ember._createPrefixedParams("firefly")
+        self._declareClassVariables(["_numCores","_nicsPerNode","node","nic","os","_params","_numNodes"])
 
         self._numCores = numCores
         self._nicsPerNode = nicsPerNode
-        self._apis = apis
-        self._loopBackDict = dict()
-        self._params = params
         self._numNodes = num_nodes
 
-        # Instance the OS layer and lock it (make it read only)
-        self.os = FireflyHades()
-        self._lockVariable("os")
-
-        # set default nic configuration
-        self.nic = BasicNicConfiguration()
+        self.node = HgNodeConfiguration()
+        self.nic = HgNicConfiguration()
 
     def getName(self):
         return "HgJob"
@@ -60,76 +38,43 @@ class HgJob(Job):
 
     def build(self, nodeID, extraKeys):
         print("building nodeID=%d" % nodeID)
-        if self._check_first_build():
-            sst.addGlobalParams("loopback_params_%s"%self._instance_name,
-                            { "numCores" : self._numCores,
-                              "nicsPerNode" : self._nicsPerNode })
+#        if self._check_first_build():
+#            sst.addGlobalParams("loopback_params_%s"%self._instance_name,
+#                            { "numCores" : self._numCores,
+#                              "nicsPerNode" : self._nicsPerNode })
+#
+#           sst.addGlobalParam("params_%s"%self._instance_name, 'jobId', self.job_id)
 
-            sst.addGlobalParam("params_%s"%self._instance_name, 'jobId', self.job_id)
+        node = self.node.build(nodeID)
 
-        nic, slot_name = self.nic.build(nodeID,self._numCores // self._nicsPerNode)
+        os = node.setSubComponent("os_slot", "hg.operating_system")
+        nic = node.setSubComponent("nic_slot", "hg.nic")
+        #nic = self.nic.build(node,"nic_slot",0)
 
         # Build NetworkInterface
-        logical_id = self._nid_map[nodeID]
-        networkif, port_name = self.network_interface.build(nic,slot_name,0,self.job_id,self.size,logical_id,False)
+        #logical_id = self._nid_map[nodeID]
+        logical_id = 0
+        print("logical_id %s\n" % logical_id)
+        networkif, port_name = self.network_interface.build(node,"link_control_slot",0,self.job_id,self.size,logical_id,False)
 
-        # Store return value for later
-        retval = ( networkif, port_name )
+        print("got network interface with port_name %s\n" % port_name)
 
-        # Set up the loopback for intranode communications.  In the
-        # case of multiple nics, will name things based on the lowest
-        # nodeID for this node.  This will allow different jobs to use
-        # different numbers of nics per node (thoough the system level
-        # allocation will have to be a multiple of any of the number
-        # of nics per node values used.
-        #my_id_name = str( (nodeID // self._nicsPerNode) * self._nicsPerNode)
-        my_id_name = str(nodeID)
+        return (networkif, port_name)
 
-        # need to make this work
-        loopBackName = "loopBack" + my_id_name
-        if nodeID % self._nicsPerNode == 0:
-            loopBack = sst.Component(loopBackName, "firefly.loopBack")
-            loopBack.addParam( "numCores", self._numCores )
-            loopBack.addParam( "nicsPerNode", self._nicsPerNode )
-            loopBack.addGlobalParamSet("loopback_params_%s"%self._instance_name);
-            self._loopBackDict[loopBackName] = loopBack
-        else:
-            loopBack = self._loopBackDict[loopBackName]
+class HgNodeConfiguration(TemplateBase):
 
+    def __init__(self):
+        TemplateBase.__init__(self)
 
-        #for x in range(self._numNodes):
-        # Instance the HgNode
-        ep = sst.Component("hgnode" + my_id_name, "hg.node")
-        ep.addParams(self._params)
-        self._applyStatisticsSettings(ep)
+    def build(self,nID):
+        node = sst.Component("node" + str(nID), "hg.node")
+        return node
 
-        ep.addGlobalParamSet("params_%s"%self._instance_name )
+class HgNicConfiguration(TemplateBase):
 
-        # Create the links to the OS layer
-        linkname = "nic" + my_id_name + "_link";
-        print("creating link %s" % linkname)
-        nicLink = sst.Link(linkname)
-        nicLink.setNoCut()
-        print("connecting link %s" % linkname)
-        #nicLink.connect( (ep,'nic','1ns' ),(nic,'core0','1ns'))
-        nic.addLink(nicLink,'core0','1ns')
-
-        linkName = "node" + str(nodeID) + "nic" + str(0) + "core" + str(0) + "loopback"
-        print("loopName: %s" % linkName)
-        loopLink = sst.Link( linkName );
-        loopLink.setNoCut()
-        loopBack.addLink(loopLink,'nic0core0','1ns')
-
-        # Create the OS layer
-        self.os.build(ep,nicLink,loopLink,self.size,self._nicsPerNode,self.job_id,nodeID,logical_id,0)
-
-        return retval
-
-#class BasicNicConfiguration(TemplateBase):
-
-#    def __init__(self):
-#        TemplateBase.__init__(self)
-#        #self._declareClassVariables("_nic")
+    def __init__(self):
+        TemplateBase.__init__(self)
+        self._subscribeToPlatformParamSet("network_interface")
 
 #        # Set up all the parameters:
 #        self._declareParams("main", [
@@ -160,12 +105,28 @@ class HgJob(Job):
 #            sst.addGlobalParams("params_%s"%self._instance_name,self._getGroupParams("main"))
 #            sst.addGlobalParam("params_%s"%self._instance_name,"num_vNics",num_vNics)
 
-#        nic = sst.Component("nic" + str(nID), "firefly.nic")
+#        nic = sst.Component("nic" + str(nID), "hg.nic")
 #        self._applyStatisticsSettings(nic)
 #        nic.addGlobalParamSet("params_%s"%self._instance_name)
 #        nic.addParam("nid",nID)
 #        #nic.addParam("num_vNics",num_vNics)
 #        return nic, "rtrLink"
+
+    def build(self,comp,slot,slot_num):
+#        if self._check_first_build():
+#            set_name = "params_%s"%self._instance_name
+#            sst.addGlobalParams(set_name, self._getGroupParams("params"))
+#            sst.addGlobalParam(set_name,"job_id",job_id)
+#            sst.addGlobalParam(set_name,"job_size",job_size)
+#            sst.addGlobalParam(set_name,"use_nid_remap",use_nid_remap)
+
+
+        print("setSubComponent hg.nic on slot %s" % slot)
+        sub = comp.setSubComponent(slot,"hg.nic",slot_num)
+        #self._applyStatisticsSettings(sub)
+        #sub.addGlobalParamSet("params_%s"%self._instance_name)
+        #sub.addParam("logical_nid",logical_nid)
+        return sub
 
 #    def getVirtNicPortName(self, index):
 #        if not self._nic:

@@ -48,7 +48,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mercury/operating_system/process/software_id.h>
 #include <mercury/operating_system/process/app_id.h>
 #include <mercury/common/timestamp.h>
-#include <mercury/components/node.h>
+#include <mercury/common/node_address.h>
 #include <mercury/hardware/network/network_message_fwd.h>
 #include <sumi/message.h>
 #include <sumi/collective.h>
