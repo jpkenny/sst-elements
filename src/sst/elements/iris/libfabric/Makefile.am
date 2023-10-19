@@ -13,6 +13,22 @@ AM_CPPFLAGS += \
   -I$(top_srcdir)/src/sst/elements/iris/libfabric/include \
   -DSSTMAC_INTEGRATED_SST_CORE=1
 
+extra_sources = \
+  ../../mercury/common/component.cc \
+  ../../mercury/common/timestamp.cc \
+  ../../mercury/components/operating_system.cc \
+  ../../mercury/components/nic.cc \
+  ../../mercury/components/node.cc \
+  ../../mercury/hardware/common/packet.cc \
+  ../../mercury/hardware/network/network_message.cc \
+  ../../mercury/operating_system/libraries/api.cc \
+  ../../mercury/operating_system/libraries/library.cc \
+  ../../mercury/operating_system/threading/stack_alloc.cc \
+  ../../mercury/operating_system/threading/thread_lock.cc \
+  ../sumi/collective_message.cc \
+  ../sumi/message.cc \
+  ../sumi/sim_transport.cc
+
 sstmac_sources = \
   prov/sprockit/debug.cc \
   prov/sprockit/keyword_registration.cc \
@@ -100,11 +116,12 @@ libfabric_sources = \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libfabric.la
 libfabric_la_SOURCES = \
+  $(extra_sources) \
   $(sstmac_sources) \
   $(common_sources) \
   $(libfabric_sources)
 
-libfabric_la_LIBADD = \
-  -L$(pkglibdir) \
-  -lhg \
-  -lsumi
+libfabric_la_LDFLAGS = -module -avoid-version
+
+install-exec-hook:
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     libfabric=$(abs_srcdir)

@@ -13,7 +13,23 @@ AM_LIBTOOLFLAGS = --tag=CXX
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libsumi.la
-libsumi_la_SOURCES = \
+
+extra_sources = \
+  ../../mercury/common/component.cc \
+  ../../mercury/common/output.cc \
+  ../../mercury/common/timestamp.cc \
+  ../../mercury/components/operating_system.cc \
+  ../../mercury/components/nic.cc \
+  ../../mercury/components/node.cc \
+  ../../mercury/hardware/common/packet.cc \
+  ../../mercury/hardware/network/network_message.cc \
+  ../../mercury/operating_system/libraries/api.cc \
+  ../../mercury/operating_system/libraries/library.cc \
+  ../../mercury/operating_system/process/thread.cc \
+  ../../mercury/operating_system/threading/stack_alloc.cc \
+  ../../mercury/operating_system/threading/thread_lock.cc
+
+sumi_sources = \
   allgather.cc \
   allgatherv.cc  \
   allreduce.cc \
@@ -37,6 +53,10 @@ libsumi_la_SOURCES = \
   sim_transport.cc \
   sumi.cc \
   sumi_thread.cc
+
+libsumi_la_SOURCES = \
+  $(extra_sources) \
+  $(sumi_sources)
 
 library_includedir=$(includedir)/sst/elements/iris
 
@@ -89,7 +109,7 @@ endif
 libsumi_la_LDFLAGS = -module -avoid-version
 
 install-exec-hook:
-	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     iris=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     sumi=$(abs_srcdir)
 
 # This sed script converts 'od' output to a comma-separated list of byte-
 # values, suitable for #include'ing into an array definition.
