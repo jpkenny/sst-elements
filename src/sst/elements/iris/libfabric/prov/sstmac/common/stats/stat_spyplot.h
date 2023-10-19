@@ -42,51 +42,74 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef SSTMAC_COMMON_STATS_STATS_COMMON_H_INCLUDED
+#define SSTMAC_COMMON_STATS_STATS_COMMON_H_INCLUDED
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#include <sstmac/common/event_scheduler.h>
+#include <sstmac/common/stats/stat_collector.h>
+#include <sstmac/common/timestamp.h>
+#include <sprockit/sim_parameters.h>
+#include <iostream>
+#include <fstream>
+#include <map>
+#include <unordered_map>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+namespace sstmac {
 
-#define connect_str_case(x) case x: return #x
 
-namespace SST {
-namespace Hg {
 
-class EventLink {
+/**
+ * this stat_collector class keeps a spy plot
+ */
+template <class Dst, class Count>
+class StatSpyplot : public SST::Statistics::MultiStatistic<Dst,Count>
+{
+  using StatSpyplotParent = SST::Statistics::MultiStatistic<Dst,Count>;
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
+  SST_ELI_DECLARE_STATISTIC_TEMPLATE(
+    StatSpyplot,
+    "macro",
+    "spyplot",
+    SST_ELI_ELEMENT_VERSION(1,0,0),
+    "spyplot showing traffic matrics",
+    "Statistic<Src,Dst,Count>")
+
+  StatSpyplot(SST::BaseComponent* comp, const std::string& name,
+              const std::string& statName, SST::Params& params)
+    : SST::Statistics::MultiStatistic<Dst,Count>(comp, name, statName, params)
   {
+    n_dst_ = params.find<Dst>("ncols");
+    vals_.resize(n_dst_);
+    fields_.resize(n_dst_);
   }
 
-  using ptr = std::unique_ptr<EventLink>;
+  ~StatSpyplot() override {}
 
-  virtual ~EventLink(){};
-
-  std::string toString() const {
-    return "self link: " + name_;
+  void addData_impl(int dest, uint64_t num) override {
+    vals_[dest] += num;
   }
 
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
+  void registerOutputFields(SST::Statistics::StatisticFieldsOutput* output) override {
+    for (int i=0; i < n_dst_; ++i){
+      auto str = sprockit::sprintf("spy%d", i);
+      fields_[i] = output->registerField<uint64_t>(str.c_str());
+    }
   }
 
-  void send(Event* ev){
-    send(selflat_, ev);
+  void outputStatisticFields(SST::Statistics::StatisticFieldsOutput* output, bool  /*endOfSim*/) override {
+    for (int i=0; i < n_dst_; ++i){
+      output->outputField(fields_[i], vals_[i]);
+    }
   }
 
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
+ protected:
+  std::vector<Count> vals_;
+  Dst n_dst_;
+  std::vector<SST::Statistics::StatisticOutput::fieldHandle_t> fields_;
+
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+
+}
+
+#endif

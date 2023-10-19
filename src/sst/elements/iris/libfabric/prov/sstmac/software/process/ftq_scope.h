@@ -42,51 +42,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef sstmac_sw_process_ftq_scope_h
+#define sstmac_sw_process_ftq_scope_h
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#include <sstmac/common/stats/ftq_tag.h>
+#include <sstmac/software/process/thread_fwd.h>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+//Always include the following classes with both standalone/sst-core
+namespace sstmac {
+namespace sw {
 
-#define connect_str_case(x) case x: return #x
-
-namespace SST {
-namespace Hg {
-
-class EventLink {
+// Ensures an ftq_tag is used for the life of this object
+class FTQScope {
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
-  }
-
-  using ptr = std::unique_ptr<EventLink>;
-
-  virtual ~EventLink(){};
-
-  std::string toString() const {
-    return "self link: " + name_;
-  }
-
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
-
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
+  FTQScope(Thread* thr, const FTQTag& tag);
+  ~FTQScope();
 
  private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
+  FTQTag prev_tag_;
+  Thread* thr_;
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+}
+}
+
+#endif
+

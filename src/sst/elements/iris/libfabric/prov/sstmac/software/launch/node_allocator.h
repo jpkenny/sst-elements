@@ -42,51 +42,62 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef SSTMAC_BACKENDS_NATIVE_LAUNCH_ALLOCATIONSTRATEGY_H_INCLUDED
+#define SSTMAC_BACKENDS_NATIVE_LAUNCH_ALLOCATIONSTRATEGY_H_INCLUDED
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#include <sstmac/common/rng.h>
+#include <sstmac/common/node_address.h>
+#include <sstmac/backends/common/parallel_runtime_fwd.h>
+#include <sstmac/hardware/topology/topology_fwd.h>
+#include <sstmac/hardware/interconnect/interconnect_fwd.h>
+#include <sstmac/software/launch/node_set.h>
+#include <sstmac/sst_core/integrated_component.h>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+#include <sprockit/factory.h>
+#include <sprockit/debug.h>
+#include <sprockit/sim_parameters_fwd.h>
+#include <unordered_map>
+#include <sprockit/printable.h>
 
-#define connect_str_case(x) case x: return #x
+DeclareDebugSlot(allocation);
 
-namespace SST {
-namespace Hg {
+namespace sstmac {
+namespace sw {
 
-class EventLink {
+/**
+ * Strategy type for assigning processes to nodes in a parallel run.
+ *
+ */
+class NodeAllocator :
+  public sprockit::printable
+{
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
-  }
+  SST_ELI_DECLARE_BASE(NodeAllocator)
+  SST_ELI_DECLARE_DEFAULT_INFO()
+  SST_ELI_DECLARE_CTOR(SST::Params&)
 
-  using ptr = std::unique_ptr<EventLink>;
+  virtual ~NodeAllocator() throw ();
 
-  virtual ~EventLink(){};
+  /** Get nodes.
+    @param nnode number of nodes requested
+    @param available the set of nodes that can be given
+    @param allocation returns the nodes that have been allocated
+    @return Whether the allocation succeeded based on available nodes
+  */
+  virtual bool allocate(int nnode,
+   const ordered_node_set& available,
+   ordered_node_set& allocation) const = 0;
 
-  std::string toString() const {
-    return "self link: " + name_;
-  }
+ protected:
+  NodeAllocator(SST::Params& params);
 
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
+ protected:
+  hw::Topology* topology_;
+  ParallelRuntime* rt_;
 
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
-
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+}
+} // end of namespace sstmac
+
+#endif

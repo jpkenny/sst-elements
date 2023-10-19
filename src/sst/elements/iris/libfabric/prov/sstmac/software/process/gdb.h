@@ -41,52 +41,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Questions? Contact sst-macro-help@sandia.gov
 */
+#ifndef sstmac_sw_process_gdb_h
+#define sstmac_sw_process_gdb_h
 
-#pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+void sst_gdb_print_rank();
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+void sst_gdb_select_rank(int rank);
 
-#define connect_str_case(x) case x: return #x
+void sst_gdbReset();
 
-namespace SST {
-namespace Hg {
+void sst_gdbSetActive(int flag);
 
-class EventLink {
- public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
-  }
+#ifdef __cplusplus
+}
+#endif
 
-  using ptr = std::unique_ptr<EventLink>;
+#endif
 
-  virtual ~EventLink(){};
-
-  std::string toString() const {
-    return "self link: " + name_;
-  }
-
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
-
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
-
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
-};
-
-} // end of namespace Hg
-} // end of namespace SST

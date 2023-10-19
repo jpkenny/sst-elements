@@ -42,51 +42,65 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef SSTMAC_HARDWARE_PROCESSOR_COMPUTEscheduleR_H_INCLUDED
+#define SSTMAC_HARDWARE_PROCESSOR_COMPUTEscheduleR_H_INCLUDED
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#include <sstmac/hardware/common/flow.h>
+#include <sstmac/common/event_scheduler.h>
+#include <sstmac/software/process/thread_fwd.h>
+#include <sstmac/software/process/operating_system_fwd.h>
+#include <sprockit/sim_parameters_fwd.h>
+#include <sprockit/factory.h>
+#include <sprockit/debug.h>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+DeclareDebugSlot(compute_scheduler)
 
-#define connect_str_case(x) case x: return #x
+namespace sstmac {
+namespace sw {
 
-namespace SST {
-namespace Hg {
-
-class EventLink {
+class ComputeScheduler
+{
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
+  SST_ELI_DECLARE_BASE(ComputeScheduler)
+  SST_ELI_DECLARE_DEFAULT_INFO()
+  SST_ELI_DECLARE_CTOR(SST::Params&,sw::OperatingSystem*, int/*ncores*/, int/*nsockets*/)
+
+  ComputeScheduler(SST::Params&  /*params*/, sw::OperatingSystem* os,
+                    int ncores, int nsockets) :
+    ncores_(ncores), 
+    nsocket_(nsockets),
+    os_(os)
   {
   }
 
-  using ptr = std::unique_ptr<EventLink>;
+  virtual ~ComputeScheduler() {}
 
-  virtual ~EventLink(){};
 
-  std::string toString() const {
-    return "self link: " + name_;
+  int ncores() const {
+    return ncores_;
   }
 
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
+  int nsocket() const {
+    return nsocket_;
   }
 
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
+  /**
+   * @brief reserve_core
+   * @param thr   The physical thread requesting to compute
+   */
+  virtual void reserveCores(int ncore, Thread* thr) = 0;
+  
+  virtual void releaseCores(int ncore, Thread* thr) = 0;
 
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
+
+ protected:
+  int ncores_;
+  int nsocket_;
+  int cores_per_socket_;
+  sw::OperatingSystem* os_;
+
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+}
+} //end of namespace sstmac
+#endif

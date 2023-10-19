@@ -42,51 +42,37 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef sprockit_common_STATICS_H
+#define sprockit_common_STATICS_H
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#include <list>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+namespace sprockit {
 
-#define connect_str_case(x) case x: return #x
-
-namespace SST {
-namespace Hg {
-
-class EventLink {
+class Statics {
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
-  }
+  typedef void (*clear_fxn)(void);
 
-  using ptr = std::unique_ptr<EventLink>;
+  static void registerFinish(clear_fxn fxn);
 
-  virtual ~EventLink(){};
+  static void finish();
 
-  std::string toString() const {
-    return "self link: " + name_;
-  }
+ protected:
+  static std::list<clear_fxn>* fxns_;
 
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
-
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
-
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+template <class T>
+class NeedDeletestatics {
+ public:
+  NeedDeletestatics(){
+    Statics::registerFinish(&T::deleteStatics);
+  }
+};
+
+#define free_static_ptr(x) \
+ if (x) delete x; x = 0
+
+}
+
+#endif // STATICS_H

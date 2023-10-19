@@ -41,52 +41,43 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Questions? Contact sst-macro-help@sandia.gov
 */
+#ifndef sstmac_null_buffer_h
+#define sstmac_null_buffer_h
 
-#pragma once
+#include <stdint.h>
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+// sentinel value that is a reserved address from mmap
+// but points to no real data
+// used to fake a real pointer, but cannot be accessed
+extern void* sstmac_nullptr;
+// for cases in which send/recv buffers cannot alias
+// this creates two pointers that won't overlap
+extern void* sstmac_nullptr_send;
+extern void* sstmac_nullptr_recv;
+// the maximum pointer in the reserved mmap range
+// all pointers between sstmac_nullptr and this
+// are not real data
+extern void* sstmac_nullptr_range_max;
 
-#define connect_str_case(x) case x: return #x
-
-namespace SST {
-namespace Hg {
-
-class EventLink {
- public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
+static inline bool isNonNullBuffer(const void* buf){
+  if (buf){
+    //see if buffer falls in the reserved "null buffer" range
+    return ( (buf < sstmac_nullptr) || (buf >= sstmac_nullptr_range_max) );
+  } else {
+    return false;
   }
+}
 
-  using ptr = std::unique_ptr<EventLink>;
+static inline bool isNullBuffer(const void* buf){
+  return !(isNonNullBuffer(buf));
+}
 
-  virtual ~EventLink(){};
+#ifdef __cplusplus
+}
+#endif
 
-  std::string toString() const {
-    return "self link: " + name_;
-  }
-
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
-
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
-
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
-};
-
-} // end of namespace Hg
-} // end of namespace SST
+#endif

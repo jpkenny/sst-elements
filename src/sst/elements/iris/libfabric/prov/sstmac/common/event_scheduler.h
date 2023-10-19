@@ -56,7 +56,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <sstmac/backends/common/parallel_runtime.h>
 #include <sstmac/sst_core/integrated_component.h>
 #include <sprockit/sim_parameters_fwd.h>
-// #include <unusedvariablemacro.h>
+#include <unusedvariablemacro.h>
 
 
 extern int run_standalone(int, char**);

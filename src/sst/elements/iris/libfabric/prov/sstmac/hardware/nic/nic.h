@@ -42,48 +42,41 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef SSTMAC_BACKENDS_NATIVE_COMPONENTS_NIC_NETWORKINTERFACE_H_INCLUDED
+#define SSTMAC_BACKENDS_NATIVE_COMPONENTS_NIC_NETWORKINTERFACE_H_INCLUDED
 
-#include <mercury/common/component.h>
-#include <sst/core/event.h>
-#include <mercury/common/thread_safe_new.h>
-#include <mercury/common/node_address.h>
-#include <mercury/common/timestamp.h>
-#include <mercury/components/node_fwd.h>
-//#include <sstmac/hardware/common/failable.h>
-#include <mercury/common/connection.h>
-#include <mercury/hardware/common/packet_fwd.h>
-#include <mercury/hardware/common/recv_cq.h>
-#include <mercury/hardware/network/network_message_fwd.h>
-//#include <sstmac/hardware/logp/logp_switch_fwd.h>
-//#include <sstmac/common/stats/stat_spyplot_fwd.h>
-//#include <sstmac/common/stats/stat_histogram_fwd.h>
-#include <mercury/hardware/common/flow_fwd.h>
-#include <mercury/hardware/network/network_message_fwd.h>
-#include <mercury/components/operating_system_fwd.h>
-//#include <mercury/operating_system/process/progress_queue.h>
-//#include <sstmac/hardware/topology/topology_fwd.h>
-//#include <sprockit/debug.h>
-#include <mercury/common/factory.h>
-#include <mercury/common/event_handler.h>
-#include <mercury/hardware/network/network_message.h>
-#include <sst/core/interfaces/simpleNetwork.h>
+#include <sstmac/common/timestamp.h>
+#include <sstmac/hardware/node/node_fwd.h>
+#include <sstmac/hardware/common/failable.h>
+#include <sstmac/hardware/common/connection.h>
+#include <sstmac/hardware/common/packet_fwd.h>
+#include <sstmac/hardware/network/network_message_fwd.h>
+#include <sstmac/hardware/logp/logp_switch_fwd.h>
+#include <sstmac/common/stats/stat_spyplot_fwd.h>
+#include <sstmac/common/stats/stat_histogram_fwd.h>
+#include <sstmac/hardware/common/flow_fwd.h>
+#include <sstmac/hardware/network/network_message_fwd.h>
+#include <sstmac/software/process/operating_system_fwd.h>
+#include <sstmac/software/process/progress_queue.h>
+#include <sstmac/sst_core/integrated_component.h>
+#include <sstmac/hardware/topology/topology_fwd.h>
 
-#include <vector>
-#include <queue>
+#include <sprockit/debug.h>
+#include <sprockit/factory.h>
+
 #include <functional>
 
-//DeclareDebugSlot(nic);
+DeclareDebugSlot(nic);
 
-//#define nic_debug(...) \
-//  debug_printf(sprockit::dbg::nic, "NIC on node %d: %s", \
-//    int(addr()), sprockit::sprintf(__VA_ARGS__).c_str())
+#define nic_debug(...) \
+  debug_printf(sprockit::dbg::nic, "NIC on node %d: %s", \
+    int(addr()), sprockit::sprintf(__VA_ARGS__).c_str())
 
-namespace SST {
-namespace Hg {
+namespace sstmac {
+namespace hw {
 
 class NicEvent :
-  public Event, public SST::Hg::thread_safe_new<NicEvent>
+  public Event, public sprockit::thread_safe_new<NicEvent>
 {
   ImplementSerializable(NicEvent)
  public:
@@ -92,6 +85,10 @@ class NicEvent :
   NetworkMessage* msg() const {
     return msg_;
   }
+
+#if !SSTMAC_INTEGRATED_SST_CORE
+  void validate_serialization(serializable* ser) override;
+#endif
 
   void serialize_order(serializer& ser) override;
 
@@ -109,46 +106,18 @@ class NicEvent :
 class NIC : public ConnectableSubcomponent
 {
  public:
-
-  SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::NIC,SST::Hg::Node*)
+#if SSTMAC_INTEGRATED_SST_CORE
+  SST_ELI_REGISTER_SUBCOMPONENT_API(sstmac::hw::NIC,hw::Node*)
+#else
+  SST_ELI_DECLARE_BASE(NIC)
+  SST_ELI_DECLARE_DEFAULT_INFO()
+  SST_ELI_DECLARE_CTOR(uint32_t,SST::Params&,hw::Node*)
+#endif
 
   typedef enum {
     Injection,
     LogP
   } Port;
-
-  struct MyRequest : public SST::Interfaces::SimpleNetwork::Request {
-    uint64_t flow_id;
-    Timestamp start;
-  };
-
-  struct MessageEvent : public Event {
-    NotSerializable(MessageEvent)
-    MessageEvent(NetworkMessage* msg) :
-      msg_(msg)
-    {
-    }
-
-    NetworkMessage* msg() const {
-      return msg_;
-    }
-
-   private:
-    NetworkMessage*  msg_;
-  };
-
-private:
-  struct Pending {
-    NetworkMessage* payload;
-    uint64_t bytesLeft;
-    Pending(NetworkMessage* p) :
-      payload(p),
-      bytesLeft(p->byteLength())
-    {
-    }
-  };
-
-public:
 
   virtual ~NIC();
 
@@ -159,37 +128,9 @@ public:
     return my_addr_;
   }
 
-  std::string toString();
-
-  void init(unsigned int phase);
-
-  void inject(int vn, NetworkMessage* payload);
-
-  void setup();
-
-  void complete(unsigned int phase);
-
-  void finish();
-
-  bool incomingCredit(int vn);
-
-  bool incomingPacket(int vn);
-
-  void connectOutput(int  /*src_outport*/, int  /*dst_inport*/, EventLink::ptr&&  /*link*/);
-
-  void connectInput(int  /*src_outport*/, int  /*dst_inport*/, EventLink::ptr&&  /*link*/);
-
-  SST::Event::HandlerBase* creditHandler(int  /*port*/);
-
-  SST::Event::HandlerBase* payloadHandler(int  /*port*/);
-
-  void sendWhatYouCan(int vn);
-
-  bool sendWhatYouCan(int vn, Pending& p);
-
-//  Topology* topology() const {
-//    return top_;
-//  }
+  Topology* topology() const {
+    return top_;
+  }
 
   /**
    * @brief injectSend Perform an operation on the NIC.
@@ -247,10 +188,8 @@ public:
 
   virtual std::function<void(NetworkMessage*)> dataIoctl();
 
-  virtual std::string toString() const { return "nic"; }
-
  protected:
-  NIC(uint32_t id, SST::Params& params, SST::Hg::Node* parent);
+  NIC(uint32_t id, SST::Params& params, hw::Node* parent);
 
   void configureLogPLinks();
 
@@ -276,23 +215,15 @@ protected:
   Node* parent_;
   NodeId my_addr_;
   EventLink::ptr logp_link_;
-  //Topology* top_;
+  Topology* top_;
 
  private:
-
-  //StatSpyplot<int,uint64_t>* spy_bytes_;
-  //Statistic<uint64_t>* xmit_flows_;
-  //sw::SingleProgressQueue<NetworkMessage> queue_;
-  SST::Interfaces::SimpleNetwork* link_control_;
-  std::vector<std::queue<Pending>> pending_;
-  std::vector<std::queue<NetworkMessage*>> ack_queue_;
-  uint32_t mtu_;
-  RecvCQ cq_;
-  int vns_;
-  int test_size_;
+  StatSpyplot<int,uint64_t>* spy_bytes_;
+  Statistic<uint64_t>* xmit_flows_;
+  sw::SingleProgressQueue<NetworkMessage> queue_;
 
  protected:
-  SST::Hg::OperatingSystem* os_;
+  sw::OperatingSystem* os_;
 
  private:
   /**
@@ -311,22 +242,30 @@ protected:
 class NullNIC : public NIC
 {
  public:
-
+#if SSTMAC_INTEGRATED_SST_CORE
   SST_ELI_REGISTER_SUBCOMPONENT(
     NullNIC,
     "macro",
     "null_nic",
     SST_ELI_ELEMENT_VERSION(1,0,0),
     "implements a nic that models nothing - stand-in only",
-    SST::Hg::NIC)
+    sstmac::hw::NIC)
+#else
+  SST_ELI_REGISTER_DERIVED(
+    NIC,
+    NullNIC,
+    "macro",
+    "null",
+    SST_ELI_ELEMENT_VERSION(1,0,0),
+    "implements a nic that models nothing - stand-in only")
+#endif
 
-  NullNIC(uint32_t id, SST::Params& params, SST::Hg::Node* parent) :
+  NullNIC(uint32_t id, SST::Params& params, hw::Node* parent) :
     NIC(id, params, parent)
   {
   }
 
   std::string toString() const override { return "null nic"; }
-  //std::string toString() const { return "null nic"; }
 
   void doSend(NetworkMessage*) override {}
 
@@ -334,10 +273,12 @@ class NullNIC : public NIC
 
   void connectInput(int, int, EventLink::ptr&&) override {}
 
-  SST::Event::HandlerBase* payloadHandler(int) override { return nullptr; }
+  LinkHandler* payloadHandler(int) override { return nullptr; }
 
-  SST::Event::HandlerBase* creditHandler(int) override { return nullptr; }
+  LinkHandler* creditHandler(int) override { return nullptr; }
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+}
+} // end of namespace sstmac.
+
+#endif

@@ -7,12 +7,31 @@ AM_CPPFLAGS += \
   -I$(top_srcdir)/src/sst/elements/mercury \
   -I$(top_srcdir)/src/sst/elements/iris \
   -I$(top_srcdir)/src/sst/elements/iris/libfabric/prov \
+  -I$(top_srcdir)/src/sst/elements/iris/libfabric/prov/include \
   -I$(top_srcdir)/src/sst/elements/iris/libfabric/prov/sstmac/include \
   -I$(top_srcdir)/src/sst/elements/iris/libfabric/prov/hook/include/ \
   -I$(top_srcdir)/src/sst/elements/iris/libfabric/include \
   -DSSTMAC_INTEGRATED_SST_CORE=1
 
 sstmac_sources = \
+  prov/sprockit/debug.cc \
+  prov/sprockit/keyword_registration.cc \
+  prov/sprockit/output.cc \
+  prov/sprockit/statics.cc \
+  prov/sstmac/common/event_scheduler.cc \
+  prov/sstmac/common/thread_lock.cc \
+  prov/sstmac/common/timestamp.cc \
+  prov/sstmac/common/stats/ftq_tag.cc \
+  prov/sstmac/hardware/memory/memory_model.cc \
+  prov/sstmac/hardware/network/network_message.cc \
+  prov/sstmac/hardware/nic/nic.cc \
+  prov/sstmac/hardware/node/node.cc \
+  prov/sstmac/software/api/api.cc \
+  prov/sstmac/software/launch/app_launcher.cc \
+  prov/sstmac/software/launch/job_launcher.cc \
+  prov/sstmac/software/libraries/library.cc \
+  prov/sstmac/software/process/operating_system.cc \
+  prov/sstmac/software/threading/stack_alloc.cc \
   prov/sstmac/src/sstmac_av.cc \
   prov/sstmac/src/sstmac_cm.cc \
   prov/sstmac/src/sstmac_cntr.cc \
@@ -84,3 +103,8 @@ libfabric_la_SOURCES = \
   $(sstmac_sources) \
   $(common_sources) \
   $(libfabric_sources)
+
+libfabric_la_LIBADD = \
+  -L$(pkglibdir) \
+  -lhg \
+  -lsumi

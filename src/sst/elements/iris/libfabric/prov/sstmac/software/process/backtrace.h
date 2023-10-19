@@ -42,51 +42,76 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef sstmac_software_process_backtrace_h
+#define sstmac_software_process_backtrace_h
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+// #include <sstmac/common/sstmac_config.h>
+#include <map>
+#include <memory>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+#define CallGraphCreateTag(name) \
+  struct graph_viz_##name : public sstmac::sw::CallGraphID<graph_viz_##name> {}; \
+  static sstmac::sw::CallGraphRegistration graph_viz_reg_##name(#name, graph_viz_##name::id)
 
-#define connect_str_case(x) case x: return #x
+#define CallGraphTag(name) graph_viz_##name::id
 
-namespace SST {
-namespace Hg {
+namespace sstmac {
+namespace sw {
 
-class EventLink {
- public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
+struct CallGraphRegistration {
+  CallGraphRegistration(const char* name, int id);
+
+  static int numIds() {
+    return id_count;
   }
 
-  using ptr = std::unique_ptr<EventLink>;
-
-  virtual ~EventLink(){};
-
-  std::string toString() const {
-    return "self link: " + name_;
+  static const char* name(int id){
+    auto iter = names->find(id);
+    return iter->second;
   }
 
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
-
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
+  static int id_count;
 
  private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
+  static std::unique_ptr<std::map<int,const char*>> names;
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+template <class T>
+struct CallGraphID {
+ public:
+  static int id;
+};
+template <class T> int CallGraphID<T>::id = CallGraphRegistration::id_count++;
+
+class CallGraphIncrementStack
+{
+ public:
+  /**
+   * @brief graph_viz_increment_stack
+   *        Should only ever be called from app threads, not the DES thread
+   * @param The name of the function currently being invoked
+   * @param Optional boolean to turn off collection.
+   *        There are certain cass where this might get called from
+   *        the DES thread, which is an error. This allows
+   *        the backtrace to be turned off on the DES thread
+   */
+  CallGraphIncrementStack(int id);
+
+  ~CallGraphIncrementStack();
+
+};
+
+}
+}
+
+#include <unusedvariablemacro.h>
+#if SSTMAC_HAVE_CALL_GRAPH
+#define CallGraphAppend(name) \
+  struct graph_viz_##name : public sstmac::sw::CallGraphID<graph_viz_##name> {}; \
+  static sstmac::sw::CallGraphRegistration __call_graph_register_variable__(#name, graph_viz_##name::id); \
+  ::sstmac::sw::CallGraphIncrementStack __call_graph_append_variable__(graph_viz_##name::id)
+#else
+#define CallGraphAppend(...) SSTMAC_MAYBE_UNUSED int __call_graph_append_variable__
+#endif
+
+#endif

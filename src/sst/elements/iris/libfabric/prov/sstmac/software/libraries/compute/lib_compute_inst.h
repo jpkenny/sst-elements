@@ -42,51 +42,59 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef SSTMAC_SOFTWARE_LIBRARIES_COMPUTE_LIB_COMPUTE_INST_H_INCLUDED
+#define SSTMAC_SOFTWARE_LIBRARIES_COMPUTE_LIB_COMPUTE_INST_H_INCLUDED
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#include <sstmac/software/libraries/compute/lib_compute_time.h>
+#include <sstmac/software/libraries/compute/compute_event_fwd.h>
+#include <sstmac/software/process/software_id.h>
+// #include <sstmac/common/sstmac_config.h>
+#include <stdint.h>
+#include <sstmac/common/stats/ftq_tag.h>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+//these are the default instruction labels
 
-#define connect_str_case(x) case x: return #x
+DeclareDebugSlot(lib_compute_inst);
 
-namespace SST {
-namespace Hg {
+namespace sstmac {
+namespace sw {
 
-class EventLink {
+class LibComputeInst :
+  public LibComputeTime
+{
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
+  LibComputeInst(SST::Params& params, SoftwareId id, OperatingSystem* os);
+
+  LibComputeInst(SST::Params& params, const std::string& libname,
+                   SoftwareId id, OperatingSystem* os);
+
+  ~LibComputeInst() override { }
+
+  void computeInst(ComputeEvent* msg, int nthr = 1);
+
+  void computeDetailed(uint64_t flops,
+    uint64_t nintops,
+    uint64_t bytes,
+    int nthread = 1);
+
+  void computeLoop(uint64_t nloops,
+    uint32_t flops_per_loop,
+    uint32_t intops_per_loop,
+    uint32_t bytes_per_loop);
+
+  void incomingEvent(Event *ev) override {
+    Library::incomingEvent(ev);
   }
 
-  using ptr = std::unique_ptr<EventLink>;
-
-  virtual ~EventLink(){};
-
-  std::string toString() const {
-    return "self link: " + name_;
-  }
-
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
-
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
+ protected:
+  double loop_overhead_;
 
  private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
+  void init(SST::Params& params);
+
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+}
+} //end of namespace sstmac
+
+#endif

@@ -42,51 +42,44 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef sstmac_libraries_compute_LIBCOMPUTE_H
+#define sstmac_libraries_compute_LIBCOMPUTE_H
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#include <sstmac/software/libraries/library.h>
+#include <sprockit/debug.h>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+DeclareDebugSlot(lib_compute)
 
-#define connect_str_case(x) case x: return #x
+namespace sstmac {
+namespace sw {
 
-namespace SST {
-namespace Hg {
-
-class EventLink {
+class LibCompute :
+  public Library
+{  
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
+  ~LibCompute() override{}
+
+ protected:
+  LibCompute(SST::Params&  /*params*/,
+              const std::string& libname, SoftwareId sid,
+              OperatingSystem* os)
+    : Library(libname, sid, os) {
+  }
+
+  LibCompute(SST::Params&  /*params*/,
+              const char* name, SoftwareId sid,
+              OperatingSystem* os)
+    : Library(name, sid, os)
   {
   }
 
-  using ptr = std::unique_ptr<EventLink>;
-
-  virtual ~EventLink(){};
-
-  std::string toString() const {
-    return "self link: " + name_;
+  void incomingRequest(Request* req) override {
+    Library::incomingRequest(req);
   }
 
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
-
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
-
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+}
+}
+
+#endif // LIBCOMPUTE_H

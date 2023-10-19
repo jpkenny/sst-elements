@@ -42,51 +42,48 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef SSTMAC_SOFTWARE_THREADING_STACKALLOC_CHUNK_H_INCLUDED
+#define SSTMAC_SOFTWARE_THREADING_STACKALLOC_CHUNK_H_INCLUDED
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+#include <sstmac/software/threading/stack_alloc.h>
+#include <algorithm>
+#include <iostream>
+#include <unistd.h>
 
-#define connect_str_case(x) case x: return #x
+namespace sstmac {
+namespace sw {
 
-namespace SST {
-namespace Hg {
+/**
+ * A chunk of allocated memory to be divided into fixed-size stacks.
+ */
+class StackAlloc::chunk
+{
+  /// The base address of my memory region.
+  char *addr_;
+  /// If true we mmap twice the requested space and mprotect every other stack
+  bool protect_;
+  /// The total size of my allocation.
+  size_t size_;
+  /// The target size of each open (unprotected) stack region.
+  size_t stacksize_;
+  /// When unprotected step_size = stacksize, otherwise 2x stacksize
+  size_t step_size_;
+  /// Offset for next stack (used in get_next_stack).
+  size_t next_stack_offset_ = 0;
 
-class EventLink {
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
-  }
+  /// Make a new chunk.
+  chunk(size_t stacksize, size_t suggested_chunk_size, bool protect);
 
-  using ptr = std::unique_ptr<EventLink>;
+  ~chunk();
 
-  virtual ~EventLink(){};
+  void*  getNextStack();
 
-  std::string toString() const {
-    return "self link: " + name_;
-  }
-
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
-
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
-
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+}
+} // end of namespace sstmac
+
+
+#endif

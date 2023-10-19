@@ -42,51 +42,43 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef SSTMAC_BACKENDS_NATIVE_LAUNCH_LAUNCHER_H_INCLUDED
+#define SSTMAC_BACKENDS_NATIVE_LAUNCH_LAUNCHER_H_INCLUDED
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#include <sstmac/software/libraries/service.h>
+#include <unordered_map>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+namespace sstmac {
+namespace sw {
 
-#define connect_str_case(x) case x: return #x
+/**
+ * A launcher that can be cooperatively scheduled by a very naive scheduler.
+ */
+class AppLauncher :
+  public Service
+{
 
-namespace SST {
-namespace Hg {
-
-class EventLink {
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
+  AppLauncher(OperatingSystem* os);
+
+  /// Hasta la vista.
+  ~AppLauncher() throw () override;
+
+  void incomingRequest(Request* ev) override;
+
+  void incomingEvent(Event* ev) override {
+    Service::incomingEvent(ev);
   }
 
-  using ptr = std::unique_ptr<EventLink>;
+  void start() override;
 
-  virtual ~EventLink(){};
+ protected:
+  bool is_completed_;
 
-  std::string toString() const {
-    return "self link: " + name_;
-  }
-
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
-
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
-
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
+  std::unordered_map<AppId, int> num_apps_launched_;
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+}
+} // end of namespace sstmac
+
+#endif

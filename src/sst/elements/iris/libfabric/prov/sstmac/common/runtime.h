@@ -42,51 +42,108 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef RUNTIME_H
+#define RUNTIME_H
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#include <sstmac/common/node_address.h>
+#include <sstmac/software/process/task_id.h>
+#include <sstmac/software/process/app_id.h>
+#include <sstmac/hardware/topology/topology_fwd.h>
+#include <sstmac/hardware/node/node_fwd.h>
+#include <sstmac/software/launch/job_launcher_fwd.h>
+#include <unordered_map>
+#include <list>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+namespace sstmac {
 
-#define connect_str_case(x) case x: return #x
-
-namespace SST {
-namespace Hg {
-
-class EventLink {
+class deadlock_check {
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
-  }
+  virtual void run() = 0;
 
-  using ptr = std::unique_ptr<EventLink>;
+  virtual ~deadlock_check(){}
 
-  virtual ~EventLink(){};
-
-  std::string toString() const {
-    return "self link: " + name_;
-  }
-
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
-
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
-
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+template <class T, class Fxn> class deadlock_check_impl : public deadlock_check
+{
+ public:
+  deadlock_check_impl(T* t , Fxn f) : t_(t), f_(f) {}
+
+  void run() override{
+    (t_->*f_)();
+  }
+
+  ~deadlock_check_impl() override{}
+
+ private:
+  T* t_;
+  Fxn f_;
+};
+
+template <class T, class Fxn>
+deadlock_check*
+new_deadlock_check(T* t, Fxn f){
+  return new deadlock_check_impl<T,Fxn>(t,f);
+}
+
+class Runtime
+{
+ protected:
+  typedef std::unordered_map<sw::TaskId, NodeId> task_to_nodeid_map;
+  typedef std::unordered_map<sw::AppId, task_to_nodeid_map> app_to_task_map;
+
+ public:
+  static NodeId nodeForTask(sw::AppId aid, sw::TaskId tid);
+
+  static hw::Topology* currentTopology() {
+    return topology_;
+  }
+
+  static void setTopology(hw::Topology* top) {
+    topology_ = top;
+  }
+
+  static void clearStatics();
+
+  static void deleteStatics();
+
+  static NodeId current_node();
+
+  static sw::JobLauncher* launcher() {
+    return launcher_;
+  }
+
+  static void finish();
+
+  static void enterDeadlockRegion(){
+    do_deadlock_check_ = true;
+  }
+
+  static void exitDeadlockRegion(){
+    do_deadlock_check_ = false;
+  }
+
+  static void checkDeadlock();
+
+  static void addDeadlockCheck(deadlock_check* c){
+    deadlock_checks_.push_back(c);
+  }
+
+  static void setJoblauncher(sw::JobLauncher* launcher){
+    launcher_ = launcher;
+  }
+
+ protected:
+  static bool do_deadlock_check_;
+
+  static hw::Topology* topology_;
+
+  static sw::JobLauncher* launcher_;
+
+  static std::list<deadlock_check*> deadlock_checks_;
+
+};
+
+}
+
+#endif // RUNTIME_H

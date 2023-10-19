@@ -42,51 +42,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef sprockit_common_TYPEDEFS_H
+#define sprockit_common_TYPEDEFS_H
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+using uli =  unsigned long;
+using uint = unsigned int;
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
-
-#define connect_str_case(x) case x: return #x
-
-namespace SST {
-namespace Hg {
-
-class EventLink {
- public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
-  }
-
-  using ptr = std::unique_ptr<EventLink>;
-
-  virtual ~EventLink(){};
-
-  std::string toString() const {
-    return "self link: " + name_;
-  }
-
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
-
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
-
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
-};
-
-} // end of namespace Hg
-} // end of namespace SST
+#endif // TYPEDEFS_H

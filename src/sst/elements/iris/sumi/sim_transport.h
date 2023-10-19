@@ -67,7 +67,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mercury/common/factory.h>
 #include <mercury/common/util.h>
 
-#include <sumi/null_buffer.h>
+#include <mercury/common/null_buffer.h>
 
 #include <unordered_map>
 #include <queue>

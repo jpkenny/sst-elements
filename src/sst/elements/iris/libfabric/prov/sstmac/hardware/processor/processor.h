@@ -42,51 +42,58 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef SSTMAC_HARDWARE_PROCESSOR_PROCESSOR_H_INCLUDED
+#define SSTMAC_HARDWARE_PROCESSOR_PROCESSOR_H_INCLUDED
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+#include <sstmac/common/timestamp.h>
+#include <sstmac/common/sst_event_fwd.h>
+#include <sstmac/hardware/memory/memory_model_fwd.h>
+#include <sstmac/hardware/node/node_fwd.h>
+#include <sstmac/software/libraries/compute/compute_event_fwd.h>
+#include <sstmac/sst_core/integrated_component.h>
+#include <sprockit/factory.h>
+#include <sprockit/debug.h>
 
-#define connect_str_case(x) case x: return #x
+DeclareDebugSlot(processor);
 
-namespace SST {
-namespace Hg {
+namespace sstmac {
+namespace hw {
 
-class EventLink {
+/**
+ * An interface for processor models
+ */
+class Processor
+{
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
+  SST_ELI_DECLARE_BASE(Processor)
+  SST_ELI_DECLARE_DEFAULT_INFO()
+  SST_ELI_DECLARE_CTOR(SST::Params&, MemoryModel*,Node*)
+  virtual ~Processor();
+
+  static void deleteStatics();
+
+  virtual void compute(Event* cev, ExecutionEvent* cb) = 0;
+
+  int ncores() const {
+    return ncores_;
   }
 
-  using ptr = std::unique_ptr<EventLink>;
+ protected:
+  Processor(SST::Params& params, MemoryModel* mem, Node* nd);
 
-  virtual ~EventLink(){};
+ protected:
+  double freq_;
+  double mem_freq_;
+  int ncores_;
 
-  std::string toString() const {
-    return "self link: " + name_;
-  }
+  MemoryModel* mem_;
+  Node* node_;
 
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
-
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
-
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+
+}
+} // end of namespace sstmac
+
+#endif

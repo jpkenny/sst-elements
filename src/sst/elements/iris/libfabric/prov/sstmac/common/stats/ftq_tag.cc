@@ -12,7 +12,7 @@ Copyright (c) 2009-2023, NTESS
 
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, 
+Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
     * Redistributions of source code must retain the above copyright
@@ -42,51 +42,63 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#include <sstmac/common/stats/ftq_tag.h>
+#include <sstmac/common/thread_lock.h>
+#include <sprockit/output.h>
+#include <sprockit/statics.h>
+#include <sprockit/errors.h>
+#include <iostream>
+#include <stdlib.h>
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#include <vector>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+namespace sstmac {
 
-#define connect_str_case(x) case x: return #x
+std::unique_ptr<std::unordered_map<std::string,int>> FTQTag::category_name_to_id_;
+std::unique_ptr<std::unordered_map<int,std::string>> FTQTag::category_id_to_name_;
+FTQTag FTQTag::null("Null", 0);
+FTQTag FTQTag::compute("Compute", 1);
+FTQTag FTQTag::sleep("Sleep", 1);
 
-namespace SST {
-namespace Hg {
+FTQTag::FTQTag(const char *name, int level) :
+  level_(level)
+{
+  id_ = allocateCategoryId(name);
+}
 
-class EventLink {
- public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
+int
+FTQTag::allocateCategoryId(const std::string &name)
+{
+  static thread_lock lock;
+  lock.lock();
+  if (!category_name_to_id_) {
+    category_name_to_id_ = std::unique_ptr<std::unordered_map<std::string,int>>(new std::unordered_map<std::string,int>);
+    category_id_to_name_ = std::unique_ptr<std::unordered_map<int,std::string>>(new std::unordered_map<int,std::string>);
   }
 
-  using ptr = std::unique_ptr<EventLink>;
-
-  virtual ~EventLink(){};
-
-  std::string toString() const {
-    return "self link: " + name_;
+  auto iter = category_name_to_id_->find(name);
+  if (iter != category_name_to_id_->end()){
+    lock.unlock();
+    return iter->second;
   }
 
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
+  int id = category_name_to_id_->size();
+  (*category_name_to_id_)[name] = id;
+  (*category_id_to_name_)[id] = name;
+  lock.unlock();
+  return id;
+}
+
+int
+FTQTag::eventTypeId(const std::string& name)
+{
+  auto it = category_name_to_id_->find(name);
+  if (it == category_name_to_id_->end()){
+    spkt_throw_printf(sprockit::ValueError,
+      "key::eventTypeId: unknown event name %s",
+      name.c_str());
   }
+  return it->second;
+}
 
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
-
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
-};
-
-} // end of namespace Hg
-} // end of namespace SST
+} // end of namespace sstmac.

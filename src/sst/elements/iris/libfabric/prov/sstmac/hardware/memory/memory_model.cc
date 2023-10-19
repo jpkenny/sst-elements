@@ -42,51 +42,54 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#include <sstmac/hardware/memory/memory_model.h>
+#include <sstmac/hardware/node/node.h>
+#include <sstmac/common/event_manager.h>
+#include <sprockit/statics.h>
+#include <sprockit/sim_parameters.h>
+#include <sprockit/util.h>
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+RegisterDebugSlot(memory, "debug info related to memory accesses");
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+namespace sstmac {
+namespace hw {
 
-#define connect_str_case(x) case x: return #x
+static sprockit::NeedDeletestatics<MemoryModel> need_del;
 
-namespace SST {
-namespace Hg {
+MemoryModel::MemoryModel(uint32_t id, SST::Params& /*params*/, Node* node) :
+  SubComponent(id, "mem", node)
+{
+  parent_node_ = node;
+  nodeid_ = parent_node_->addr();
+}
 
-class EventLink {
- public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
-  }
+NodeId
+MemoryModel::addr() const {
+  return parent_node_->addr();
+}
 
-  using ptr = std::unique_ptr<EventLink>;
+int
+MemoryModel::initialize(RequestHandlerBase* handler)
+{
+  int idx = rsp_handlers_.size();
+  rsp_handlers_.push_back(handler);
+  return idx;
+}
 
-  virtual ~EventLink(){};
+void
+MemoryModel::deleteStatics()
+{
+}
 
-  std::string toString() const {
-    return "self link: " + name_;
-  }
+MemoryModel::~MemoryModel()
+{
+}
 
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
+void
+NullMemoryModel::accessRequest(int linkId, Request *req)
+{
+  rsp_handlers_[linkId]->handle(req);
+}
 
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
-
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
-};
-
-} // end of namespace Hg
-} // end of namespace SST
+}
+} /* namespace sstmac */

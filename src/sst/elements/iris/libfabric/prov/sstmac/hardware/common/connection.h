@@ -42,51 +42,89 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef CONNECTION_H
+#define CONNECTION_H
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#include <sstmac/common/event_scheduler.h>
+#include <sprockit/sim_parameters_fwd.h>
 
 #define Connectable_type_invalid(ty) \
    spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
 
 #define connect_str_case(x) case x: return #x
 
-namespace SST {
-namespace Hg {
+namespace sstmac {
+namespace hw {
 
-class EventLink {
+class Connectable {
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
+  static const int any_port = -1;
+
+  /**
+   * @brief connectOutput
+   * Invoked by interconnect setup routine to notify device
+   * that all payloads sent out on given port should be sent to given payload handler
+   * @param src_outport
+   * @param dst_inport
+   * @param payloadHandler
+   */
+  virtual void connectOutput(int src_outport, int dst_inport, EventLink::ptr&& payload_link) = 0;
+
+  /**
+   * @brief connectInput
+   * Invoked by interconnect setup routine to notify device
+   * that all credits sent back to a given port should be sent to given credit handler
+   * @param src_outport
+   * @param dst_inport
+   * @param creditHandler Can be null, if no credits are ever sent
+   */
+  virtual void connectInput(int src_outport, int dst_inport, EventLink::ptr&& credit_link) = 0;
+
+  /**
+   * @brief creditHandler
+   * @param port
+   * @return Can be null, if no credits are ever to be received
+   */
+  virtual LinkHandler* creditHandler(int port) = 0;
+
+  /**
+   * @brief payloadHandler
+   * @param port
+   * @return A new handler for incoming payloads on the given port
+   */
+  virtual LinkHandler* payloadHandler(int port) = 0;
+
+};
+
+class ConnectableComponent :
+  public Component,
+  public Connectable
+{
+  public:
+    void initOutputLink(int src_outport, int dst_inport);
+    void initInputLink(int src_outport, int dst_inport);
+
+  protected:
+    ConnectableComponent(uint32_t cid, SST::Params& params);
+};
+
+class ConnectableSubcomponent :
+  public SubComponent,
+  public Connectable
+{
+ protected:
+  ConnectableSubcomponent(uint32_t id, const std::string& selfname, SST::Component* parent)
+    : SubComponent(id,selfname,parent)
   {
   }
 
-  using ptr = std::unique_ptr<EventLink>;
+  void initOutputLink(int src_outport, int dst_inport);
+  void initInputLink(int src_outport, int dst_inport);
 
-  virtual ~EventLink(){};
-
-  std::string toString() const {
-    return "self link: " + name_;
-  }
-
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
-
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
-
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+
+}
+}
+
+#endif // CONNECTION_H

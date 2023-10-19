@@ -521,7 +521,7 @@ SimTransport::allocateWorkspace(uint64_t size, void* parent)
   if (isNonNullBuffer(parent)){
     return ::malloc(size);
   } else {
-    return sst_iris_nullptr;
+    return sst_hg_nullptr;
   }
 }
 

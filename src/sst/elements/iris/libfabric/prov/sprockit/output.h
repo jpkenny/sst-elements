@@ -42,51 +42,62 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef sprockit_common_OUTPUT_H
+#define sprockit_common_OUTPUT_H
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#include <iostream>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+#define cout0 ::sprockit::output::out0()
+#define coutn ::sprockit::output::outn()
+#define cerr0 ::sprockit::output::err0()
+#define cerrn ::sprockit::output::errn()
 
-#define connect_str_case(x) case x: return #x
 
-namespace SST {
-namespace Hg {
+namespace sprockit {
 
-class EventLink {
+class output
+{
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
+  static std::ostream& out0() {
+    return (*out0_);
   }
 
-  using ptr = std::unique_ptr<EventLink>;
-
-  virtual ~EventLink(){};
-
-  std::string toString() const {
-    return "self link: " + name_;
+  static std::ostream& outn() {
+    return (*outn_);
   }
 
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
+  static std::ostream& err0() {
+    return (*err0_);
   }
 
-  void send(Event* ev){
-    send(selflat_, ev);
+  static std::ostream& errn() {
+    return (*errn_);
   }
 
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
+  static void init_out0(std::ostream* out0){
+    out0_ = out0;
+  }
+
+  static void init_outn(std::ostream* outn){
+    outn_ = outn;
+  }
+
+  static void init_err0(std::ostream* err0){
+    err0_ = err0;
+  }
+
+  static void init_errn(std::ostream* errn){
+    errn_ = errn;
+  }
+
+ protected:
+  static std::ostream* out0_;
+  static std::ostream* outn_;
+  static std::ostream* err0_;
+  static std::ostream* errn_;
+
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+}
+
+#endif // OUTPUT_H

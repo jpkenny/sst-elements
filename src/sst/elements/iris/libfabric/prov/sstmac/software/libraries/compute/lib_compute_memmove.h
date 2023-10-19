@@ -42,51 +42,50 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef SSTMAC_SOFTWARE_LIBRARIES_COMPUTE_LIB_COMPUTE_MEMMOVE_H_INCLUDED
+#define SSTMAC_SOFTWARE_LIBRARIES_COMPUTE_LIB_COMPUTE_MEMMOVE_H_INCLUDED
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#include <sstmac/software/libraries/compute/lib_compute_inst.h>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+namespace sstmac {
+namespace sw {
 
-#define connect_str_case(x) case x: return #x
+class LibComputeMemmove :
+  public LibComputeInst
+{
 
-namespace SST {
-namespace Hg {
-
-class EventLink {
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
+  ~LibComputeMemmove() override {}
+
+  LibComputeMemmove(SST::Params& params, SoftwareId id,
+                      OperatingSystem* os);
+
+  LibComputeMemmove(SST::Params& params, const char* prefix, SoftwareId id,
+                      OperatingSystem* os);
+
+  void incomingEvent(Event *ev) override{
+    //forward to parent, which throws
+    Library::incomingEvent(ev);
   }
 
-  using ptr = std::unique_ptr<EventLink>;
+  void read(uint64_t bytes);
 
-  virtual ~EventLink(){};
+  void write(uint64_t bytes);
 
-  std::string toString() const {
-    return "self link: " + name_;
-  }
+  void copy(uint64_t bytes);
 
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
+ protected:
+  static const long unlimited_page_size = -1;
+  static const long default_page_size = unlimited_page_size;
 
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
+  void doAccess(uint64_t bytes);
 
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
+ protected:
+  int access_width_bytes_;
+
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+}
+} //end of namespace sstmac
+
+#endif

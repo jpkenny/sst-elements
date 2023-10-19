@@ -42,51 +42,94 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#include <sstmac/software/process/operating_system.h>
+#include <sstmac/software/process/thread.h>
+#include <sstmac/software/process/app.h>
+#include <sstmac/software/libraries/compute/lib_compute_memmove.h>
+#include <sstmac/software/api/api.h>
+#include <sstmac/hardware/common/flow.h>
+#include <sstmac/common/sstmac_env.h>
+#include <sstmac/common/thread_lock.h>
+#include <sprockit/sim_parameters.h>
+#include <sprockit/keyword_registration.h>
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+namespace sstmac {
+namespace sw {
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+static thread_lock the_api_lock;
 
-#define connect_str_case(x) case x: return #x
+void
+apiLock() {
+  the_api_lock.lock();
+}
 
-namespace SST {
-namespace Hg {
+void
+apiUnlock() {
+  the_api_lock.unlock();
+}
 
-class EventLink {
- public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
+API::~API()
+{
+}
+
+sstmac::sw::SoftwareId
+API::sid() const {
+  return parent_->sid();
+}
+
+sstmac::NodeId
+API::addr() const {
+  return parent_->os()->addr();
+}
+
+Thread*
+API::activeThread()
+{
+  return parent_->os()->activeThread();
+}
+
+void
+API::startAPICall()
+{
+  if (host_timer_){
+    host_timer_->start();
   }
-
-  using ptr = std::unique_ptr<EventLink>;
-
-  virtual ~EventLink(){};
-
-  std::string toString() const {
-    return "self link: " + name_;
+  activeThread()->startAPICall();
+}
+void
+API::endAPICall()
+{
+  if (host_timer_) {
+    double time = host_timer_->stamp();
+    parent_->compute(TimeDelta(time));
   }
+  activeThread()->endAPICall();
+}
 
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
+Timestamp
+API::now() const 
+{
+  return parent_->os()->now();
+}
 
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
+void
+API::schedule(Timestamp t, ExecutionEvent* ev)
+{
+  parent_->os()->sendExecutionEvent(t, ev);
+}
 
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
-};
+void
+API::scheduleDelay(TimeDelta t, ExecutionEvent* ev)
+{
+  parent_->os()->sendDelayedExecutionEvent(t, ev);
+}
 
-} // end of namespace Hg
-} // end of namespace SST
+API::API(SST::Params & /*params*/, App *parent, SST::Component*  /*comp*/) :
+  host_timer_(nullptr),
+  parent_(parent)
+{
+  //host_timer_(new HostTimer)
+}
+
+}
+}

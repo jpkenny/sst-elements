@@ -42,51 +42,66 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef SSTMAC_BACKENDS_NATIVE_LAUNCH_INDEXSTRATEGY_H_INCLUDED
+#define SSTMAC_BACKENDS_NATIVE_LAUNCH_INDEXSTRATEGY_H_INCLUDED
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#include <sstmac/common/node_address.h>
+#include <sstmac/software/process/app_id.h>
+#include <sstmac/backends/common/parallel_runtime_fwd.h>
+#include <sstmac/hardware/topology/topology_fwd.h>
+#include <sstmac/sst_core/integrated_component.h>
+#include <sprockit/debug.h>
+#include <sprockit/factory.h>
+#include <sprockit/printable.h>
+#include <vector>
+#include <sstmac/software/launch/node_set.h>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+DeclareDebugSlot(indexing);
 
-#define connect_str_case(x) case x: return #x
+namespace sstmac {
+namespace sw {
 
-namespace SST {
-namespace Hg {
-
-class EventLink {
+/**
+ * Base class for strategies regarding how to sequentially number nodes
+ * in a parallel simulation.
+ */
+class TaskMapper : public sprockit::printable
+{
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
-  }
+  SST_ELI_DECLARE_BASE(TaskMapper)
+  SST_ELI_DECLARE_DEFAULT_INFO()
+  SST_ELI_DECLARE_CTOR(SST::Params&)
 
-  using ptr = std::unique_ptr<EventLink>;
+  virtual ~TaskMapper() throw ();
 
-  virtual ~EventLink(){};
+  /** Assign processes to nodes.
+   @param aid The application ID for the application whose processes are being indexed
+   @param nodes is the set of unique nodes to be used for the allocation
+   @param ppn is the nominal number of processes allocated on each node.
+   @param result is the resulting vector of length nodes (size nproc)
+   @param nproc the total number of processes to allocate
+   @throw value_error if nodes.empty()
+   @throw value_error if ppn <= 0
+   @throw value_error if nodes.size()*ppn < nproc
+  */
+  virtual void mapRanks(
+    const ordered_node_set& allocation,
+    int ppn,
+    std::vector<NodeId>& result,
+    int nproc) = 0;
 
-  std::string toString() const {
-    return "self link: " + name_;
-  }
+ protected:
+  TaskMapper(SST::Params& params);
 
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
+  int validateNproc(int ppn, int num_nodes, int nproc, const char* name) const;
 
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
+ protected:
+  hw::Topology* topology_;
+  ParallelRuntime* rt_;
 
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+}
+} // end of namespace sstmac
+
+#endif

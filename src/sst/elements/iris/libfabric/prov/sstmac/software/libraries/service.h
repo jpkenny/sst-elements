@@ -42,51 +42,38 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef SSTMAC_SOFTWARE_SERVICES_SERVICE_H_INCLUDED
+#define SSTMAC_SOFTWARE_SERVICES_SERVICE_H_INCLUDED
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#include <sstmac/software/libraries/library.h>
+#include <sstmac/hardware/node/node_fwd.h>
+#include <sstmac/software/process/operating_system_fwd.h>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+namespace sstmac {
+namespace sw {
 
-#define connect_str_case(x) case x: return #x
+class Service :
+  public Library
+{
 
-namespace SST {
-namespace Hg {
-
-class EventLink {
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
-  }
+  virtual void start() {}
 
-  using ptr = std::unique_ptr<EventLink>;
+ protected:
+  Service(const std::string& libname, SoftwareId sid, OperatingSystem* os) :
+    Library(libname, sid, os)
+  {}
 
-  virtual ~EventLink(){};
+  Service(const char* prefix, SoftwareId sid, OperatingSystem* os) :
+    Library(prefix, sid, os)
+  {}
 
-  std::string toString() const {
-    return "self link: " + name_;
-  }
+  ~Service() override{}
 
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
 
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
-
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+}
+} //end of namespace sstmac
+
+#endif

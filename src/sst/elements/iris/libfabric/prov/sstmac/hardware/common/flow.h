@@ -42,51 +42,67 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef SSTMAC_COMMON_MESSAGES_SST_MESSAGE_H_INCLUDED
+#define SSTMAC_COMMON_MESSAGES_SST_MESSAGE_H_INCLUDED
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+#include <sstmac/common/serializable.h>
+#include <sstmac/common/node_address.h>
+#include <sstmac/common/request.h>
+#include <sprockit/printable.h>
 
-#define connect_str_case(x) case x: return #x
 
-namespace SST {
-namespace Hg {
+namespace sstmac {
 
-class EventLink {
+class Flow : public Request
+{
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
+  /**
+   * Virtual function to return size. Child classes should impement this
+   * if they want any size tracked / modeled.
+   * @return Zero size, meant to be implemented by children.
+   */
+  uint64_t byteLength() const {
+    return byte_length_;
+  }
+
+  ~Flow() override{}
+
+  void setFlowId(uint64_t id) {
+    flow_id_ = id;
+  }
+
+  uint64_t flowId() const {
+    return flow_id_;
+  }
+
+  std::string libname() const {
+    return libname_;
+  }
+
+  void setFlowSize(uint64_t sz) {
+    byte_length_ = sz;
+  }
+
+  void serialize_order(sstmac::serializer& ser) override {
+    ser & flow_id_;
+    ser & byte_length_;
+    ser & libname_;
+  }
+
+ protected:
+  Flow(uint64_t id, uint64_t size, const std::string& libname = "") :
+    flow_id_(id), byte_length_(size), libname_(libname)
   {
   }
 
-  using ptr = std::unique_ptr<EventLink>;
+  uint64_t flow_id_;
+  uint64_t byte_length_;
+  std::string libname_;
 
-  virtual ~EventLink(){};
-
-  std::string toString() const {
-    return "self link: " + name_;
-  }
-
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
-
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
-
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+
+
+} // end of namespace sstmac
+#endif

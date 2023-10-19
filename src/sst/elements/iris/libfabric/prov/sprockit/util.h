@@ -42,51 +42,47 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef sprockit_common_util_h
+#define sprockit_common_util_h
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#include <sprockit/errors.h>
+#include <sprockit/printable.h>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+namespace sprockit {
 
-#define connect_str_case(x) case x: return #x
-
-namespace SST {
-namespace Hg {
-
-class EventLink {
- public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
+template <class Out, class In>
+Out* __safe_cast__(const char*  /*objname*/,
+              const char* file,
+              int line,
+              In* in,
+              const char* error_msg = "error")
+{
+  Out* out = dynamic_cast<Out*>(in);
+  if (!out) {
+    spkt_abort_printf("%s: failed to cast object at %s:%d\n%s",
+                     error_msg, file, line,
+                     in ? toString(in).c_str() : "null");
   }
+  return out;
+}
 
-  using ptr = std::unique_ptr<EventLink>;
+/**
+ * First entry in VA_ARGS is the obj
+ * Second entry is optional being an error msg
+*/
+#define safe_cast(type,...) \
+    ::sprockit::__safe_cast__<type>(#type, __FILE__, __LINE__, __VA_ARGS__)
 
-  virtual ~EventLink(){};
+#define test_cast(type, obj) \
+    dynamic_cast<type*>(obj)
 
-  std::string toString() const {
-    return "self link: " + name_;
-  }
+#define known_cast(type,...) \
+    safe_cast(type, __VA_ARGS__)
 
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
+#define interface_cast(type,obj) \
+    dynamic_cast<type*>(obj)
 
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
+} // end namespace sprockit
 
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
-};
 
-} // end of namespace Hg
-} // end of namespace SST
+#endif

@@ -42,51 +42,50 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef UNBLOCK_EVENT_H
+#define UNBLOCK_EVENT_H
+#include <sstmac/common/sst_event.h>
+#include <sstmac/software/process/operating_system_fwd.h>
+#include <sstmac/software/process/thread_fwd.h>
+#include <sprockit/thread_safe_new.h>
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+namespace sstmac {
+namespace sw {
 
-#define connect_str_case(x) case x: return #x
+class UnblockEvent : 
+  public ExecutionEvent,
+  public sprockit::thread_safe_new<UnblockEvent>
+{
 
-namespace SST {
-namespace Hg {
-
-class EventLink {
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
-  }
+  UnblockEvent(OperatingSystem* os, Thread* thr);
 
-  using ptr = std::unique_ptr<EventLink>;
+  void execute() override;
 
-  virtual ~EventLink(){};
+ protected:
+  OperatingSystem* os_;
+  Thread* thr_;
 
-  std::string toString() const {
-    return "self link: " + name_;
-  }
-
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
-
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
-
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+class TimeoutEvent : public ExecutionEvent
+{
+
+ public:
+  TimeoutEvent(OperatingSystem* os, Thread* thr);
+
+  void execute() override;
+
+ protected:
+  OperatingSystem* os_;
+  Thread* thr_;
+  uint64_t counter_;
+
+};
+
+}
+} //end of namespace sstmac
+
+
+#endif // UNBLOCK_EVENT_H

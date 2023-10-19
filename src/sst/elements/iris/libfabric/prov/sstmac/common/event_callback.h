@@ -42,51 +42,63 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef SSTMAC_COMMON_EVENTCALLBACK_H_INCLUDED
+#define SSTMAC_COMMON_EVENTCALLBACK_H_INCLUDED
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#include <sstmac/common/event_handler.h>
+#include <sstmac/common/sst_event.h>
+#include <sprockit/thread_safe_new.h>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+namespace sstmac {
 
-#define connect_str_case(x) case x: return #x
+template <class Cls, typename Fxn, class ...Args>
+class MemberFxnCallback :
+  public ExecutionEvent,
+  public sprockit::thread_safe_new<MemberFxnCallback<Cls,Fxn,Args...>>
+{
 
-namespace SST {
-namespace Hg {
-
-class EventLink {
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
+  ~MemberFxnCallback() override{}
+
+  void execute() override {
+    dispatch(typename gens<sizeof...(Args)>::type());
+  }
+
+  MemberFxnCallback(Cls* obj, Fxn fxn, const Args&... args) :
+    params_(args...),
+    fxn_(fxn),
+    obj_(obj)
   {
   }
 
-  using ptr = std::unique_ptr<EventLink>;
-
-  virtual ~EventLink(){};
-
-  std::string toString() const {
-    return "self link: " + name_;
-  }
-
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
-
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
-
  private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
+  template <int ...S> void dispatch(seq<S...>){
+    (obj_->*fxn_)(std::get<S>(params_)...);
+  }
+
+  std::tuple<Args...> params_;
+  Fxn fxn_;
+  Cls* obj_;
+
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+template<class Cls, typename Fxn, class ...Args>
+ExecutionEvent* newCallback(Cls* cls, Fxn fxn, const Args&... args)
+{
+  return new MemberFxnCallback<Cls, Fxn, Args...>(cls, fxn, args...);
+}
+
+/**
+ * This bypasses any custom operators
+ */
+template<class Cls, typename Fxn, class ...Args>
+ExecutionEvent* placementNewCallback(Cls* cls, Fxn fxn, const Args&... args)
+{
+  size_t sz = sizeof(MemberFxnCallback<Cls, Fxn, Args...>);
+  char* space = new char[sz];
+  return new (space) MemberFxnCallback<Cls, Fxn, Args...>(
+        cls, fxn, args...);
+}
+
+} // end of namespace sstmac
+#endif

@@ -42,51 +42,35 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef JOB_LAUNCH_EVENT_H
+#define JOB_LAUNCH_EVENT_H
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#include <sstmac/common/sst_event.h>
+#include <sstmac/software/launch/launch_request_fwd.h>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+namespace sstmac {
+namespace sw {
 
-#define connect_str_case(x) case x: return #x
+class job_launch_event :
+  public Event
+{
+  NotSerializable(job_launch_event)
 
-namespace SST {
-namespace Hg {
-
-class EventLink {
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
+  job_launch_event(AppLaunchRequest* appman) :
+    appman_(appman)
   {
   }
 
-  using ptr = std::unique_ptr<EventLink>;
-
-  virtual ~EventLink(){};
-
-  std::string toString() const {
-    return "self link: " + name_;
-  }
-
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
-
-  void send(Event* ev){
-    send(selflat_, ev);
+  AppLaunchRequest* appman() const {
+    return appman_;
   }
 
  private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
+  AppLaunchRequest* appman_;
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+}
+}
+
+#endif // JOB_LAUNCH_EVENT_H

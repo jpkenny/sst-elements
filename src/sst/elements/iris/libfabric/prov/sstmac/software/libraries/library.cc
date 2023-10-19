@@ -42,51 +42,42 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#include <sstmac/software/libraries/library.h>
+#include <sstmac/software/process/operating_system.h>
+#include <sstmac/common/sstmac_env.h>
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+namespace sstmac {
+namespace sw {
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+Library::Library(const std::string& libname, SoftwareId sid, OperatingSystem* os) :
+  os_(os),
+  sid_(sid), 
+  addr_(os->addr()),
+  libname_(libname) 
+{
+  os_->registerLib(this);
+}
 
-#define connect_str_case(x) case x: return #x
+Library::~Library()
+{
+  os_->unregisterLib(this);
+}
 
-namespace SST {
-namespace Hg {
+void
+Library::incomingEvent(Event*  /*ev*/)
+{
+  spkt_throw_printf(sprockit::UnimplementedError,
+    "%s::incomingEvent: this library should only block, never receive incoming",
+     toString().c_str());
+}
 
-class EventLink {
- public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
-  }
+void
+Library::incomingRequest(Request*  /*ev*/)
+{
+  spkt_throw_printf(sprockit::UnimplementedError,
+    "%s::incomingRequest: this library should only block, never receive incoming",
+     toString().c_str());
+}
 
-  using ptr = std::unique_ptr<EventLink>;
-
-  virtual ~EventLink(){};
-
-  std::string toString() const {
-    return "self link: " + name_;
-  }
-
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
-
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
-
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
-};
-
-} // end of namespace Hg
-} // end of namespace SST
+}
+} //end namespace

@@ -42,51 +42,45 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef SSTMAC_SOFTWARE_LIBRARIES_COMPUTE_LIB_COMPUTE_TIME_H_INCLUDED
+#define SSTMAC_SOFTWARE_LIBRARIES_COMPUTE_LIB_COMPUTE_TIME_H_INCLUDED
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#include <sstmac/software/libraries/compute/lib_compute.h>
+#include <sstmac/software/process/software_id.h>
+#include <sstmac/common/timestamp.h>
+// #include <sstmac/common/sstmac_config.h>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+namespace sstmac {
+namespace sw {
 
-#define connect_str_case(x) case x: return #x
-
-namespace SST {
-namespace Hg {
-
-class EventLink {
+class LibComputeTime :
+  public LibCompute
+{
  public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
+  LibComputeTime(SST::Params& params, SoftwareId id,
+                   OperatingSystem* os);
+
+  LibComputeTime(SST::Params& params,
+                   const char* prefix, SoftwareId id,
+                   OperatingSystem* os);
+
+  LibComputeTime(SST::Params& params,
+                   const std::string& name, SoftwareId id,
+                   OperatingSystem* os);
+
+  ~LibComputeTime() override;
+
+  void incomingEvent(Event *ev) override{
+    Library::incomingEvent(ev);
   }
 
-  using ptr = std::unique_ptr<EventLink>;
+  void compute(TimeDelta time);
 
-  virtual ~EventLink(){};
+  void sleep(TimeDelta time);
 
-  std::string toString() const {
-    return "self link: " + name_;
-  }
-
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
-
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
-
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+}
+} //end of namespace sstmac
+
+#endif

@@ -42,51 +42,91 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef UNIQUE_ID_H
+#define UNIQUE_ID_H
 
-#include <sst/core/params.h>
-#include <sst/core/event.h>
-#include <mercury/common/component.h>
+#include <sstream>
+#include <stdint.h>
+#include <sstmac/common/serializable.h>
 
-#define Connectable_type_invalid(ty) \
-   spkt_throw_printf(sprockit::value_error, "invalid Connectable type %s", Connectable::str(ty))
+namespace sstmac {
+namespace hw {
 
-#define connect_str_case(x) case x: return #x
+struct UniqueEventId {
+  uint32_t src_node;
+  uint32_t msg_num;
 
-namespace SST {
-namespace Hg {
-
-class EventLink {
- public:
-  EventLink(const std::string& name, TimeDelta selflat, SST::Link* link) :
-    link_(link),
-    selflat_(selflat),
-    name_(name)
-  {
+  UniqueEventId(uint32_t src, uint32_t num) :
+    src_node(src), msg_num(num) {
   }
 
-  using ptr = std::unique_ptr<EventLink>;
+  UniqueEventId() :
+    src_node(-1), msg_num(0) {
+  }
 
-  virtual ~EventLink(){};
+  operator uint64_t() const {
+    //map onto single 64 byte number
+    uint64_t lo = msg_num;
+    uint64_t hi = (((uint64_t)src_node)<<32);
+    return lo | hi;
+  }
+
+  static void unpack(uint64_t id, uint32_t& node, uint32_t& num){
+    num = id; //low 32
+    node = (id>>32); //high 32
+  }
 
   std::string toString() const {
-    return "self link: " + name_;
+    std::stringstream sstr;
+    sstr << "unique_id(" << src_node << "," << msg_num << ")";
+    return sstr.str();
   }
 
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
+  void setSrcNode(uint32_t src) {
+    src_node = src;
   }
 
-  void send(Event* ev){
-    send(selflat_, ev);
+  void setSeed(uint32_t seed) {
+    msg_num = seed;
   }
 
- private:
-  SST::Link* link_;
-  TimeDelta selflat_;
-  std::string name_;
+  UniqueEventId& operator++() {
+    ++msg_num;
+    return *this;
+  }
+
+  UniqueEventId operator++(int) {
+    UniqueEventId other(*this);
+    ++msg_num;
+    return other;
+  }
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+
+}
+}
+
+START_SERIALIZATION_NAMESPACE
+template <>
+class serialize<sstmac::hw::UniqueEventId>
+{
+ public:
+  void
+  operator()(sstmac::hw::UniqueEventId& id, serializer& ser){
+    ser.primitive(id);
+  }
+};
+END_SERIALIZATION_NAMESPACE
+
+
+namespace std {
+template <>
+struct hash<sstmac::hw::UniqueEventId>
+  : public std::hash<uint64_t>
+{ };
+}
+
+
+
+
+#endif // UNIQUE_ID_H
