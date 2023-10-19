@@ -521,7 +521,7 @@ SimTransport::allocateWorkspace(uint64_t size, void* parent)
   if (isNonNullBuffer(parent)){
     return ::malloc(size);
   } else {
-    return sst_iris_nullptr;
+    return sst_hg_nullptr;
   }
 }
 
@@ -533,239 +533,240 @@ SimTransport::freeWorkspace(void *buf, uint64_t /*size*/)
   }
 }
 
-//CollectiveEngine::CollectiveEngine(SST::Params& params, Transport *tport) :
-//  tport_(tport),
-//  global_domain_(nullptr),
-//  eager_cutoff_(512),
-//  use_put_protocol_(false),
-//  system_collective_tag_(-1) //negative tags reserved for special system work
-//{
-//  global_domain_ = new GlobalCommunicator(tport);
-//  eager_cutoff_ = params.find<int>("eager_cutoff", 512);
-//  use_put_protocol_ = params.find<bool>("use_put_protocol", false);
-//  alltoall_type_ = params.find<std::string>("alltoall", "bruck");
-//  allgather_type_ = params.find<std::string>("allgather", "bruck");
+CollectiveEngine::CollectiveEngine(SST::Params& params, Transport *tport) :
+  tport_(tport),
+  global_domain_(nullptr),
+  eager_cutoff_(512),
+  use_put_protocol_(false),
+  system_collective_tag_(-1) //negative tags reserved for special system work
+{
+  global_domain_ = new GlobalCommunicator(tport);
+  eager_cutoff_ = params.find<int>("eager_cutoff", 512);
+  use_put_protocol_ = params.find<bool>("use_put_protocol", false);
+  alltoall_type_ = params.find<std::string>("alltoall", "bruck");
+  allgather_type_ = params.find<std::string>("allgather", "bruck");
 
-//  int default_qos = params.find<int>("default_qos", 0);
-//  rdma_get_qos_ = params.find<int>("collective_rdma_get_qos", default_qos);
-//  rdma_header_qos_ = params.find<int>("collective_rdma_header_qos", default_qos);
-//  ack_qos_ = params.find<int>("collective_ack_qos", default_qos);
-//  smsg_qos_ = params.find<int>("collective_smsg_qos", default_qos);
-//}
+  int default_qos = params.find<int>("default_qos", 0);
+  rdma_get_qos_ = params.find<int>("collective_rdma_get_qos", default_qos);
+  rdma_header_qos_ = params.find<int>("collective_rdma_header_qos", default_qos);
+  ack_qos_ = params.find<int>("collective_ack_qos", default_qos);
+  smsg_qos_ = params.find<int>("collective_smsg_qos", default_qos);
+}
 
-//CollectiveEngine::~CollectiveEngine()
-//{
-//  if (global_domain_) delete global_domain_;
-//}
+CollectiveEngine::~CollectiveEngine()
+{
+  if (global_domain_) delete global_domain_;
+}
 
-//void
-//CollectiveEngine::notifyCollectiveDone(int rank, Collective::type_t ty, int tag)
-//{
-//  Collective* coll = collectives_[ty][tag];
-//  if (!coll){
-//    spkt_throw_printf(sprockit::ValueError,
-//      "transport::notify_collective_done: invalid collective of type %s, tag %d",
-//       Collective::tostr(ty), tag);
-//  }
-//  finishCollective(coll, rank, ty, tag);
-//}
+void
+CollectiveEngine::notifyCollectiveDone(int rank, Collective::type_t ty, int tag)
+{
+  Collective* coll = collectives_[ty][tag];
+  if (!coll){
+    sst_hg_throw_printf(SST::Hg::ValueError,
+      "transport::notify_collective_done: invalid collective of type %s, tag %d",
+       Collective::tostr(ty), tag);
+  }
+  finishCollective(coll, rank, ty, tag);
+}
 
-//void
-//CollectiveEngine::initSmp(const std::set<int>& /*neighbors*/)
-//{
-//}
+void
+CollectiveEngine::initSmp(const std::set<int>& /*neighbors*/)
+{
+}
 
-//void
-//CollectiveEngine::deadlockCheck()
-//{
-//  collective_map::iterator it, end = collectives_.end();
-//  for (it=collectives_.begin(); it != end; ++it){
-//    tag_to_collective_map& next = it->second;
-//    tag_to_collective_map::iterator cit, cend = next.end();
-//    for (cit=next.begin(); cit != cend; ++cit){
-//      Collective* coll = cit->second;
-//      if (!coll->complete()){
-//        coll->deadlockCheck();
-//      }
-//    }
-//  }
-//}
+void
+CollectiveEngine::deadlockCheck()
+{
+  collective_map::iterator it, end = collectives_.end();
+  for (it=collectives_.begin(); it != end; ++it){
+    tag_to_collective_map& next = it->second;
+    tag_to_collective_map::iterator cit, cend = next.end();
+    for (cit=next.begin(); cit != cend; ++cit){
+      Collective* coll = cit->second;
+      if (!coll->complete()){
+        coll->deadlockCheck();
+      }
+    }
+  }
+}
 
-//CollectiveDoneMessage*
-//CollectiveEngine::skipCollective(Collective::type_t ty,
-//  int cq_id, Communicator* comm,
-//  void* dst, void *src,
-//  int nelems, int type_size,
-//  int tag)
-//{
-//  if (!comm) comm = global_domain_;
-//  if (comm->nproc() == 1){
-//    tport_->memcopy(dst, src, nelems*type_size);
-//    return new CollectiveDoneMessage(tag, ty, comm, cq_id);
-//  } else {
-//    return nullptr;
-//  }
-//}
+CollectiveDoneMessage*
+CollectiveEngine::skipCollective(Collective::type_t ty,
+  int cq_id, Communicator* comm,
+  void* dst, void *src,
+  int nelems, int type_size,
+  int tag)
+{
+  if (!comm) comm = global_domain_;
+  if (comm->nproc() == 1){
+    tport_->memcopy(dst, src, nelems*type_size);
+    return new CollectiveDoneMessage(tag, ty, comm, cq_id);
+  } else {
+    return nullptr;
+  }
+}
 
-//CollectiveDoneMessage*
-//CollectiveEngine::allreduce(void* dst, void *src, int nelems, int type_size, int tag, reduce_fxn fxn,
-//                            int cq_id, Communicator* comm)
-//{
-//  auto* msg = skipCollective(Collective::allreduce, cq_id, comm, dst, src, nelems, type_size, tag);
-//  if (msg) return msg;
+CollectiveDoneMessage*
+CollectiveEngine::allreduce(void* dst, void *src, int nelems, int type_size, int tag, reduce_fxn fxn,
+                            int cq_id, Communicator* comm)
+{
+  auto* msg = skipCollective(Collective::allreduce, cq_id, comm, dst, src, nelems, type_size, tag);
+  if (msg) return msg;
 
-//  if (!comm) comm = global_domain_;
+  if (!comm) comm = global_domain_;
 
-//  Collective* coll = nullptr;
-//  if (comm->smpComm()){
-//    //tags are restricted to 28 bits - the front 4 bits are mine for various internal operations
-//    int intra_reduce_tag = 1<<28 | tag;
-//    auto* intra_reduce = new WilkeHalvingAllreduce(this, dst, src, nelems,
-//                                   type_size, intra_reduce_tag, fxn, cq_id, comm->smpComm());
+  Collective* coll = nullptr;
+  if (comm->smpComm()){
+    //tags are restricted to 28 bits - the front 4 bits are mine for various internal operations
+    int intra_reduce_tag = 1<<28 | tag;
+    auto* intra_reduce = new WilkeHalvingAllreduce(this, dst, src, nelems,
+                                   type_size, intra_reduce_tag, fxn, cq_id, comm->smpComm());
 
-//    int root = comm->smpComm()->commToGlobalRank(0);
-//    Collective* prev;
-//    if (comm->myCommRank() == root){
-//      if (!comm->ownerComm()){
-//        spkt_abort_printf("Bad owner comm configuration - rank 0 in SMP comm should 'own' node");
-//      }
-//      //I am the owner!
-//      int inter_reduce_tag = 2<<28 | tag;
-//      auto* inter_reduce = new WilkeHalvingAllreduce(this, dst, dst, nelems,
-//                                     type_size, inter_reduce_tag, fxn, cq_id, comm->ownerComm());
-
-
-//      intra_reduce->setSubsequent(inter_reduce);
-//      prev = inter_reduce;
-//    } else {
-//      prev = intra_reduce;
-//    }
-//    auto* intra_bcast = new BinaryTreeBcastCollective(this, root, dst, nelems, type_size, tag,
-//                                                      cq_id, comm->smpComm());
-//    prev->setSubsequent(intra_bcast);
-//    //this should report back as done on the original communicator!
-//    coll = new DoNothingCollective(this, tag, cq_id, comm);
-//    intra_bcast->setSubsequent(coll);
-//  } else {
-//    coll = new WilkeHalvingAllreduce(this, dst, src, nelems, type_size, tag, fxn, cq_id, comm);
-//  }
-
-//  return startCollective(coll);
-//}
-
-//sumi::CollectiveDoneMessage*
-//CollectiveEngine::reduceScatter(void* dst, void *src, int nelems, int type_size, int tag, reduce_fxn fxn,
-//                                  int cq_id, Communicator* comm)
-//{
-//  auto* msg = skipCollective(Collective::reduce_scatter, cq_id, comm, dst, src, nelems, type_size, tag);
-//  if (msg) return msg;
-
-//  if (!comm) comm = global_domain_;
-//  DagCollective* coll = new HalvingReduceScatter(this, dst, src, nelems, type_size, tag, fxn, cq_id, comm);
-//  return startCollective(coll);
-//}
-
-//sumi::CollectiveDoneMessage*
-//CollectiveEngine::scan(void* dst, void* src, int nelems, int type_size, int tag, reduce_fxn fxn,
-//                        int cq_id, Communicator* comm)
-//{
-//  auto* msg = skipCollective(Collective::scan, cq_id, comm, dst, src, nelems, type_size, tag);
-//  if (msg) return msg;
-
-//  if (!comm) comm = global_domain_;
-//  DagCollective* coll = new SimultaneousBtreeScan(this, dst, src, nelems, type_size, tag, fxn, cq_id, comm);
-//  return startCollective(coll);
-//}
+    int root = comm->smpComm()->commToGlobalRank(0);
+    Collective* prev;
+    if (comm->myCommRank() == root){
+      if (!comm->ownerComm()){
+        sst_hg_abort_printf("Bad owner comm configuration - rank 0 in SMP comm should 'own' node");
+      }
+      //I am the owner!
+      int inter_reduce_tag = 2<<28 | tag;
+      auto* inter_reduce = new WilkeHalvingAllreduce(this, dst, dst, nelems,
+                                     type_size, inter_reduce_tag, fxn, cq_id, comm->ownerComm());
 
 
-//CollectiveDoneMessage*
-//CollectiveEngine::reduce(int root, void* dst, void *src, int nelems, int type_size, int tag, reduce_fxn fxn,
-//                          int cq_id, Communicator* comm)
-//{
-//  auto* msg = skipCollective(Collective::reduce, cq_id, comm, dst, src, nelems, type_size, tag);
-//  if (msg) return msg;
+      intra_reduce->setSubsequent(inter_reduce);
+      prev = inter_reduce;
+    } else {
+      prev = intra_reduce;
+    }
+    auto* intra_bcast = new BinaryTreeBcastCollective(this, root, dst, nelems, type_size, tag,
+                                                      cq_id, comm->smpComm());
+    prev->setSubsequent(intra_bcast);
+    //this should report back as done on the original communicator!
+    coll = new DoNothingCollective(this, tag, cq_id, comm);
+    intra_bcast->setSubsequent(coll);
+  } else {
+    coll = new WilkeHalvingAllreduce(this, dst, src, nelems, type_size, tag, fxn, cq_id, comm);
+  }
 
-//  if (!comm) comm = global_domain_;
-//  DagCollective* coll = new WilkeHalvingReduce(this, root, dst, src, nelems, type_size, tag, fxn, cq_id, comm);
-//  return startCollective(coll);
-//}
+  return startCollective(coll);
+}
 
-//CollectiveDoneMessage*
-//CollectiveEngine::bcast(int root, void *buf, int nelems, int type_size, int tag,
-//                         int cq_id, Communicator* comm)
-//{
-//  auto* msg = skipCollective(Collective::bcast, cq_id, comm, buf, buf, nelems, type_size, tag);
-//  if (msg) return msg;
+sumi::CollectiveDoneMessage*
+CollectiveEngine::reduceScatter(void* dst, void *src, int nelems, int type_size, int tag, reduce_fxn fxn,
+                                  int cq_id, Communicator* comm)
+{
+  auto* msg = skipCollective(Collective::reduce_scatter, cq_id, comm, dst, src, nelems, type_size, tag);
+  if (msg) return msg;
 
-//  if (!comm) comm = global_domain_;
-//  DagCollective* coll = new BinaryTreeBcastCollective(this, root, buf, nelems, type_size, tag, cq_id, comm);
-//  return startCollective(coll);
-//}
+  if (!comm) comm = global_domain_;
+  DagCollective* coll = new HalvingReduceScatter(this, dst, src, nelems, type_size, tag, fxn, cq_id, comm);
+  return startCollective(coll);
+}
 
-//CollectiveDoneMessage*
-//CollectiveEngine::gatherv(int root, void *dst, void *src,
-//                   int sendcnt, int *recv_counts,
-//                   int type_size, int tag, int cq_id, Communicator* comm)
-//{
-//  auto* msg = skipCollective(Collective::gatherv, cq_id, comm, dst, src, sendcnt, type_size, tag);
-//  if (msg) return msg;
+sumi::CollectiveDoneMessage*
+CollectiveEngine::scan(void* dst, void* src, int nelems, int type_size, int tag, reduce_fxn fxn,
+                        int cq_id, Communicator* comm)
+{
+  auto* msg = skipCollective(Collective::scan, cq_id, comm, dst, src, nelems, type_size, tag);
+  if (msg) return msg;
 
-//  if (!comm) comm = global_domain_;
-//  DagCollective* coll = new BtreeGatherv(this, root, dst, src, sendcnt, recv_counts, type_size, tag, cq_id, comm);
-//  sprockit::abort("gatherv");
-//  return startCollective(coll);
-//}
+  if (!comm) comm = global_domain_;
+  DagCollective* coll = new SimultaneousBtreeScan(this, dst, src, nelems, type_size, tag, fxn, cq_id, comm);
+  return startCollective(coll);
+}
 
-//CollectiveDoneMessage*
-//CollectiveEngine::gather(int root, void *dst, void *src, int nelems, int type_size, int tag,
-//                          int cq_id, Communicator* comm)
-//{
-//  auto* msg = skipCollective(Collective::gather, cq_id, comm, dst, src, nelems, type_size, tag);
-//  if (msg) return msg;
 
-//  if (!comm) comm = global_domain_;
-//  DagCollective* coll = new BtreeGather(this, root, dst, src, nelems, type_size, tag, cq_id, comm);
-//  return startCollective(coll);
-//}
+CollectiveDoneMessage*
+CollectiveEngine::reduce(int root, void* dst, void *src, int nelems, int type_size, int tag, reduce_fxn fxn,
+                          int cq_id, Communicator* comm)
+{
+  auto* msg = skipCollective(Collective::reduce, cq_id, comm, dst, src, nelems, type_size, tag);
+  if (msg) return msg;
 
-//CollectiveDoneMessage*
-//CollectiveEngine::scatter(int root, void *dst, void *src, int nelems, int type_size, int tag,
-//                           int cq_id, Communicator* comm)
-//{
-//  auto* msg = skipCollective(Collective::scatter, cq_id, comm, dst, src, nelems, type_size, tag);
-//  if (msg) return msg;
+  if (!comm) comm = global_domain_;
+  DagCollective* coll = new WilkeHalvingReduce(this, root, dst, src, nelems, type_size, tag, fxn, cq_id, comm);
+  return startCollective(coll);
+}
 
-//  if (!comm) comm = global_domain_;
-//  DagCollective* coll = new BtreeScatter(this, root, dst, src, nelems, type_size, tag, cq_id, comm);
-//  return startCollective(coll);
-//}
+CollectiveDoneMessage*
+CollectiveEngine::bcast(int root, void *buf, int nelems, int type_size, int tag,
+                         int cq_id, Communicator* comm)
+{
+  auto* msg = skipCollective(Collective::bcast, cq_id, comm, buf, buf, nelems, type_size, tag);
+  if (msg) return msg;
 
-//CollectiveDoneMessage*
-//CollectiveEngine::scatterv(int root, void *dst, void *src, int* send_counts, int recvcnt, int type_size, int tag,
-//                            int cq_id, Communicator* comm)
-//{
-//  auto* msg = skipCollective(Collective::scatterv, cq_id, comm, dst, src, recvcnt, type_size, tag);
-//  if (msg) return msg;
+  if (!comm) comm = global_domain_;
+  DagCollective* coll = new BinaryTreeBcastCollective(this, root, buf, nelems, type_size, tag, cq_id, comm);
+  return startCollective(coll);
+}
 
-//  if (!comm) comm = global_domain_;
-//  DagCollective* coll = new BtreeScatterv(this, root, dst, src, send_counts, recvcnt, type_size, tag, cq_id, comm);
-//  sprockit::abort("scatterv");
-//  return startCollective(coll);
-//}
+CollectiveDoneMessage*
+CollectiveEngine::gatherv(int root, void *dst, void *src,
+                   int sendcnt, int *recv_counts,
+                   int type_size, int tag, int cq_id, Communicator* comm)
+{
+  auto* msg = skipCollective(Collective::gatherv, cq_id, comm, dst, src, sendcnt, type_size, tag);
+  if (msg) return msg;
 
-//CollectiveDoneMessage*
-//CollectiveEngine::alltoall(void *dst, void *src, int nelems, int type_size, int tag,
-//                            int cq_id, Communicator* comm)
-//{
+  if (!comm) comm = global_domain_;
+  DagCollective* coll = new BtreeGatherv(this, root, dst, src, sendcnt, recv_counts, type_size, tag, cq_id, comm);
+  SST::Hg::abort("gatherv");
+  return startCollective(coll);
+}
+
+CollectiveDoneMessage*
+CollectiveEngine::gather(int root, void *dst, void *src, int nelems, int type_size, int tag,
+                          int cq_id, Communicator* comm)
+{
+  auto* msg = skipCollective(Collective::gather, cq_id, comm, dst, src, nelems, type_size, tag);
+  if (msg) return msg;
+
+  if (!comm) comm = global_domain_;
+  DagCollective* coll = new BtreeGather(this, root, dst, src, nelems, type_size, tag, cq_id, comm);
+  return startCollective(coll);
+}
+
+CollectiveDoneMessage*
+CollectiveEngine::scatter(int root, void *dst, void *src, int nelems, int type_size, int tag,
+                           int cq_id, Communicator* comm)
+{
+  auto* msg = skipCollective(Collective::scatter, cq_id, comm, dst, src, nelems, type_size, tag);
+  if (msg) return msg;
+
+  if (!comm) comm = global_domain_;
+  DagCollective* coll = new BtreeScatter(this, root, dst, src, nelems, type_size, tag, cq_id, comm);
+  return startCollective(coll);
+}
+
+CollectiveDoneMessage*
+CollectiveEngine::scatterv(int root, void *dst, void *src, int* send_counts, int recvcnt, int type_size, int tag,
+                            int cq_id, Communicator* comm)
+{
+  auto* msg = skipCollective(Collective::scatterv, cq_id, comm, dst, src, recvcnt, type_size, tag);
+  if (msg) return msg;
+
+  if (!comm) comm = global_domain_;
+  DagCollective* coll = new BtreeScatterv(this, root, dst, src, send_counts, recvcnt, type_size, tag, cq_id, comm);
+  SST::Hg::abort("scatterv");
+  return startCollective(coll);
+}
+
+CollectiveDoneMessage*
+CollectiveEngine::alltoall(void *dst, void *src, int nelems, int type_size, int tag,
+                            int cq_id, Communicator* comm)
+{
 //  auto* msg = skipCollective(Collective::alltoall, cq_id, comm, dst, src, nelems, type_size, tag);
 //  if (msg) return msg;
 
 //  if (!comm) comm = global_domain_;
 
+//  //FIXME
 //  auto* fact = AllToAllCollective::getBuilderLibrary("macro");
 //  auto* builder = fact->getBuilder(alltoall_type_);
 //  if (!builder){
-//    spkt_abort_printf("invalid alltoall type requested: %s", allgather_type_.c_str());
+//    sst_hg_abort_printf("invalid alltoall type requested: %s", allgather_type_.c_str());
 //  }
 
 //  if (comm->smpComm() && comm->smpBalanced()){
@@ -796,37 +797,38 @@ SimTransport::freeWorkspace(void *buf, uint64_t /*size*/)
 //    AllToAllCollective* coll = builder->create(this, dst, src, nelems, type_size, tag, cq_id, comm);
 //    return startCollective(coll);
 //  }
-//}
+}
 
-//CollectiveDoneMessage*
-//CollectiveEngine::alltoallv(void *dst, void *src, int* send_counts, int* recv_counts, int type_size, int tag,
-//                             int cq_id, Communicator* comm)
-//{
-//  auto* msg = skipCollective(Collective::alltoallv, cq_id, comm, dst, src, send_counts[0], type_size, tag);
-//  if (msg) return msg;
+CollectiveDoneMessage*
+CollectiveEngine::alltoallv(void *dst, void *src, int* send_counts, int* recv_counts, int type_size, int tag,
+                             int cq_id, Communicator* comm)
+{
+  auto* msg = skipCollective(Collective::alltoallv, cq_id, comm, dst, src, send_counts[0], type_size, tag);
+  if (msg) return msg;
 
-//  if (!comm) comm = global_domain_;
-//  DagCollective* coll = new DirectAlltoallvCollective(this, dst, src, send_counts, recv_counts, type_size, tag, cq_id, comm);
-//  return startCollective(coll);
-//}
+  if (!comm) comm = global_domain_;
+  DagCollective* coll = new DirectAlltoallvCollective(this, dst, src, send_counts, recv_counts, type_size, tag, cq_id, comm);
+  return startCollective(coll);
+}
 
-//CollectiveDoneMessage*
-//CollectiveEngine::allgather(void *dst, void *src, int nelems, int type_size, int tag,
-//                             int cq_id, Communicator* comm)
-//{
+CollectiveDoneMessage*
+CollectiveEngine::allgather(void *dst, void *src, int nelems, int type_size, int tag,
+                             int cq_id, Communicator* comm)
+{
 // auto* msg = skipCollective(Collective::allgather, cq_id, comm, dst, src, nelems, type_size, tag);
 // if (msg) return msg;
 
 //  if (!comm) comm = global_domain_;
 
+//  //FIXME
 //  auto* fact = AllgatherCollective::getBuilderLibrary("macro");
 //  if (!fact){
-//    spkt_abort_printf("No allgather collective algorithms registered!");
+//    sst_hg_abort_printf("No allgather collective algorithms registered!");
 //  }
 
 //  auto* builder = fact->getBuilder(allgather_type_);
 //  if (!builder){
-//    spkt_abort_printf("invalid allgather type requested: %s", allgather_type_.c_str());
+//    sst_hg_abort_printf("invalid allgather type requested: %s", allgather_type_.c_str());
 //  }
 
 //  if (comm->smpComm() && comm->smpBalanced()){
@@ -862,194 +864,194 @@ SimTransport::freeWorkspace(void *buf, uint64_t /*size*/)
 //    AllgatherCollective* coll = builder->create(this, dst, src, nelems, type_size, tag, cq_id, comm);
 //    return startCollective(coll);
 //  }
-//}
+}
 
-//CollectiveDoneMessage*
-//CollectiveEngine::allgatherv(void *dst, void *src, int* recv_counts, int type_size, int tag,
-//                              int cq_id, Communicator* comm)
-//{
-//  //if the allgatherv is skipped, we have a single recv count
-//  int nelems = *recv_counts;
-//  auto* msg = skipCollective(Collective::allgatherv, cq_id, comm, dst, src, nelems, type_size, tag);
-//  if (msg) return msg;
+CollectiveDoneMessage*
+CollectiveEngine::allgatherv(void *dst, void *src, int* recv_counts, int type_size, int tag,
+                              int cq_id, Communicator* comm)
+{
+  //if the allgatherv is skipped, we have a single recv count
+  int nelems = *recv_counts;
+  auto* msg = skipCollective(Collective::allgatherv, cq_id, comm, dst, src, nelems, type_size, tag);
+  if (msg) return msg;
 
-//  if (!comm) comm = global_domain_;
-//  DagCollective* coll = new BruckAllgathervCollective(this, dst, src, recv_counts, type_size, tag, cq_id, comm);
-//  return startCollective(coll);
-//}
+  if (!comm) comm = global_domain_;
+  DagCollective* coll = new BruckAllgathervCollective(this, dst, src, recv_counts, type_size, tag, cq_id, comm);
+  return startCollective(coll);
+}
 
-//CollectiveDoneMessage*
-//CollectiveEngine::barrier(int tag, int cq_id, Communicator* comm)
-//{
-//  auto* msg = skipCollective(Collective::barrier, cq_id, comm, 0, 0, 0, 0, tag);
-//  if (msg) return msg;
+CollectiveDoneMessage*
+CollectiveEngine::barrier(int tag, int cq_id, Communicator* comm)
+{
+  auto* msg = skipCollective(Collective::barrier, cq_id, comm, 0, 0, 0, 0, tag);
+  if (msg) return msg;
 
-//  if (!comm) comm = global_domain_;
-//  DagCollective* coll = new BruckBarrierCollective(this, nullptr, nullptr, tag, cq_id, comm);
-//  return startCollective(coll);
-//}
+  if (!comm) comm = global_domain_;
+  DagCollective* coll = new BruckBarrierCollective(this, nullptr, nullptr, tag, cq_id, comm);
+  return startCollective(coll);
+}
 
-//CollectiveDoneMessage*
-//CollectiveEngine::deliverPending(Collective* coll, int tag, Collective::type_t ty)
-//{
-//  std::list<CollectiveWorkMessage*> pending = pending_collective_msgs_[ty][tag];
-//  pending_collective_msgs_[ty].erase(tag);
-//  CollectiveDoneMessage* dmsg = nullptr;
-//  for (auto* msg : pending){
-//    dmsg = coll->recv(msg);
-//  }
-//  return dmsg;
-//}
+CollectiveDoneMessage*
+CollectiveEngine::deliverPending(Collective* coll, int tag, Collective::type_t ty)
+{
+  std::list<CollectiveWorkMessage*> pending = pending_collective_msgs_[ty][tag];
+  pending_collective_msgs_[ty].erase(tag);
+  CollectiveDoneMessage* dmsg = nullptr;
+  for (auto* msg : pending){
+    dmsg = coll->recv(msg);
+  }
+  return dmsg;
+}
 
-//void
-//CollectiveEngine::validateCollective(Collective::type_t ty, int tag)
-//{
-//  tag_to_collective_map::iterator it = collectives_[ty].find(tag);
-//  if (it == collectives_[ty].end()){
-//    return; // all good
-//  }
+void
+CollectiveEngine::validateCollective(Collective::type_t ty, int tag)
+{
+  tag_to_collective_map::iterator it = collectives_[ty].find(tag);
+  if (it == collectives_[ty].end()){
+    return; // all good
+  }
 
-//  Collective* coll = it->second;
-//  if (!coll){
-//   spkt_throw_printf(sprockit::IllformedError,
-//    "sumi_api::validate_collective: lingering null collective of type %s with tag %d",
-//    Collective::tostr(ty), tag);
-//  }
+  Collective* coll = it->second;
+  if (!coll){
+   sst_hg_throw_printf(SST::Hg::IllformedError,
+    "sumi_api::validate_collective: lingering null collective of type %s with tag %d",
+    Collective::tostr(ty), tag);
+  }
 
-//  if (coll->persistent() && coll->complete()){
-//    return; // all good
-//  }
+  if (coll->persistent() && coll->complete()){
+    return; // all good
+  }
 
-//  spkt_throw_printf(sprockit::IllformedError,
-//    "sumi_api::validate_collective: cannot overwrite collective of type %s with tag %d",
-//    Collective::tostr(ty), tag);
-//}
+  sst_hg_throw_printf(SST::Hg::IllformedError,
+    "sumi_api::validate_collective: cannot overwrite collective of type %s with tag %d",
+    Collective::tostr(ty), tag);
+}
 
-//CollectiveDoneMessage*
-//CollectiveEngine::startCollective(Collective* coll)
-//{
-//  if (coll->type() == Collective::donothing){
-//    todel_.push_back(coll);
-//    return new CollectiveDoneMessage(coll->tag(), coll->type(), coll->comm(), coll->cqId());
-//  }
+CollectiveDoneMessage*
+CollectiveEngine::startCollective(Collective* coll)
+{
+  if (coll->type() == Collective::donothing){
+    todel_.push_back(coll);
+    return new CollectiveDoneMessage(coll->tag(), coll->type(), coll->comm(), coll->cqId());
+  }
 
-//  coll->initActors();
-//  int tag = coll->tag();
-//  Collective::type_t ty = coll->type();
-//  Collective*& map_entry = collectives_[ty][tag];
-//  Collective* active = nullptr;
-//  CollectiveDoneMessage* dmsg=nullptr;
-//  if (map_entry){
-//    active = map_entry;
-//    coll->start();
-//    dmsg = active->addActors(coll);
-//    delete coll;
-//  } else {
-//    map_entry = active = coll;
-//    coll->start();
-//    dmsg = deliverPending(coll, tag, ty);
-//  }
+  coll->initActors();
+  int tag = coll->tag();
+  Collective::type_t ty = coll->type();
+  Collective*& map_entry = collectives_[ty][tag];
+  Collective* active = nullptr;
+  CollectiveDoneMessage* dmsg=nullptr;
+  if (map_entry){
+    active = map_entry;
+    coll->start();
+    dmsg = active->addActors(coll);
+    delete coll;
+  } else {
+    map_entry = active = coll;
+    coll->start();
+    dmsg = deliverPending(coll, tag, ty);
+  }
 
-//  while (dmsg && active->hasSubsequent()){
-//    delete dmsg;
-//    active = active->popSubsequent();
-//    dmsg = startCollective(active);
-//  }
+  while (dmsg && active->hasSubsequent()){
+    delete dmsg;
+    active = active->popSubsequent();
+    dmsg = startCollective(active);
+  }
 
-//  return dmsg;
-//}
+  return dmsg;
+}
 
-//void
-//CollectiveEngine::finishCollective(Collective* coll, int rank, Collective::type_t ty, int tag)
-//{
-//  bool deliver_cq_msg; bool delete_collective;
-//  coll->actorDone(rank, deliver_cq_msg, delete_collective);
+void
+CollectiveEngine::finishCollective(Collective* coll, int rank, Collective::type_t ty, int tag)
+{
+  bool deliver_cq_msg; bool delete_collective;
+  coll->actorDone(rank, deliver_cq_msg, delete_collective);
 //  debug_printf(sprockit::dbg::sumi,
 //    "Rank %d finishing collective of type %s tag %d - deliver=%d",
 //    tport_->rank(), Collective::tostr(ty), tag, deliver_cq_msg);
 
-//  if (!deliver_cq_msg)
-//    return;
+  if (!deliver_cq_msg)
+    return;
 
-//  coll->complete();
-//  if (delete_collective && !coll->persistent()){ //otherwise collective must exist FOREVER
-//    collectives_[ty].erase(tag);
-//    todel_.push_back(coll);
-//  }
+  coll->complete();
+  if (delete_collective && !coll->persistent()){ //otherwise collective must exist FOREVER
+    collectives_[ty].erase(tag);
+    todel_.push_back(coll);
+  }
 
-//  pending_collective_msgs_[ty].erase(tag);
+  pending_collective_msgs_[ty].erase(tag);
 //  debug_printf(sprockit::dbg::sumi,
 //    "Rank %d finished collective of type %s tag %d",
 //    tport_->rank(), Collective::tostr(ty), tag);
-//}
+}
 
-//void
-//CollectiveEngine::waitBarrier(int tag)
-//{
-//  if (tport_->nproc() == 1) return;
-//  barrier(tag, Message::default_cq);
-//  blockUntilNext(Message::default_cq);
-//}
+void
+CollectiveEngine::waitBarrier(int tag)
+{
+  if (tport_->nproc() == 1) return;
+  barrier(tag, Message::default_cq);
+  blockUntilNext(Message::default_cq);
+}
 
-//void
-//CollectiveEngine::cleanUp()
-//{
-//  for (Collective* coll : todel_){
-//    delete coll;
-//  }
-//  todel_.clear();
-//}
+void
+CollectiveEngine::cleanUp()
+{
+  for (Collective* coll : todel_){
+    delete coll;
+  }
+  todel_.clear();
+}
 
-//CollectiveDoneMessage*
-//CollectiveEngine::incoming(Message* msg)
-//{
-//  cleanUp();
+CollectiveDoneMessage*
+CollectiveEngine::incoming(Message* msg)
+{
+  cleanUp();
 
-//  CollectiveWorkMessage* cmsg = dynamic_cast<CollectiveWorkMessage*>(msg);
-//  if (cmsg->sendCQ() == -1 && cmsg->recvCQ() == -1){
-//    spkt_abort_printf("both CQs are invalid for %s", msg->toString().c_str())
-//  }
-//  int tag = cmsg->tag();
-//  Collective::type_t ty = cmsg->type();
-//  tag_to_collective_map::iterator it = collectives_[ty].find(tag);
-//  if (it == collectives_[ty].end()){
+  CollectiveWorkMessage* cmsg = dynamic_cast<CollectiveWorkMessage*>(msg);
+  if (cmsg->sendCQ() == -1 && cmsg->recvCQ() == -1){
+    sst_hg_abort_printf("both CQs are invalid for %s", msg->toString().c_str())
+  }
+  int tag = cmsg->tag();
+  Collective::type_t ty = cmsg->type();
+  tag_to_collective_map::iterator it = collectives_[ty].find(tag);
+  if (it == collectives_[ty].end()){
 //    debug_printf(sprockit::dbg::sumi_collective,
 //      "Rank %d, queuing %p %s from %d on tag %d for type %s",
 //      tport_->rank(), msg,
 //      Message::tostr(msg->classType()),
 //      msg->sender(),
 //      tag, Collective::tostr(ty));
-//      //message for collective we haven't started yet
-//      pending_collective_msgs_[ty][tag].push_back(cmsg);
-//      return nullptr;
-//  } else {
-//    Collective* coll = it->second;
-//    auto* dmsg = coll->recv(cmsg);
-//    while (dmsg && coll->hasSubsequent()){
-//      delete dmsg;
-//      coll = coll->popSubsequent();
-//      dmsg = startCollective(coll);
-//    }
-//    return dmsg;
-//  }
-//}
+      //message for collective we haven't started yet
+      pending_collective_msgs_[ty][tag].push_back(cmsg);
+      return nullptr;
+  } else {
+    Collective* coll = it->second;
+    auto* dmsg = coll->recv(cmsg);
+    while (dmsg && coll->hasSubsequent()){
+      delete dmsg;
+      coll = coll->popSubsequent();
+      dmsg = startCollective(coll);
+    }
+    return dmsg;
+  }
+}
 
-//CollectiveDoneMessage*
-//CollectiveEngine::blockUntilNext(int cq_id)
-//{
-//  CollectiveDoneMessage* dmsg = nullptr;
-//  while (dmsg == nullptr){
+CollectiveDoneMessage*
+CollectiveEngine::blockUntilNext(int cq_id)
+{
+  CollectiveDoneMessage* dmsg = nullptr;
+  while (dmsg == nullptr){
 //    debug_printf(sprockit::dbg::sumi_collective,
 //      "Rank %d, blocking collective until next message arrives on CQ %d", tport_->rank(), cq_id);
-//    auto* msg = tport_->blockingPoll(cq_id);
+    auto* msg = tport_->blockingPoll(cq_id);
 //    debug_printf(sprockit::dbg::sumi_collective,
 //      "Rank %d, unblocking collective on CQ %d", tport_->rank(), cq_id);
-//    dmsg = incoming(msg);
-//  }
+    dmsg = incoming(msg);
+  }
 //  debug_printf(sprockit::dbg::sumi_collective,
 //    "Rank %d, exiting collective progress on CQ %d", tport_->rank(), cq_id);
-//  return dmsg;
-//}
+  return dmsg;
+}
 
 class NullQoSAnalysis : public QoSAnalysis
 {
