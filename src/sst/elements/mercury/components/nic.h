@@ -112,7 +112,7 @@ class NIC : public SST::Hg::SubComponent
  public:
 
   SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::NIC,
-                                    SST::Hg::SimpleNode*)
+                                    SST::Hg::Node*)
 
   SST_ELI_REGISTER_SUBCOMPONENT(
     NIC,
@@ -269,7 +269,7 @@ public:
   virtual std::string toString() const { return "nic"; }
 
  public:
-  NIC(uint32_t id, SST::Params& params, SST::Hg::SimpleNode* parent);
+  NIC(uint32_t id, SST::Params& params, SST::Hg::Node* parent);
 
  protected:
 
@@ -277,7 +277,7 @@ public:
 
   void configureLinks();
 
-  SimpleNode* parent() const {
+  Node* parent() const {
     return parent_;
   }
 
@@ -294,7 +294,7 @@ public:
 
 protected:
   int negligibleSize_;
-  SimpleNode* parent_;
+  Node* parent_;
   NodeId my_addr_;
   EventLink::ptr logp_link_;
   //Topology* top_;

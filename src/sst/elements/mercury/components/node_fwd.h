@@ -19,7 +19,6 @@ namespace SST {
 namespace Hg {
 
 class Node;
-class SimpleNode;
 
 }
 }

@@ -48,7 +48,7 @@ class OperatingSystem : public SST::Hg::SubComponent {
 public:
 
   SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::OperatingSystem,
-                                    SST::Hg::SimpleNode*)
+                                    SST::Hg::Node*)
 
   SST_ELI_REGISTER_SUBCOMPONENT(
     OperatingSystem,
@@ -59,7 +59,7 @@ public:
     SST::Hg::OperatingSystem
   )
 
-  OperatingSystem(SST::ComponentId_t id, SST::Params& params, SimpleNode* parent);
+  OperatingSystem(SST::ComponentId_t id, SST::Params& params, Node* parent);
 
   virtual ~OperatingSystem();
 
@@ -143,7 +143,7 @@ public:
   /// to this context on every context switch.
   ThreadContext *des_context_;
 
-  SimpleNode* node_;
+  Node* node_;
   Thread* active_thread_;
   Thread* blocked_thread_;
   int next_condition_;
@@ -184,7 +184,7 @@ public:
 
  public:
 
-  SimpleNode* node() const {
+  Node* node() const {
     return node_;
   }
 

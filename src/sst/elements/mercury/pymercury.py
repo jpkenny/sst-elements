@@ -67,7 +67,7 @@ class HgNodeConfiguration(TemplateBase):
         TemplateBase.__init__(self)
 
     def build(self,nID):
-        node = sst.Component("node" + str(nID), "hg.simplenode")
+        node = sst.Component("node" + str(nID), "hg.node")
         return node
 
 class HgNicConfiguration(TemplateBase):
