@@ -213,7 +213,7 @@ Thread::initId()
 API*
 Thread::getAppApi(const std::string &name) const
 {
-  return parentApp()->getPrebuiltApi(name);
+  return parentApp()->getAPI(name);
 }
 
 void*

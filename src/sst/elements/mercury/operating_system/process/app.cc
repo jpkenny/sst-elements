@@ -153,14 +153,15 @@ App::unlockDlopen_API(std::string api_name)
 void
 App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
 {
-  //params.print_all_params(std::cerr);
-  // check params for apis
+  params.print_all_params(std::cerr);
   std::vector<std::string> apis;
   if (params.contains("apis")){
-    params.find_array("apis", apis);
+    params.find_array<std::string>("apis", apis);
+    for (auto i: apis)
+      std::cerr << i << std::endl;
   }
   else {
-    apis.push_back("system:libsystemapi.so");
+    apis.push_back("systemAPI:libsystemapi.so");
   }
 
   // parse apis and dlopen the libraries
@@ -176,7 +177,7 @@ App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
       file = str.substr(pos + 1);
     }
 
-    //std::cerr << "loading " << name.c_str() << "API\n";
+    std::cerr << "loading " << name.c_str() << " API from " << file.c_str() << "\n";;
     dlopen_lock.lock();
     dlopen_entry& entry = api_dlopens_[name];
     entry.name = file;
@@ -318,7 +319,7 @@ App::App(SST::Params& params, SoftwareId sid,
   } else {
 //    apis.push_back("mpi");
 //    apis.push_back("sumi:mpi");
-      apis.push_back("system");
+      apis.push_back("systemAPI:libsystemapi.so");
   }
 
   for (auto& str : apis){
@@ -329,15 +330,15 @@ App::App(SST::Params& params, SoftwareId sid,
       name = str;
       alias = str;
     } else {
-      alias = str.substr(0, pos);
-      name = str.substr(pos + 1);
+      name = str.substr(0, pos);
+      alias = str.substr(pos + 1);
     }
 
-    out_->debug(CALL_INFO, 1, 0, "checking %sAPI", name.c_str());
+    out_->debug(CALL_INFO, 1, 0, "checking %s API", name.c_str());
 
     auto iter = apis_.find(name);
     if (iter == apis_.end()){
-      out_->debug(CALL_INFO, 1, 0, "loading %sAPI", name.c_str());
+      out_->debug(CALL_INFO, 1, 0, "loading %s API", name.c_str());
       SST::Params api_params = params.get_scoped_params(name);
       //SST::Component* comp = dynamic_cast<SST::Component*>(os->node());
       //if(!comp) sst_hg_abort_printf("APP can't dyncast to SST::Component*");
@@ -575,11 +576,11 @@ App::getParams()
 //}
 
 API*
-App::getPrebuiltApi(const std::string &name)
+App::getAPI(const std::string &name)
 {
   auto iter = apis_.find(name);
   if (iter == apis_.end()){
-    sst_hg_abort_printf("API %s was not included in launch params for app %d",
+    sst_hg_abort_printf("API %s not found for app %d",
                 name.c_str(), aid());
   }
   return iter->second;

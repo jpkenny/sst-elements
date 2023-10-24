@@ -222,7 +222,7 @@ class App : public Thread
   SST::Params params_;
 
  private:
-  API* getPrebuiltApi(const std::string& name);
+  API* getAPI(const std::string& name);
 
   void dlcloseCheck(){
     dlcloseCheck(aid());

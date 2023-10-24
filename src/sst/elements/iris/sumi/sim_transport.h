@@ -98,8 +98,8 @@ class SimTransport : public Transport, public SST::Hg::API {
   SST_ELI_REGISTER_DERIVED(
     API,
     SimTransport,
-    "iris",
-    "sumi",
+    "hg",
+    "SimTransport",
     SST_ELI_ELEMENT_VERSION(1,0,0),
     "provides the SUMI transport API")
 
