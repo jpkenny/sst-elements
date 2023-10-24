@@ -18,6 +18,7 @@
 #include <sst/core/params.h>
 #include <common/events.h>
 #include <common/factory.h>
+#include <sst/core/eli/elementbuilder.h>
 #include <common/request.h>
 #include <components/node.h>
 #include <operating_system/launch/app_launcher.h>
@@ -155,7 +156,7 @@ OperatingSystem::initThreading(SST::Params& params)
     }
 
   des_context_ = create<ThreadContext>(
-        "macro", params.find<std::string>("context", ThreadContext::defaultThreading()));
+        "hg", params.find<std::string>("context", ThreadContext::defaultThreading()));
 
   des_context_->initContext();
 

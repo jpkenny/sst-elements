@@ -19,7 +19,8 @@
 
 #include <sst/core/link.h>
 
-#include <mercury/common/factory.h>
+//#include <mercury/common/factory.h>
+#include <sst/core/eli/elementbuilder.h>
 #include <mercury/components/node_fwd.h>
 #include <mercury/operating_system/threading/threading_interface.h>
 #include <mercury/operating_system/launch/app_launcher_fwd.h>

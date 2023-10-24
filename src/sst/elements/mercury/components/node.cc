@@ -36,13 +36,20 @@ Node::Node(ComponentId_t id, Params &params)
   assert(os_);
 
   out_->debug(CALL_INFO, 1, 0, "loading hg.NIC\n");
-  nic_ = loadUserSubComponent<NIC>("nic_slot", SST::ComponentInfo::SHARE_NONE, this);
-  assert(nic_);
-
   link_control_ = loadUserSubComponent<SST::Interfaces::SimpleNetwork>("link_control_slot", SST::ComponentInfo::SHARE_NONE,1);
-  assert(link_control_);
+  if (link_control_) {
+    out_->debug(CALL_INFO, 1, 0, "loading hg.NIC\n");
+    nic_ = loadUserSubComponent<NIC>("nic_slot", SST::ComponentInfo::SHARE_NONE, this);
+    assert(nic_);
+    nic_->set_link_control(link_control_);
+  }
+  else {
+    // assume basic tests
+    // (unused but needs to be there or multithread termination breaks)
+    netLink_ = configureLink("network");
+  }
 
-  nic_->set_link_control(link_control_);
+
 
   int ncores_ = params.find<std::int32_t>("ncores", 1);
   int nsockets_ = params.find<std::int32_t>("nsockets",1);
@@ -57,7 +64,7 @@ Node::init(unsigned int phase)
 {
   SST::Component::init(phase);
   os_->init(phase);
-  nic_->init(phase);
+  if (nic_) nic_->init(phase);
 }
 
 void
@@ -65,7 +72,7 @@ Node::setup()
 {
   SST::Component::setup();
   os_->setup();
-  nic_->setup();
+  if (nic_) nic_->setup();
 }
 
 void

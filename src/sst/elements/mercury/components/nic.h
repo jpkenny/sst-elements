@@ -64,7 +64,8 @@ Questions? Contact sst-macro-help@sandia.gov
 //#include <mercury/operating_system/process/progress_queue.h>
 //#include <sstmac/hardware/topology/topology_fwd.h>
 //#include <sprockit/debug.h>
-#include <mercury/common/factory.h>
+//#include <mercury/common/factory.h>
+#include <sst/core/eli/elementbuilder.h>
 #include <mercury/common/event_handler.h>
 #include <mercury/hardware/network/network_message.h>
 #include <sst/core/interfaces/simpleNetwork.h>
