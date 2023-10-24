@@ -48,7 +48,8 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <sumi/collective_actor.h>
 #include <sumi/collective_message.h>
 #include <sumi/comm_functions.h>
-#include <mercury/common/factory.h>
+//#include <mercury/common/factory.h>
+#include <sst/core/eli/elementbuilder.h>
 
 namespace SST::Iris::sumi {
 

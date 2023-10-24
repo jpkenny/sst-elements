@@ -20,6 +20,7 @@
 #include <sst/core/params.h>
 
 #include <common/factory.h>
+#include <sst/core/eli/elementbuilder.h>
 #include <common/output.h>
 #include <common/util.h>
 #include <common/errors.h>
@@ -43,7 +44,6 @@
 //#include <sstmac/main/sstmac.h>
 #include <operating_system/process/loadlib.h>
 #include <components/operating_system.h>
-
 #include <inttypes.h>
 #include <dlfcn.h>
 
@@ -153,6 +153,7 @@ App::unlockDlopen_API(std::string api_name)
 void
 App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
 {
+  //params.print_all_params(std::cerr);
   // check params for apis
   std::vector<std::string> apis;
   if (params.contains("apis")){
@@ -742,12 +743,12 @@ UserAppCxxFullMain::aliasMains()
     //std::cerr << "have main_fxns_\n";
     for (auto& pair : *main_fxns_){
     auto* builder = lib->getBuilder("UserAppCxxFullMain");
-    //std::cerr << "adding " << pair.first << " builder\n";
+    //std::cerr << "adding " << pair.first << " builder " << builder << "\n";
     lib->addBuilder(pair.first, builder);
     }
   }
   else {
-      //std::cerr << "no main_fxns_\n";
+      std::cerr << "no main_fxns_\n";
     }
   lock.unlock();
 }
@@ -848,7 +849,7 @@ UserAppCxxEmptyMain::UserAppCxxEmptyMain(SST::Params& params, SoftwareId sid,
 void
 UserAppCxxEmptyMain::registerMainFxn(const char *name, App::empty_main_fxn fxn)
 {
-  std::cerr << "registering empty main " << name << "\n";
+  //std::cerr << "registering empty main " << name << "\n";
   if (empty_main_fxns_){ //already cleared static init
     (*empty_main_fxns_)[name] = fxn;
   } else { 
@@ -858,17 +859,6 @@ UserAppCxxEmptyMain::registerMainFxn(const char *name, App::empty_main_fxn fxn)
 
     (*empty_main_fxns_init_)[name] = fxn;
   }
-
-#if 0
-  auto* lib = App::getBuilderLibrary("macro");
-#if SSTMAC_INTEGRATED_SST_CORE
-  using builder_t = SST::ELI::DerivedBuilder<App,UserAppCxxFullMain,SST::Params&,SoftwareId,OperatingSystem*>;
-  lib->addBuilder(name, new builder_t);
-#else
-  using builder_t = sprockit::DerivedBuilder<App,UserAppCxxFullMain,SST::Params&,SoftwareId,OperatingSystem*>;
-  lib->addBuilder(name, std::unique_ptr<builder_t>(new builder_t));
-#endif
-#endif
 }
 
 int

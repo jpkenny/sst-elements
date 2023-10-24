@@ -44,7 +44,8 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #pragma once
 
-#include <mercury/common/factory.h>
+#include <sst/core/eli/elementbuilder.h>
+//#include <mercury/common/factory.h>
 //#include <sprockit/debug.h>
 #include <sst/core/params.h>
 #include <sumi/message.h>

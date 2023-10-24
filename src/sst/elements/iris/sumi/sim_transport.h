@@ -65,6 +65,7 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #include <mercury/common/errors.h>
 #include <mercury/common/factory.h>
+#include <sst/core/eli/elementbuilder.h>
 #include <mercury/common/util.h>
 
 #include <mercury/common/null_buffer.h>
