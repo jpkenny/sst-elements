@@ -34,7 +34,7 @@ void
 AppLauncher::incomingRequest(AppLaunchRequest* req)
 {
   Params app_params = req->params();
-  SoftwareId sid(req->aid(), 0);
+  SoftwareId sid(req->aid(), os_->addr()-1);
 
   std::string app_name;
   if (app_params.count("label")) {

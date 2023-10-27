@@ -269,6 +269,10 @@ public:
 
   virtual std::string toString() const { return "nic"; }
 
+  void doSend(NetworkMessage* payload) {
+    inject(0, payload);
+  }
+
  public:
   NIC(uint32_t id, SST::Params& params, SST::Hg::Node* parent);
 
@@ -358,8 +362,6 @@ protected:
 
 //  std::string toString() const override { return "null nic"; }
 //  //std::string toString() const { return "null nic"; }
-
-//  //void doSend(NetworkMessage*) override {}
 
 ////  void connectOutput(int, int, EventLink::ptr&&) override {}
 

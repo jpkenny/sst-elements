@@ -121,9 +121,13 @@ NIC::NIC(uint32_t id, SST::Params& params, Node* parent) :
 //  link_control_ = loadUserSubComponent<SST::Interfaces::SimpleNetwork>("link_control_slot", SST::ComponentInfo::SHARE_PORTS,1);
 //  assert(link_control_);
 
-  pending_.resize(vns_);
-  ack_queue_.resize(vns_);
-  mtu_ = params.find<SST::UnitAlgebra>("mtu").getRoundedValue();
+  //FIXME
+  //pending_.resize(vns_);
+  //ack_queue_.resize(vns_);
+  // mtu_ = params.find<SST::UnitAlgebra>("mtu").getRoundedValue();
+  pending_.resize(1);
+  ack_queue_.resize(1);
+  mtu_ = 4096;
 }
 
 std::string
@@ -360,6 +364,7 @@ NIC::dataIoctl()
 void
 NIC::injectSend(NetworkMessage* netmsg)
 {
+  std::cerr << "NIC::injectSend\n";
   if (netmsg->toaddr() == my_addr_){
     intranodeSend(netmsg);
   } else {
@@ -377,11 +382,14 @@ NIC::recvMessage(NetworkMessage* netmsg)
 //    NetworkMessage::tostr(netmsg->type()),
 //    int(netmsg->fromaddr()));
 
+  std::cerr << "recvMessage type: " << NetworkMessage::tostr(netmsg->type()) << std::endl;
+
   switch (netmsg->type()) {
     case NetworkMessage::rdma_get_request: {
-      netmsg->nicReverse(NetworkMessage::rdma_get_payload);
-      netmsg->putOnWire();
-      internodeSend(netmsg);
+    sst_hg_abort_printf("case NetworkMessage::rdma_get_request unimplemented\n");
+//      netmsg->nicReverse(NetworkMessage::rdma_get_payload);
+//      netmsg->putOnWire();
+//      internodeSend(netmsg);
       break;
     }
     case NetworkMessage::nvram_get_request: {
@@ -395,9 +403,8 @@ NIC::recvMessage(NetworkMessage* netmsg)
     case NetworkMessage::rdma_get_sent_ack:
     case NetworkMessage::payload_sent_ack:
     case NetworkMessage::rdma_put_sent_ack: {
-      sst_hg_abort_printf("case NetworkMessage::rdma_put_sent_ack unimplemented\n");
-//      //node_link_->send(netmsg);
-//      parent_->handle(netmsg);
+      inject(0,netmsg);
+      parent_->handle(netmsg);
       break;
     }
     case NetworkMessage::rdma_get_nack:
@@ -406,10 +413,9 @@ NIC::recvMessage(NetworkMessage* netmsg)
     case NetworkMessage::nvram_get_payload:
     case NetworkMessage::smsg_send:
     case NetworkMessage::posted_send: {
-      sst_hg_abort_printf("case NetworkMessage::posted_send unimplemented\n");
-//      netmsg->takeOffWire();
-//      parent_->handle(netmsg);
-//      //node_link_->send(netmsg);
+      netmsg->takeOffWire();
+      parent_->handle(netmsg);
+      inject(0,netmsg);
       break;
     }
     default: {
@@ -497,6 +503,7 @@ NIC::internodeSend(NetworkMessage* netmsg)
 //                      int(netmsg->toaddr()), int(addr()), netmsg->toString().c_str());
 //  }
 
+  std::cerr << "recording message\n";
   recordMessage(netmsg);
 //  nic_debug("internode send payload %llu of size %d %s",
 //    netmsg->flowId(), int(netmsg->byteLength()), netmsg->toString().c_str());
@@ -506,7 +513,7 @@ NIC::internodeSend(NetworkMessage* netmsg)
 //  } else {
 //    doSend(netmsg);
 //  }
-  //doSend(netmsg);
+  doSend(netmsg);
 }
 
 //void
@@ -528,6 +535,7 @@ NIC::internodeSend(NetworkMessage* netmsg)
 void
 NIC::sendToNode(NetworkMessage* payload)
 {
+  std::cerr << "send to node " << payload->typeStr() << std::endl;
   auto forward_ev = newCallback(parent_, &Node::handle, payload);
   parent_->sendExecutionEventNow(forward_ev);
 }

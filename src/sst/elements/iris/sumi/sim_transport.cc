@@ -117,6 +117,7 @@ class SumiServer :
 //    debug_printf(sprockit::dbg::sumi,
 //                 "SumiServer registering rank %d for app %d",
 //                 rank, app_id);
+    std::cerr << "registering rank " << rank << " for app " << app_id << std::endl;
     SimTransport*& slot = procs_[app_id][rank];
     if (slot){
       sst_hg_abort_printf("SumiServer: already registered rank %d for app %d on node %d",
@@ -227,14 +228,14 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Compo
   completion_queues_(1),
 //  spy_bytes_(nullptr),
   parent_app_(parent),
-//  default_progress_queue_(parent->os()),
+  default_progress_queue_(parent->os()),
   nic_ioctl_(parent->os()->nicDataIoctl()),
   qos_analysis_(nullptr),
   pragma_block_set_(false),
   pragma_timeout_(-1)
 {
-//  completion_queues_[0] = std::bind(&DefaultProgressQueue::incoming,
-//                                    &default_progress_queue_, 0, std::placeholders::_1);
+  completion_queues_[0] = std::bind(&DefaultProgressQueue::incoming,
+                                    &default_progress_queue_, 0, std::placeholders::_1);
   null_completion_notify_ = std::bind(&SimTransport::drop, this, std::placeholders::_1);
   rank_ = sid().task_;
   auto* server_lib = parent_->os()->lib(server_libname_);
@@ -258,7 +259,7 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Compo
 
 //  rank_mapper_ = sstmac::sw::TaskMapping::globalMapping(sid().app_);
 //  nproc_ = rank_mapper_->nproc();
-  nproc_ = 1;
+  nproc_ = 2;
 
   auto qos_params = params.get_scoped_params("qos");
   auto qos_name = qos_params.find<std::string>("name", "null");
@@ -371,11 +372,11 @@ SimTransport::compute(SST::Hg::TimeDelta t)
 void
 SimTransport::send(Message* m)
 {
-  int qos = qos_analysis_->selectQoS(m);
-  m->setQoS(qos);
-  if (!m->started()){
-    m->setTimeStarted(parent_app_->now());
-  }
+//  int qos = qos_analysis_->selectQoS(m);
+//  m->setQoS(qos);
+//  if (!m->started()){
+//    m->setTimeStarted(parent_app_->now());
+//  }
 
 //  if (spy_bytes_){
 //    switch(m->sstmac::hw::NetworkMessage::type()){
@@ -407,6 +408,7 @@ SimTransport::send(Message* m)
         if (post_header_delay_.ticks()) {
           //parent_->compute(post_header_delay_);
         }
+        std::cerr << "smsg_send, nic_ioctl_\n";
         nic_ioctl_(m);
       }
       break;
@@ -611,8 +613,12 @@ CollectiveDoneMessage*
 CollectiveEngine::allreduce(void* dst, void *src, int nelems, int type_size, int tag, reduce_fxn fxn,
                             int cq_id, Communicator* comm)
 {
+  std::cerr << "CollectiveEngine::allreduce()\n";
   auto* msg = skipCollective(Collective::allreduce, cq_id, comm, dst, src, nelems, type_size, tag);
-  if (msg) return msg;
+  if (msg) {
+    std::cerr << "return message\n";
+    return msg;
+  }
 
   if (!comm) comm = global_domain_;
 
@@ -650,6 +656,7 @@ CollectiveEngine::allreduce(void* dst, void *src, int nelems, int type_size, int
     coll = new WilkeHalvingAllreduce(this, dst, src, nelems, type_size, tag, fxn, cq_id, comm);
   }
 
+  std::cerr << "starting collective\n";
   return startCollective(coll);
 }
 
@@ -942,11 +949,13 @@ CollectiveEngine::startCollective(Collective* coll)
   Collective* active = nullptr;
   CollectiveDoneMessage* dmsg=nullptr;
   if (map_entry){
+    std::cerr << "map entry\n";
     active = map_entry;
     coll->start();
     dmsg = active->addActors(coll);
     delete coll;
   } else {
+    std::cerr << "no map entry\n";
     map_entry = active = coll;
     coll->start();
     dmsg = deliverPending(coll, tag, ty);
@@ -958,6 +967,7 @@ CollectiveEngine::startCollective(Collective* coll)
     dmsg = startCollective(active);
   }
 
+  std::cerr << "return dmsg\n";
   return dmsg;
 }
 
@@ -1007,7 +1017,10 @@ CollectiveEngine::incoming(Message* msg)
 {
   cleanUp();
 
+  std::cerr << "msg: " << msg << std::endl;
+
   CollectiveWorkMessage* cmsg = dynamic_cast<CollectiveWorkMessage*>(msg);
+  std::cerr << "cmsg: " << cmsg << std::endl;
   if (cmsg->sendCQ() == -1 && cmsg->recvCQ() == -1){
     sst_hg_abort_printf("both CQs are invalid for %s", msg->toString().c_str())
   }

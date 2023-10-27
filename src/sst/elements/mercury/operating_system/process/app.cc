@@ -336,17 +336,19 @@ App::App(SST::Params& params, SoftwareId sid,
 
     out_->debug(CALL_INFO, 1, 0, "checking %s API", name.c_str());
 
-    auto iter = apis_.find(name);
-    if (iter == apis_.end()){
-      out_->debug(CALL_INFO, 1, 0, "loading %s API", name.c_str());
-      SST::Params api_params = params.get_scoped_params(name);
-      //SST::Component* comp = dynamic_cast<SST::Component*>(os->node());
-      //if(!comp) sst_hg_abort_printf("APP can't dyncast to SST::Component*");
-      API* api = SST::Hg::create<API>(
-          "hg", name, api_params, this, os->node());
-      apis_[name] = api;
+    if (name != "SimTransport") {
+      auto iter = apis_.find(name);
+      if (iter == apis_.end()){
+        out_->debug(CALL_INFO, 1, 0, "loading %s API", name.c_str());
+        SST::Params api_params = params.get_scoped_params(name);
+        //SST::Component* comp = dynamic_cast<SST::Component*>(os->node());
+        //if(!comp) sst_hg_abort_printf("APP can't dyncast to SST::Component*");
+        API* api = SST::Hg::create<API>(
+              "hg", name, api_params, this, os->node());
+        apis_[name] = api;
+      }
+      apis_[alias] = apis_[name];
     }
-    apis_[alias] = apis_[name];
   }
 
   std::string stdout_str = params.find<std::string>("stdout", "stdout");
