@@ -90,16 +90,11 @@ WilkeAllreduceActor::initDag()
   slicer_->fxn = fxn_;
 
   int virtual_nproc, log2nproc, midpoint;
-  std::cerr << "dom_nproc_ " << dom_nproc_ << std::endl;
   RecursiveDoubling::computeTree(dom_nproc_, log2nproc, midpoint, virtual_nproc);
-  std::cerr << "virtualnproc_ " << virtual_nproc << std::endl;
   VirtualRankMap rank_map(dom_nproc_, virtual_nproc);
   int my_roles[2];
   int num_roles = rank_map.realToVirtual(dom_me_, my_roles);
-  std::cerr << "num_roles: " << num_roles << std::endl;
-
   int num_doubling_rounds = log2nproc;
-  std::cerr << "num_doubling_rounds " << num_doubling_rounds << std::endl;
 
 //  debug_printf(sumi_collective,
 //    "Rank %s configured allreduce for tag=%d for nproc=%d(%d) virtualized to n=%d over %d rounds",
@@ -120,7 +115,6 @@ WilkeAllreduceActor::initDag()
         SendAction::in_place : SendAction::prev_recv;
 
   for (int role=0; role < num_roles; ++role){
-    std::cerr << "role " << role << std::endl;
     Action* null = nullptr;
     std::vector<Action*> send_rounds(num_doubling_rounds, null);
     std::vector<Action*> recv_rounds(num_doubling_rounds, null);
@@ -139,7 +133,6 @@ WilkeAllreduceActor::initDag()
 //      "Rank %d configuring allreduce for virtual role=%d tag=%d for nproc=%d(%d) virtualized to n=%d over %d rounds ",
 //      my_api_->rank(), virtual_me, tag_, dom_nproc_, my_api_->nproc(), virtual_nproc, log2nproc);
     for (int i=0; i < num_doubling_rounds; ++i){
-      std::cerr << "round " << i << std::endl;
       //again, see comment above about weirndess of round numberings
       int rnd = (i == 0 || i_am_even) ? i : i + round_offset;
       bool i_am_low = isLowerPartner(virtual_me, partner_gap);
@@ -155,8 +148,6 @@ WilkeAllreduceActor::initDag()
         send_offset = my_buffer_offset;
         recv_offset = my_buffer_offset + send_nelems;
       }
-      std::cerr << "virtual me " << virtual_me << std::endl;
-      std::cerr << "virtual_partner " << virtual_partner << std::endl;
 
 //      debug_printf(sumi_collective,
 //        "Rank %d:%d testing partner=%d tag=%d for round=%d,%d",
@@ -166,7 +157,6 @@ WilkeAllreduceActor::initDag()
 
       if (!isSharedRole(virtual_partner, num_roles, my_roles)){
         int partner = rank_map.virtualToReal(virtual_partner);
-        std::cerr << "send/recv with partner: " << partner << std::endl;
         //this is not colocated with me - real send/recv
         Action* send_ac = new SendAction(rnd, partner, SendAction::in_place);
         send_ac->offset = send_offset;
@@ -212,12 +202,10 @@ WilkeAllreduceActor::initDag()
       Action* mirror_recv = recv_rounds[mirror_round];
       if (mirror_send && mirror_recv){ //if it's a real action, not colocated
         //what I sent last time around, I receive this time
-        std::cerr << "mirror send with " << mirror_recv->partner << std::endl;
         Action* send_ac = new SendAction(my_round, mirror_recv->partner,
                            i == 0 ? SendAction::in_place : fan_in_send_type);
         send_ac->nelems = mirror_recv->nelems;
         send_ac->offset = mirror_recv->offset;
-        std::cerr << "mirror recv with " << mirror_send->partner << std::endl;
         Action* recv_ac = new RecvAction(my_round, mirror_send->partner,
                                           fan_in_recv_type);
         recv_ac->nelems = mirror_send->nelems;

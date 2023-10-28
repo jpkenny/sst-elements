@@ -124,7 +124,7 @@ comp_node0.setCoordinates(0, 0, 0)
 comp_node0_subcomp_os_slot = comp_node0.setSubComponent("os_slot", "hg.operating_system", 0)
 comp_node0_subcomp_os_slot.setCoordinates(0, 0, 0)
 comp_node0_subcomp_os_slot.addParams({
-    "verbose"   : "100",
+    "verbose"   : "0",
     "app1.name" : "runsendrecv",
     "app1.exe"  : "runsendrecv" })
 comp_node0_subcomp_os_slot.addParams({"app1.apis" : ["systemAPI:libsystemapi.so", "SimTransport:libsumi.so", "MpiApi:libsst_mpi.so"] })
@@ -143,7 +143,7 @@ comp_node1.setCoordinates(0, 0, 0)
 comp_node1_subcomp_os_slot = comp_node1.setSubComponent("os_slot", "hg.operating_system", 0)
 comp_node1_subcomp_os_slot.setCoordinates(0, 0, 0)
 comp_node1_subcomp_os_slot.addParams({
-    "verbose"   : "100",
+    "verbose"   : "0",
     "app1.name" : "runsendrecv",
     "app1.exe"  : "runsendrecv" })
 comp_node1_subcomp_os_slot.addParams({ "app1.apis" : ["systemAPI:libsystemapi.so", "SimTransport:libsumi.so", "MpiApi:libsst_mpi.so"] })

@@ -147,17 +147,14 @@ CollectiveActor::domToGlobalDst(int dom_dst)
 void
 DagCollectiveActor::start()
 {
-  std::cerr << "DagCollectiveActor::start()\n";
 #if SSTMAC_COMM_DELAY_STATS
   my_api_->startCollectiveMessageLog();
 #endif
   while (!initial_actions_.empty()){
-    std::cerr << "starting an action\n";
     auto iter = initial_actions_.begin();
     Action* ac = *iter;
     initial_actions_.erase(iter);
     startAction(ac);
-    std::cerr << "initial action started, looping\n";
   }
 }
 
@@ -225,12 +222,10 @@ DagCollectiveActor::startShuffle(Action * /*ac*/)
 void
 DagCollectiveActor::clearDependencies(Action* ac)
 {
-  std::cerr << "clearing dependencies for " << ac << std::endl;
   std::multimap<uint32_t, Action*>::iterator it = pending_comms_.find(ac->id);
   std::list<Action*> pending_actions;
   while (it != pending_comms_.end()){
     Action* pending = it->second;
-    std::cerr << "pending action: " << pending << std::endl;
     pending_actions.push_back(pending);
     pending_comms_.erase(it);
 
@@ -244,21 +239,15 @@ DagCollectiveActor::clearDependencies(Action* ac)
 //      pending->round,ac->id,tag_);
 
     if (ac->type == Action::resolve){
-      std::cerr << "phys partner???\n";
       pending->phys_partner = ac->phys_partner;
     }
 
     if (pending->join_counter == 0){
-      std::cerr << "starting action\n";
       startAction(pending);
-    }
-    else {
-      std::cerr << "action still has " << pending->join_counter << " dependencies\n";
     }
 
     it = pending_comms_.find(ac->id);
   }
-  std::cerr << "done clearing dependencies\n";
 }
 
 void
@@ -293,11 +282,6 @@ DagCollectiveActor::sendEagerMessage(Action* ac)
 //   "Rank %s, collective %s(%p) sending eager message to %d on tag=%d offset=%d num_bytes=%d",
 //   rankStr().c_str(), toString().c_str(), this,
 //   ac->partner, tag_, ac->offset, num_bytes);
-
-  std::cerr << "DagCollectiveActor::sendEagerMessage()\n";
-  std::cerr << "dom_me_ :     " << dom_me_ << std::endl;
-  std::cerr << "phys_partner: " << ac->phys_partner << std::endl;
-  std::cerr << "partner:      " << ac->partner << std::endl;
 
   /*auto* msg =*/ my_api_->smsgSend<CollectiveWorkMessage>(ac->phys_partner, num_bytes, buf,
                                               cq_id_, cq_id_, Message::collective, engine_->smsgQos(),
@@ -358,7 +342,6 @@ DagCollectiveActor::addDependencyToMap(uint32_t id, Action* ac)
 //   "Rank %s, collective %s adding dependency %u to %s tag=%d",
 //   rankStr().c_str(), Collective::tostr(type_),
 //   id, ac->toString().c_str(), tag_);
-  std::cerr << "adding dependency " << ac << " to id " << id << std::endl;
   pending_comms_.insert(std::make_pair(id, ac));
   ac->join_counter++;
 }
@@ -384,7 +367,6 @@ DagCollectiveActor::addCommDependency(Action* precursor, Action *ac)
 //       "Rank %s, collective %s adding initial %s on tag=%d",
 //       rankStr().c_str(), Collective::tostr(type_),
 //       ac->toString().c_str(), tag_);
-      std::cerr << "adding initial action " << ac << std::endl;
       initial_actions_.insert(ac);
     } else {
       //no new dependency, but not an initial action
@@ -412,7 +394,6 @@ DagCollectiveActor::addDependency(Action* precursor, Action *ac)
       if (precursor){
         addDependencyToMap(precursor->id, ac);
       } else if (ac->join_counter == 0){
-        std::cerr << "insert initial action " << ac << std::endl;
         initial_actions_.insert(ac);
       } else {
         //no new dependency, but not an initial action
@@ -438,9 +419,7 @@ DagCollectiveActor::checkCollectiveDone()
 //  debug_printf(sumi_collective,
 //      "Rank %s has %d active comms, %d pending comms, %d initial comms",
 //      rankStr().c_str(), active_comms_.size(), pending_comms_.size(), initial_actions_.size());
-  std::cerr << "DagCollectiveActor::checkCollectiveDone()\n";
   if (active_comms_.empty() && pending_comms_.empty() && initial_actions_.empty()){
-    std::cerr << "collective is done\n";
     finalize();
     putDoneNotification();
   }
@@ -577,10 +556,6 @@ DagCollectiveActor::commActionDone(Action::type_t ty, int round, int partner)
 
   active_map::iterator it = active_comms_.find(id);
   if (it == active_comms_.end()){
-    for (it=active_comms_.begin(); it != active_comms_.end(); ++it){
-      std::cerr << "Have action id " << it->first
-        << " to partner " << it->second->partner << std::endl;
-    }
     sst_hg_abort_printf("Rank %d=%d invalid action %s for round %d, partner %d",
      my_api_->rank(), dom_me_, Action::tostr(ty), round, partner);
   }
@@ -614,7 +589,6 @@ DagCollectiveActor::dataRecved(Action* ac_, CollectiveWorkMessage* msg, void *re
   if (isNonNullBuffer(recv_buffer_)){
     int my_comm_rank =  comm_->myCommRank();
     int sender_comm_rank = msg->domSender();
-    std::cerr << my_comm_rank << " receiving real buffer from " << sender_comm_rank << std::endl;
     if (my_comm_rank == sender_comm_rank){
       do_sumi_debug_print("ignoring", rankStr().c_str(), msg->domSender(),
         ac->round, 0, nelems_, type_size_, recv_buffer_);
@@ -795,7 +769,6 @@ DagCollectiveActor::incomingHeader(CollectiveWorkMessage* msg)
           spkt_abort_printf("Flow %llu: no SMSG buffer: %s", msg->flowId(), msg->toString().c_str());
         }
 #endif
-        std::cerr << "incoming eager\n";
         dataRecved(msg, msg->smsgBuffer());
         delete msg;
       }
@@ -892,7 +865,6 @@ DagCollectiveActor::recv(CollectiveWorkMessage* msg)
     case Message::payload_sent_ack:
     case Message::rdma_get_sent_ack:
     case Message::rdma_put_sent_ack:
-      std::cerr << "got the ack\n";
       dataSent(msg);
       delete msg;
       break;
@@ -1000,7 +972,6 @@ DefaultSlicer::unpackReduce(void *packedBuf, void *unpackedObj,
     char* dstptr = (char*) unpackedObj + offset*type_size;
     (fxn)(dstptr, packedBuf, nelems);
   }
-  std::cerr << "reduce unpacked\n";
 }
 
 }

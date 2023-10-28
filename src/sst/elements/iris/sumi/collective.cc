@@ -160,7 +160,6 @@ DagCollective::initActors()
 {
   DagCollectiveActor* actor = newActor();
   actor->init();
-  std::cerr << "dom_me_: " << dom_me_ << std::endl;
   my_actors_[dom_me_] = actor;
   refcounts_[dom_me_] = my_actors_.size();
 }
@@ -197,7 +196,6 @@ DagCollective::recv(int target, CollectiveWorkMessage* msg)
 void
 DagCollective::start()
 {
-  std::cerr << "DagCollective::start()\n";
   actor_map::iterator it, end = my_actors_.end();
   for (it = my_actors_.begin(); it != end; ++it){
     DagCollectiveActor* actor = it->second;

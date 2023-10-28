@@ -153,12 +153,12 @@ App::unlockDlopen_API(std::string api_name)
 void
 App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
 {
-  params.print_all_params(std::cerr);
+  //params.print_all_params(std::cerr);
   std::vector<std::string> apis;
   if (params.contains("apis")){
     params.find_array<std::string>("apis", apis);
-    for (auto i: apis)
-      std::cerr << i << std::endl;
+//    for (auto i: apis)
+//      std::cerr << i << std::endl;
   }
   else {
     apis.push_back("systemAPI:libsystemapi.so");
@@ -177,7 +177,7 @@ App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
       file = str.substr(pos + 1);
     }
 
-    std::cerr << "loading " << name.c_str() << " API from " << file.c_str() << "\n";;
+    //std::cerr << "loading " << name.c_str() << " API from " << file.c_str() << "\n";;
     dlopen_lock.lock();
     dlopen_entry& entry = api_dlopens_[name];
     entry.name = file;

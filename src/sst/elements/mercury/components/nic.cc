@@ -193,12 +193,10 @@ NIC::incomingCredit(int vn){
 
 bool
 NIC::incomingPacket(int vn){
-  std::cerr << "link_control_ incoming packet\n";
   auto* req = link_control_->recv(vn);
   while (req){
     MyRequest* myreq = static_cast<MyRequest*>(req);
     auto bytes = myreq->size_in_bits/8;
-    std::cerr << "size: " << bytes << std::endl;
     auto* payload = myreq->takePayload();
     MessageEvent* ev = payload ? static_cast<MessageEvent*>(payload) : nullptr;
     Flow* flow = cq_.recv(myreq->flow_id, bytes, ev ? ev->msg() : nullptr);
@@ -206,7 +204,6 @@ NIC::incomingPacket(int vn){
 //             (myreq->size_in_bits/8), myreq->flow_id, vn, (flow ? flow->toString().c_str() : "no flow"));
     if (flow){
       auto* msg = static_cast<NetworkMessage*>(flow);
-      std::cerr << "have all of message\n";
 //      nic_debug("fully received message %s", msg->toString().c_str());
       recvMessage(msg);
     }
@@ -265,7 +262,6 @@ NIC::sendWhatYouCan(int vn) {
 
 bool
 NIC::sendWhatYouCan(int vn, Pending& p) {
-  std::cerr << "trying to send " << p.bytesLeft << std::endl;
   //if (!p.bytesLeft) sst_hg_abort_printf("zero send abort\n");
   uint64_t next_bytes = std::min(uint64_t(mtu_), p.bytesLeft);
   uint32_t next_bits = next_bytes * 8; //this is fine for 32-bits
@@ -369,14 +365,9 @@ NIC::dataIoctl()
 void
 NIC::injectSend(NetworkMessage* netmsg)
 {
-  std::cerr << "NIC::injectSend\n";
-  std::cerr << "my_add_: " << my_addr_ << std::endl;
-  std::cerr << "toaddr:  " << netmsg->toaddr() << std::endl;
   if (netmsg->toaddr() == my_addr_){
-    std::cerr << "intranode send\n";
     intranodeSend(netmsg);
   } else {
-    std::cerr << "internode send\n";
     netmsg->putOnWire();
     internodeSend(netmsg);
   }
@@ -390,8 +381,6 @@ NIC::recvMessage(NetworkMessage* netmsg)
 //    netmsg->flowId(),
 //    NetworkMessage::tostr(netmsg->type()),
 //    int(netmsg->fromaddr()));
-
-  std::cerr << "recvMessage type: " << NetworkMessage::tostr(netmsg->type()) << std::endl;
 
   switch (netmsg->type()) {
     case NetworkMessage::rdma_get_request: {
@@ -412,7 +401,6 @@ NIC::recvMessage(NetworkMessage* netmsg)
     case NetworkMessage::rdma_get_sent_ack:
     case NetworkMessage::payload_sent_ack:
     case NetworkMessage::rdma_put_sent_ack: {
-      //inject(0,netmsg);
       parent_->handle(netmsg);
       break;
     }
@@ -423,10 +411,7 @@ NIC::recvMessage(NetworkMessage* netmsg)
     case NetworkMessage::smsg_send:
     case NetworkMessage::posted_send: {
       netmsg->takeOffWire();
-      std::cerr << "payload size: " << netmsg->payloadBytes() << std::endl;
-      std::cerr << "buffer: " << netmsg->smsgBuffer() << std::endl;
       parent_->handle(netmsg);
-      //inject(0,netmsg);
       break;
     }
     default: {
@@ -514,7 +499,6 @@ NIC::internodeSend(NetworkMessage* netmsg)
 //                      int(netmsg->toaddr()), int(addr()), netmsg->toString().c_str());
 //  }
 
-  std::cerr << "recording message\n";
   recordMessage(netmsg);
 //  nic_debug("internode send payload %llu of size %d %s",
 //    netmsg->flowId(), int(netmsg->byteLength()), netmsg->toString().c_str());
@@ -546,7 +530,6 @@ NIC::internodeSend(NetworkMessage* netmsg)
 void
 NIC::sendToNode(NetworkMessage* payload)
 {
-  std::cerr << "send to node " << payload->typeStr() << std::endl;
   auto forward_ev = newCallback(parent_, &Node::handle, payload);
   parent_->sendExecutionEventNow(forward_ev);
 }

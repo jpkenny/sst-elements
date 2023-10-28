@@ -117,7 +117,6 @@ class SumiServer :
 //    debug_printf(sprockit::dbg::sumi,
 //                 "SumiServer registering rank %d for app %d",
 //                 rank, app_id);
-    std::cerr << "registering rank " << rank << " for app " << app_id << std::endl;
     SimTransport*& slot = procs_[app_id][rank];
     if (slot){
       sst_hg_abort_printf("SumiServer: already registered rank %d for app %d on node %d",
@@ -408,7 +407,6 @@ SimTransport::send(Message* m)
         if (post_header_delay_.ticks()) {
           //parent_->compute(post_header_delay_);
         }
-        std::cerr << "smsg_send, nic_ioctl_\n";
         nic_ioctl_(m);
       }
       break;
@@ -613,10 +611,8 @@ CollectiveDoneMessage*
 CollectiveEngine::allreduce(void* dst, void *src, int nelems, int type_size, int tag, reduce_fxn fxn,
                             int cq_id, Communicator* comm)
 {
-  std::cerr << "CollectiveEngine::allreduce()\n";
   auto* msg = skipCollective(Collective::allreduce, cq_id, comm, dst, src, nelems, type_size, tag);
   if (msg) {
-    std::cerr << "return message\n";
     return msg;
   }
 
@@ -656,7 +652,6 @@ CollectiveEngine::allreduce(void* dst, void *src, int nelems, int type_size, int
     coll = new WilkeHalvingAllreduce(this, dst, src, nelems, type_size, tag, fxn, cq_id, comm);
   }
 
-  std::cerr << "starting collective\n";
   return startCollective(coll);
 }
 
@@ -905,7 +900,6 @@ CollectiveEngine::deliverPending(Collective* coll, int tag, Collective::type_t t
   pending_collective_msgs_[ty].erase(tag);
   CollectiveDoneMessage* dmsg = nullptr;
   for (auto* msg : pending){
-    std::cerr << "CollectiveEngine::deliverPending()\n";
     dmsg = coll->recv(msg);
   }
   return dmsg;
@@ -950,13 +944,11 @@ CollectiveEngine::startCollective(Collective* coll)
   Collective* active = nullptr;
   CollectiveDoneMessage* dmsg=nullptr;
   if (map_entry){
-    std::cerr << "map entry\n";
     active = map_entry;
     coll->start();
     dmsg = active->addActors(coll);
     delete coll;
   } else {
-    std::cerr << "no map entry\n";
     map_entry = active = coll;
     coll->start();
     dmsg = deliverPending(coll, tag, ty);
@@ -968,7 +960,6 @@ CollectiveEngine::startCollective(Collective* coll)
     dmsg = startCollective(active);
   }
 
-  std::cerr << "return dmsg\n";
   return dmsg;
 }
 
@@ -1018,10 +1009,7 @@ CollectiveEngine::incoming(Message* msg)
 {
   cleanUp();
 
-  std::cerr << "msg: " << msg << std::endl;
-
   CollectiveWorkMessage* cmsg = dynamic_cast<CollectiveWorkMessage*>(msg);
-  std::cerr << "cmsg: " << cmsg << std::endl;
   if (cmsg->sendCQ() == -1 && cmsg->recvCQ() == -1){
     sst_hg_abort_printf("both CQs are invalid for %s", msg->toString().c_str())
   }
@@ -1040,7 +1028,6 @@ CollectiveEngine::incoming(Message* msg)
       return nullptr;
   } else {
     Collective* coll = it->second;
-    std::cerr << "CollectiveEngine incoming receive\n";
     auto* dmsg = coll->recv(cmsg);
     while (dmsg && coll->hasSubsequent()){
       delete dmsg;
