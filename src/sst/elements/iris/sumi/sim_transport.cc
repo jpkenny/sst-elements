@@ -905,6 +905,7 @@ CollectiveEngine::deliverPending(Collective* coll, int tag, Collective::type_t t
   pending_collective_msgs_[ty].erase(tag);
   CollectiveDoneMessage* dmsg = nullptr;
   for (auto* msg : pending){
+    std::cerr << "CollectiveEngine::deliverPending()\n";
     dmsg = coll->recv(msg);
   }
   return dmsg;
@@ -1039,6 +1040,7 @@ CollectiveEngine::incoming(Message* msg)
       return nullptr;
   } else {
     Collective* coll = it->second;
+    std::cerr << "CollectiveEngine incoming receive\n";
     auto* dmsg = coll->recv(cmsg);
     while (dmsg && coll->hasSubsequent()){
       delete dmsg;

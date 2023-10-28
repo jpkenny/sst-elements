@@ -89,7 +89,7 @@ NIC::NIC(uint32_t id, SST::Params& params, Node* parent) :
 //NIC::NIC(uint32_t id, SST::Params& params, Node* parent) :
 //    ConnectableSubcomponent(id, "nic", parent),
   parent_(parent), 
-  my_addr_(parent->addr()),
+  my_addr_(parent->addr()-1),
 //  logp_link_(nullptr),
 //  spy_bytes_(nullptr),
 //  xmit_flows_(nullptr),
@@ -193,10 +193,12 @@ NIC::incomingCredit(int vn){
 
 bool
 NIC::incomingPacket(int vn){
+  std::cerr << "link_control_ incoming packet\n";
   auto* req = link_control_->recv(vn);
   while (req){
     MyRequest* myreq = static_cast<MyRequest*>(req);
     auto bytes = myreq->size_in_bits/8;
+    std::cerr << "size: " << bytes << std::endl;
     auto* payload = myreq->takePayload();
     MessageEvent* ev = payload ? static_cast<MessageEvent*>(payload) : nullptr;
     Flow* flow = cq_.recv(myreq->flow_id, bytes, ev ? ev->msg() : nullptr);
@@ -204,6 +206,7 @@ NIC::incomingPacket(int vn){
 //             (myreq->size_in_bits/8), myreq->flow_id, vn, (flow ? flow->toString().c_str() : "no flow"));
     if (flow){
       auto* msg = static_cast<NetworkMessage*>(flow);
+      std::cerr << "have all of message\n";
 //      nic_debug("fully received message %s", msg->toString().c_str());
       recvMessage(msg);
     }
@@ -262,6 +265,8 @@ NIC::sendWhatYouCan(int vn) {
 
 bool
 NIC::sendWhatYouCan(int vn, Pending& p) {
+  std::cerr << "trying to send " << p.bytesLeft << std::endl;
+  //if (!p.bytesLeft) sst_hg_abort_printf("zero send abort\n");
   uint64_t next_bytes = std::min(uint64_t(mtu_), p.bytesLeft);
   uint32_t next_bits = next_bytes * 8; //this is fine for 32-bits
   while (link_control_->spaceToSend(vn, next_bits)){
@@ -365,9 +370,13 @@ void
 NIC::injectSend(NetworkMessage* netmsg)
 {
   std::cerr << "NIC::injectSend\n";
+  std::cerr << "my_add_: " << my_addr_ << std::endl;
+  std::cerr << "toaddr:  " << netmsg->toaddr() << std::endl;
   if (netmsg->toaddr() == my_addr_){
+    std::cerr << "intranode send\n";
     intranodeSend(netmsg);
   } else {
+    std::cerr << "internode send\n";
     netmsg->putOnWire();
     internodeSend(netmsg);
   }
@@ -403,7 +412,7 @@ NIC::recvMessage(NetworkMessage* netmsg)
     case NetworkMessage::rdma_get_sent_ack:
     case NetworkMessage::payload_sent_ack:
     case NetworkMessage::rdma_put_sent_ack: {
-      inject(0,netmsg);
+      //inject(0,netmsg);
       parent_->handle(netmsg);
       break;
     }
@@ -414,8 +423,10 @@ NIC::recvMessage(NetworkMessage* netmsg)
     case NetworkMessage::smsg_send:
     case NetworkMessage::posted_send: {
       netmsg->takeOffWire();
+      std::cerr << "payload size: " << netmsg->payloadBytes() << std::endl;
+      std::cerr << "buffer: " << netmsg->smsgBuffer() << std::endl;
       parent_->handle(netmsg);
-      inject(0,netmsg);
+      //inject(0,netmsg);
       break;
     }
     default: {
