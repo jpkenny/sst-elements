@@ -22,22 +22,18 @@ if __name__ == "__main__":
 
     PlatformDefinition.loadPlatformFile("platform_file_hg_mpi_test")
     PlatformDefinition.setCurrentPlatform("platform_hg_mpi_test")
+    platform = PlatformDefinition.getCurrentPlatform()
+
+    platform.addParamSet("operating_system", {
+        "verbose" : "0",
+        "app1.name" : "runsendrecv",
+        "app1.exe"  : "runsendrecv",
+        "app1.apis" : ["systemAPI:libsystemapi.so", "SimTransport:libsumi.so", "MpiApi:libsst_mpi.so"],
+    })
 
     topo = topoSingle()
     topo.link_latency = "20ns"
     topo.num_ports = 32
-
-    # Set up the routers
-    #router = hr_router()
-    #router.link_bw = "12GB/s"
-    #router.flit_size = "8B"
-    #router.xbar_bw = "50GB/s"
-    #router.input_latency = "40ns"
-    #router.output_latency = "40ns"
-    #router.input_buf_size = "16kB"
-    #router.output_buf_size = "16kB"
-    #router.num_vns = 1
-    #router.xbar_arb = "merlin.xbar_arb_lru"
 
     ep = HgJob(0,2)
 
