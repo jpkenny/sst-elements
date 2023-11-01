@@ -89,7 +89,7 @@ NIC::NIC(uint32_t id, SST::Params& params, Node* parent) :
 //NIC::NIC(uint32_t id, SST::Params& params, Node* parent) :
 //    ConnectableSubcomponent(id, "nic", parent),
   parent_(parent), 
-  my_addr_(parent->addr()),
+  my_addr_(parent->addr()-1),
 //  logp_link_(nullptr),
 //  spy_bytes_(nullptr),
 //  xmit_flows_(nullptr),
@@ -121,9 +121,13 @@ NIC::NIC(uint32_t id, SST::Params& params, Node* parent) :
 //  link_control_ = loadUserSubComponent<SST::Interfaces::SimpleNetwork>("link_control_slot", SST::ComponentInfo::SHARE_PORTS,1);
 //  assert(link_control_);
 
-  pending_.resize(vns_);
-  ack_queue_.resize(vns_);
-  mtu_ = params.find<SST::UnitAlgebra>("mtu").getRoundedValue();
+  //FIXME
+  //pending_.resize(vns_);
+  //ack_queue_.resize(vns_);
+  // mtu_ = params.find<SST::UnitAlgebra>("mtu").getRoundedValue();
+  pending_.resize(1);
+  ack_queue_.resize(1);
+  mtu_ = 4096;
 }
 
 std::string
@@ -258,6 +262,7 @@ NIC::sendWhatYouCan(int vn) {
 
 bool
 NIC::sendWhatYouCan(int vn, Pending& p) {
+  //if (!p.bytesLeft) sst_hg_abort_printf("zero send abort\n");
   uint64_t next_bytes = std::min(uint64_t(mtu_), p.bytesLeft);
   uint32_t next_bits = next_bytes * 8; //this is fine for 32-bits
   while (link_control_->spaceToSend(vn, next_bits)){
@@ -379,9 +384,10 @@ NIC::recvMessage(NetworkMessage* netmsg)
 
   switch (netmsg->type()) {
     case NetworkMessage::rdma_get_request: {
-      netmsg->nicReverse(NetworkMessage::rdma_get_payload);
-      netmsg->putOnWire();
-      internodeSend(netmsg);
+    sst_hg_abort_printf("case NetworkMessage::rdma_get_request unimplemented\n");
+//      netmsg->nicReverse(NetworkMessage::rdma_get_payload);
+//      netmsg->putOnWire();
+//      internodeSend(netmsg);
       break;
     }
     case NetworkMessage::nvram_get_request: {
@@ -395,9 +401,7 @@ NIC::recvMessage(NetworkMessage* netmsg)
     case NetworkMessage::rdma_get_sent_ack:
     case NetworkMessage::payload_sent_ack:
     case NetworkMessage::rdma_put_sent_ack: {
-      sst_hg_abort_printf("case NetworkMessage::rdma_put_sent_ack unimplemented\n");
-//      //node_link_->send(netmsg);
-//      parent_->handle(netmsg);
+      parent_->handle(netmsg);
       break;
     }
     case NetworkMessage::rdma_get_nack:
@@ -406,10 +410,8 @@ NIC::recvMessage(NetworkMessage* netmsg)
     case NetworkMessage::nvram_get_payload:
     case NetworkMessage::smsg_send:
     case NetworkMessage::posted_send: {
-      sst_hg_abort_printf("case NetworkMessage::posted_send unimplemented\n");
-//      netmsg->takeOffWire();
-//      parent_->handle(netmsg);
-//      //node_link_->send(netmsg);
+      netmsg->takeOffWire();
+      parent_->handle(netmsg);
       break;
     }
     default: {
@@ -506,7 +508,7 @@ NIC::internodeSend(NetworkMessage* netmsg)
 //  } else {
 //    doSend(netmsg);
 //  }
-  //doSend(netmsg);
+  doSend(netmsg);
 }
 
 //void

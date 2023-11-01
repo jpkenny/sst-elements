@@ -4,6 +4,9 @@ from sst.merlin.base import *
 platdef = PlatformDefinition("platform_hg_mpi_test")
 PlatformDefinition.registerPlatformDefinition(platdef)
 
+platdef.addParamSet("operating_system",{
+    "verbose" : "0",
+})
 
 platdef.addParamSet("topology",{
     "link_latency" : "20ns",

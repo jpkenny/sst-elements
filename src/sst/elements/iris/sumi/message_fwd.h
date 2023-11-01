@@ -50,5 +50,7 @@ namespace SST::Iris::sumi {
 
 class Message;
 
+class ProtocolMessage;
+
 }
 

@@ -94,7 +94,6 @@ WilkeAllreduceActor::initDag()
   VirtualRankMap rank_map(dom_nproc_, virtual_nproc);
   int my_roles[2];
   int num_roles = rank_map.realToVirtual(dom_me_, my_roles);
-
   int num_doubling_rounds = log2nproc;
 
 //  debug_printf(sumi_collective,

@@ -227,14 +227,14 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Compo
   completion_queues_(1),
 //  spy_bytes_(nullptr),
   parent_app_(parent),
-//  default_progress_queue_(parent->os()),
+  default_progress_queue_(parent->os()),
   nic_ioctl_(parent->os()->nicDataIoctl()),
   qos_analysis_(nullptr),
   pragma_block_set_(false),
   pragma_timeout_(-1)
 {
-//  completion_queues_[0] = std::bind(&DefaultProgressQueue::incoming,
-//                                    &default_progress_queue_, 0, std::placeholders::_1);
+  completion_queues_[0] = std::bind(&DefaultProgressQueue::incoming,
+                                    &default_progress_queue_, 0, std::placeholders::_1);
   null_completion_notify_ = std::bind(&SimTransport::drop, this, std::placeholders::_1);
   rank_ = sid().task_;
   auto* server_lib = parent_->os()->lib(server_libname_);
@@ -258,7 +258,7 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Compo
 
 //  rank_mapper_ = sstmac::sw::TaskMapping::globalMapping(sid().app_);
 //  nproc_ = rank_mapper_->nproc();
-  nproc_ = 1;
+  nproc_ = 2;
 
   auto qos_params = params.get_scoped_params("qos");
   auto qos_name = qos_params.find<std::string>("name", "null");
@@ -371,11 +371,11 @@ SimTransport::compute(SST::Hg::TimeDelta t)
 void
 SimTransport::send(Message* m)
 {
-  int qos = qos_analysis_->selectQoS(m);
-  m->setQoS(qos);
-  if (!m->started()){
-    m->setTimeStarted(parent_app_->now());
-  }
+//  int qos = qos_analysis_->selectQoS(m);
+//  m->setQoS(qos);
+//  if (!m->started()){
+//    m->setTimeStarted(parent_app_->now());
+//  }
 
 //  if (spy_bytes_){
 //    switch(m->sstmac::hw::NetworkMessage::type()){
@@ -612,7 +612,9 @@ CollectiveEngine::allreduce(void* dst, void *src, int nelems, int type_size, int
                             int cq_id, Communicator* comm)
 {
   auto* msg = skipCollective(Collective::allreduce, cq_id, comm, dst, src, nelems, type_size, tag);
-  if (msg) return msg;
+  if (msg) {
+    return msg;
+  }
 
   if (!comm) comm = global_domain_;
 

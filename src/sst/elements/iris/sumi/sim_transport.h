@@ -98,12 +98,12 @@ class SimTransport : public Transport, public SST::Hg::API {
   SST_ELI_REGISTER_DERIVED(
     API,
     SimTransport,
-    "iris",
-    "sumi",
+    "hg",
+    "SimTransport",
     SST_ELI_ELEMENT_VERSION(1,0,0),
     "provides the SUMI transport API")
 
-  //using DefaultProgressQueue = sstmac::sw::MultiProgressQueue<Message>;
+  using DefaultProgressQueue = SST::Hg::MultiProgressQueue<Message>;
 
   SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Component* comp);
 
@@ -118,7 +118,9 @@ class SimTransport : public Transport, public SST::Hg::API {
   ~SimTransport() override;
 
   SST::Hg::NodeId rankToNode(int rank) const override {
+    // FIXME
     //return rank_mapper_->rankToNode(rank);
+    return SST::Hg::NodeId(rank);
   }
 
   /**
@@ -204,7 +206,7 @@ class SimTransport : public Transport, public SST::Hg::API {
   */
   Message* poll(bool blocking, int cq_id, double timeout = -1) override {
     configureNextPoll(blocking, timeout);
-    //return default_progress_queue_.find(cq_id, blocking, timeout);
+    return default_progress_queue_.find(cq_id, blocking, timeout);
   }
 
   /**
@@ -217,7 +219,7 @@ class SimTransport : public Transport, public SST::Hg::API {
   */
   Message* poll(bool blocking, double timeout = -1) override {
     configureNextPoll(blocking, timeout);
-    //return default_progress_queue_.find_any(blocking, timeout);
+    return default_progress_queue_.find_any(blocking, timeout);
   }
 
   void setPragmaBlocking(bool cond, double timeout = -1){
@@ -256,9 +258,9 @@ class SimTransport : public Transport, public SST::Hg::API {
 
   int allocateDefaultCq() override {
     int id = allocateCqId();
-//    allocateCq(id, std::bind(&DefaultProgressQueue::incoming,
-//                          &default_progress_queue_,
-//                          id, std::placeholders::_1));
+    allocateCq(id, std::bind(&DefaultProgressQueue::incoming,
+                          &default_progress_queue_,
+                          id, std::placeholders::_1));
     return id;
   }
 
@@ -300,7 +302,7 @@ class SimTransport : public Transport, public SST::Hg::API {
 
   //SST::Hg::TaskMapping::ptr rank_mapper_;
 
-//  DefaultProgressQueue default_progress_queue_;
+  DefaultProgressQueue default_progress_queue_;
 
   std::function<void(SST::Hg::NetworkMessage*)> nic_ioctl_;
 
