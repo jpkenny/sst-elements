@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
+#include <output.h>
 #include <sumi/bcast.h>
 #include <sumi/communicator.h>
 #include <sumi/transport.h>
@@ -122,9 +123,8 @@ BinaryTreeBcastActor::init_child(int offsetMe, int roundNproc, int nproc)
   addAction(recv);
 
   int windowStop = std::min(nproc, (windowSplit + windowSize));
-//  debug_printf(sprockit::dbg::sumi_collective_init,
-//    "Rank %s is in window %d->%d:%d in initing bcast",
-//    rankStr().c_str(), windowStart, windowSplit, windowSplit + windowSize);
+  output.output("Rank %s is in window %d->%d:%d in initing bcast",
+    rankStr().c_str(), windowStart, windowSplit, windowSplit + windowSize);
 
   if (offsetMe % 2 == 0){
     init_internal(offsetMe, windowSize, windowStop, recv);

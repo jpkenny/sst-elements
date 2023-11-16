@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
+#include <output.h>
 #include <cstring>
 #include <sumi/transport.h>
 #include <sumi/allreduce.h>
@@ -105,6 +106,8 @@ class SumiServer :
 {
 
  public:
+ Output output;
+
   SumiServer(SimTransport* tport)
     : Service(tport->serverLibname(),
        SST::Hg::SoftwareId(-1, -1), //belongs to no application
@@ -114,9 +117,7 @@ class SumiServer :
 
   void registerProc(int rank, SimTransport* proc){
     int app_id = proc->sid().app_;
-//    debug_printf(sprockit::dbg::sumi,
-//                 "SumiServer registering rank %d for app %d",
-//                 rank, app_id);
+    output.output("SumiServer registering rank %d for app %d", rank, app_id);
     SimTransport*& slot = procs_[app_id][rank];
     if (slot){
       sst_hg_abort_printf("SumiServer: already registered rank %d for app %d on node %d",
@@ -153,14 +154,11 @@ class SumiServer :
 
   void incomingRequest(SST::Hg::Request *req) override {
     Message* smsg = safe_cast(Message, req);
-//    debug_printf(sprockit::dbg::sumi,
-//                 "SumiServer %d: incoming %s",
-//                 os_->addr(), smsg->toString().c_str());
+    output.output("SumiServer %d: incoming %s", os_->addr(), smsg->toString().c_str());
     SimTransport* tport = procs_[smsg->aid()][smsg->targetRank()];
     if (!tport){
-//      debug_printf(sprockit::dbg::sumi,
-//                  "SumiServer %d: message pending to app %d, target %d",
-//                  os_->addr(), smsg->aid(), smsg->targetRank());
+      output.output("SumiServer %d: message pending to app %d, target %d",
+        os_->addr(), smsg->aid(), smsg->targetRank());
       pending_.push_back(smsg);
     } else {
       tport->incomingMessage(smsg);
@@ -394,8 +392,7 @@ SimTransport::send(Message* m)
     case SST::Hg::NetworkMessage::smsg_send:
       if (m->recver() == rank_){
         //deliver to self
-//        debug_printf(sprockit::dbg::sumi,
-//          "Rank %d SUMI sending self message", rank_);
+        output.output("Rank %d SUMI sending self message", rank_);
         if (m->needsRecvAck()){
           completion_queues_[m->recvCQ()](m);
         }
@@ -496,14 +493,14 @@ SimTransport::incomingMessage(Message *msg)
   int cq = msg->isNicAck() ? msg->sendCQ() : msg->recvCQ();
   if (cq != Message::no_ack){
     if (cq >= completion_queues_.size()){
-      //debug_printf(sprockit::dbg::sumi, "No CQ yet for %s", msg->toString().c_str());
+      output.output("No CQ yet for %s", msg->toString().c_str());
       held_[cq].push_back(msg);
     } else {
-      //debug_printf(sprockit::dbg::sumi, "CQ %d handle %s", cq, msg->toString().c_str());
+      output.output("CQ %d handle %s", cq, msg->toString().c_str());
       completion_queues_[cq](msg);
     }
   } else {
-    //debug_printf(sprockit::dbg::sumi, "Dropping message without CQ: %s", msg->toString().c_str());
+    output.output("Dropping message without CQ: %s", msg->toString().c_str());
     null_completion_notify_(msg);
     delete msg;
   }

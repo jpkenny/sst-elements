@@ -70,6 +70,8 @@ class WilkeAllreduceActor :
 
   void bufferAction(void *dst_buffer, void *msg_buffer, Action* ac) override;
 
+  Output output;
+
  private:
   bool isLowerPartner(int virtual_me, int partner_gap);
   void finalizeBuffers() override;

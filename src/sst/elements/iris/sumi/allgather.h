@@ -44,6 +44,7 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #pragma once
 
+#include <output.h>
 #include <sumi/collective.h>
 #include <sumi/collective_actor.h>
 #include <sumi/collective_message.h>
@@ -92,6 +93,8 @@ class BruckActor : public DagCollectiveActor
   std::string toString() const override {
     return std::string("bruck actor ") + Collective::tostr(type_);
   }
+
+  Output output;
 
  private:
   void finalize() override;

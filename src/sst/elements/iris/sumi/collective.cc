@@ -107,9 +107,8 @@ Collective::Collective(type_t ty, CollectiveEngine* engine, int tag, int cq_id, 
   type_(ty), 
   subsequent_(nullptr)
 {
-//  debug_printf(sumi_collective | sumi_vote,
-//    "Rank %d=%d built collective of size %d in role=%d, tag=%d",
-//    my_api_->rank(), comm_->myCommRank(), comm_->nproc(), dom_me_, tag);
+  output.output("Rank %d=%d built collective of size %d in role=%d, tag=%d",
+    my_api_->rank(), comm_->myCommRank(), comm_->nproc(), dom_me_, tag);
 }
 
 CollectiveDoneMessage*
@@ -167,27 +166,23 @@ DagCollective::initActors()
 CollectiveDoneMessage*
 DagCollective::recv(int target, CollectiveWorkMessage* msg)
 {
-//  debug_printf(sumi_collective | sprockit::dbg::sumi,
-//    "Rank %d=%d %s got from %d on tag=%d for target %d",
-//    my_api_->rank(), dom_me_,
-//    Collective::tostr(type_),
-//    msg->sender(), tag_, target);
+  output.output("Rank %d=%d %s got from %d on tag=%d for target %d",
+    my_api_->rank(), dom_me_, Collective::tostr(type_), msg->sender(), tag_, target);
 
   DagCollectiveActor* vr = my_actors_[target];
   if (!vr){
     //data-centric collective - this actor does not exist
     pending_.push_back(msg);
-//      debug_printf(sumi_collective | sprockit::dbg::sumi,
-//                  "dag actor %d does not yet exit - queueing %s",
-//                  target, msg->toString().c_str())
+    output.output("dag actor %d does not yet exit - queueing %s",
+      target, msg->toString().c_str());
     return nullptr;
   } else {
     vr->recv(msg);
     if (vr->complete()){
-//      debug_printf(sumi_collective, "Rank %d=%d returning completion", my_api_->rank(), dom_me_);
+      output.output("Rank %d=%d returning completion", my_api_->rank(), dom_me_);
       return vr->doneMsg();
     } else {
-//      debug_printf(sumi_collective, "Rank %d=%d not yet complete", my_api_->rank(), dom_me_);
+      output.output("Rank %d=%d not yet complete", my_api_->rank(), dom_me_);
       return nullptr;
     }
   }

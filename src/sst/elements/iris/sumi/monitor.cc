@@ -61,18 +61,15 @@ FunctionSet::timeoutAllListeners(int dst)
   int idx = 0;
   for (it=tmp.begin(); it != end; ++it, ++idx){
     TimeoutFunction* func = *it;
-//    debug_printf(sprockit::dbg::sumi_ping,
-//     "\ttiming out ping %p to %d",
-//      func, dst);
-//    func->time_out(dst);
+    output.output("\ttiming out ping %p to %d", func, dst);
+    func->time_out(dst);
   }
 }
 
 int
 FunctionSet::erase(TimeoutFunction* func)
 {
-//  debug_printf(sprockit::dbg::sumi_ping,
-//   "\terasing ping %p", func);
+  output.output("\terasing ping %p", func);
 
   std::list<TimeoutFunction*>::iterator tmp,
     it = listeners_.begin(),

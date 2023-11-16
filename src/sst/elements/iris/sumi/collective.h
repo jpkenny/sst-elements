@@ -44,6 +44,7 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #pragma once
 
+#include <output.h>
 #include <sumi/timeout.h>
 #include <sumi/collective_message_fwd.h>
 #include <sumi/transport_fwd.h>
@@ -152,6 +153,8 @@ class Collective
     subsequent_ = nullptr;
     return ret;
   }
+
+  Output output;
 
  protected:
   Collective(type_t type, CollectiveEngine* engine, int tag, int cq_id, Communicator* comm);
