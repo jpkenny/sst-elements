@@ -2,7 +2,52 @@
 #
 #
 
+AM_CPPFLAGS += \
+  -I$(top_srcdir)/src/sst/elements \
+  -I$(top_srcdir)/src/sst/elements/mercury \
+  -I$(top_srcdir)/src/sst/elements/iris \
+  -I$(top_srcdir)/src/sst/elements/iris/libfabric/prov \
+  -I$(top_srcdir)/src/sst/elements/iris/libfabric/prov/include \
+  -I$(top_srcdir)/src/sst/elements/iris/libfabric/prov/sstmac/include \
+  -I$(top_srcdir)/src/sst/elements/iris/libfabric/prov/hook/include/ \
+  -I$(top_srcdir)/src/sst/elements/iris/libfabric/include \
+  -DSSTMAC_INTEGRATED_SST_CORE=1
+
+extra_sources = \
+  ../../mercury/common/component.cc \
+  ../../mercury/common/timestamp.cc \
+  ../../mercury/components/operating_system.cc \
+  ../../mercury/components/nic.cc \
+  ../../mercury/components/node.cc \
+  ../../mercury/hardware/common/packet.cc \
+  ../../mercury/hardware/network/network_message.cc \
+  ../../mercury/operating_system/libraries/api.cc \
+  ../../mercury/operating_system/libraries/library.cc \
+  ../../mercury/operating_system/threading/stack_alloc.cc \
+  ../../mercury/operating_system/threading/thread_lock.cc \
+  ../sumi/collective_message.cc \
+  ../sumi/message.cc \
+  ../sumi/sim_transport.cc
+
 sstmac_sources = \
+  prov/sprockit/debug.cc \
+  prov/sprockit/keyword_registration.cc \
+  prov/sprockit/output.cc \
+  prov/sprockit/statics.cc \
+  prov/sstmac/common/event_scheduler.cc \
+  prov/sstmac/common/thread_lock.cc \
+  prov/sstmac/common/timestamp.cc \
+  prov/sstmac/common/stats/ftq_tag.cc \
+  prov/sstmac/hardware/memory/memory_model.cc \
+  prov/sstmac/hardware/network/network_message.cc \
+  prov/sstmac/hardware/nic/nic.cc \
+  prov/sstmac/hardware/node/node.cc \
+  prov/sstmac/software/api/api.cc \
+  prov/sstmac/software/launch/app_launcher.cc \
+  prov/sstmac/software/launch/job_launcher.cc \
+  prov/sstmac/software/libraries/library.cc \
+  prov/sstmac/software/process/operating_system.cc \
+  prov/sstmac/software/threading/stack_alloc.cc \
   prov/sstmac/src/sstmac_av.cc \
   prov/sstmac/src/sstmac_cm.cc \
   prov/sstmac/src/sstmac_cntr.cc \
@@ -17,27 +62,6 @@ sstmac_sources = \
   prov/sstmac/src/sstmac_wait.cc \
   prov/sstmac/src/sstmac_sumi.cpp
         
-sstmac_headers = \
-  prov/sstmac/include/fi_ext_sstmac.h \
-  prov/sstmac/include/fi_ext_sstmac.h \
-  prov/sstmac/include/sstmac.h \
-  prov/sstmac/include/sstmac_av.h \
-  prov/sstmac/include/sstmac_ep.h \
-  prov/sstmac/include/sstmac_poll.h \
-  prov/sstmac/include/sstmac_wait.h
-
-sstmac_rdma_headers = \
-  prov/sstmac/include/rdma/fi_direct.h \
-  prov/sstmac/include/rdma/fi_direct_atomic.h \
-  prov/sstmac/include/rdma/fi_direct_atomic_def.h \
-  prov/sstmac/include/rdma/fi_direct_cm.h \
-  prov/sstmac/include/rdma/fi_direct_domain.h \
-  prov/sstmac/include/rdma/fi_direct_endpoint.h \
-  prov/sstmac/include/rdma/fi_direct_eq.h \
-  prov/sstmac/include/rdma/fi_direct_rma.h \
-  prov/sstmac/include/rdma/fi_direct_tagged.h \
-  prov/sstmac/include/rdma/fi_direct_trigger.h
-
 common_sources = \
   src/log.c \
   src/common.c \
@@ -89,75 +113,15 @@ libfabric_sources = \
   prov/hook/src/hook_domain.c \
   prov/hook/src/hook_eq.c
 
-libfabric_headers = \
-  include/ofi.h \
-  include/ofi_abi.h \
-  include/ofi_atom.h \
-  include/ofi_enosys.h \
-  include/ofi_file.h \
-  include/ofi_hook.h \
-  include/ofi_indexer.h \
-  include/ofi_iov.h \
-  include/ofi_list.h \
-  include/ofi_bitmask.h \
-  include/shared/ofi_str.h \
-  include/ofi_lock.h \
-  include/ofi_mem.h \
-  include/ofi_osd.h \
-  include/ofi_proto.h \
-  include/ofi_recvwin.h \
-  include/ofi_rbuf.h \
-  include/ofi_shm.h \
-  include/ofi_signal.h \
-  include/ofi_epoll.h \
-  include/ofi_tree.h \
-  include/ofi_util.h \
-  include/ofi_atomic.h \
-  include/ofi_mr.h \
-  include/ofi_net.h \
-  include/ofi_perf.h \
-  include/ofi_coll.h \
-  include/fasthash.h \
-  include/rbtree.h \
-  include/uthash.h \
-  include/ofi_prov.h \
-  include/rdma/providers/fi_log.h \
-  include/rdma/providers/fi_prov.h 
+compdir = $(pkglibdir)
+comp_LTLIBRARIES = libfabric.la
+libfabric_la_SOURCES = \
+  $(extra_sources) \
+  $(sstmac_sources) \
+  $(common_sources) \
+  $(libfabric_sources)
 
-rdmainclude_headers = \
-  prov/sstmac/include/fi_ext_sstmac.h \
-  include/rdma/fabric.h \
-  include/rdma/fi_atomic.h \
-  include/rdma/fi_cm.h \
-  include/rdma/fi_collective.h \
-  include/rdma/fi_domain.h \
-  include/rdma/fi_eq.h \
-  include/rdma/fi_rma.h \
-  include/rdma/fi_endpoint.h \
-  include/rdma/fi_errno.h \
-  include/rdma/fi_tagged.h \
-  include/rdma/fi_trigger.h
+libfabric_la_LDFLAGS = -module -avoid-version
 
-nodist_rdmainclude_headers = \
-  prov/sstmac/include/rdma/fi_direct_domain.h \
-  prov/sstmac/include/rdma/fi_direct_endpoint.h \
-  prov/sstmac/include/rdma/fi_direct_tagged.h \
-  prov/sstmac/include/rdma/fi_direct_rma.h \
-  prov/sstmac/include/rdma/fi_direct_atomic_def.h \
-  prov/sstmac/include/rdma/fi_direct_atomic.h \
-  prov/sstmac/include/rdma/fi_direct_cm.h \
-  prov/sstmac/include/rdma/fi_direct_eq.h \
-  prov/sstmac/include/rdma/fi_direct_trigger.h \
-  prov/sstmac/include/rdma/fi_direct.h
-
-#compdir = $(pkglibdir)
-#comp_LTLIBRARIES = libfabric.la
-#libfabric_la_SOURCES = \
-#  $(sstmac_sources) \
-#  $(sstmac_headers) \
-#  $(sstmac_rdma_headers) \
-#  $(common_sources) \
-#  $(libfabric_sources) \
-#  $(libfabric_headers) \
-#  $(rdmainclude_headers) \
-#  $(nodist_rdmainclude_headers)
+install-exec-hook:
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     libfabric=$(abs_srcdir)

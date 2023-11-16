@@ -42,41 +42,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
+#ifndef NETWORK_ID_H
+#define NETWORK_ID_H
 
+#include <sstream>
 #include <stdint.h>
+#include <sstmac/hardware/common/unique_id.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace sstmac {
+namespace hw {
 
-// sentinel value that is a reserved address from mmap
-// but points to no real data
-// used to fake a real pointer, but cannot be accessed
-extern void* sst_hg_nullptr;
-// for cases in which send/recv buffers cannot alias
-// this creates two pointers that won't overlap
-extern void* sst_hg_nullptr_send;
-extern void* sst_hg_nullptr_recv;
-// the maximum pointer in the reserved mmap range
-// all pointers between sstmac_nullptr and this
-// are not real data
-extern void* sst_hg_nullptr_range_max;
+typedef UniqueEventId network_id;
 
-static inline bool isNonNullBuffer(const void* buf){
-  if (buf){
-    //see if buffer falls in the reserved "null buffer" range
-    return ( (buf < sst_hg_nullptr) || (buf >= sst_hg_nullptr_range_max) );
-  } else {
-    return false;
-  }
+}
 }
 
-static inline bool isNullBuffer(const void* buf){
-  return !(isNonNullBuffer(buf));
-}
-
-#ifdef __cplusplus
-}
-#endif
-
+#endif // NETWORK_ID_H

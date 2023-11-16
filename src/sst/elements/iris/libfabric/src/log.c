@@ -155,7 +155,7 @@ void DEFAULT_SYMVER_PRE(fi_log)(const struct fi_provider *prov, enum fi_log_leve
 
 	va_list vargs;
 
-	size = snprintf(buf, sizeof(buf), "%s:%d:%s:%s:%s():%d<%s> ", PACKAGE,
+	size = snprintf(buf, sizeof(buf), "%s:%d:%s:%s:%s():%d<%s> ", "libfabric",
 			pid, prov->name, log_subsys[subsys], func, line,
 			log_levels[level]);
 

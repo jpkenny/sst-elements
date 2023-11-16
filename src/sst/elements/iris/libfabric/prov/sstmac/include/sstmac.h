@@ -46,7 +46,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #define _SSTMAC_H_
 
 #if HAVE_CONFIG_H
-#include <config.h>
+// #include <config.h>
 #endif /* HAVE_CONFIG_H */
 
 #include <stdlib.h>
@@ -73,6 +73,8 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <ofi_file.h>
 
 #include "fi_ext_sstmac.h"
+
+#include "sstmac_sumi.hpp"
 
 
 #ifdef __cplusplus
@@ -592,7 +594,7 @@ struct RecvQueue {
   std::list<FabricMessage*> unexp_recvs;
   std::list<FabricMessage*> unexp_tagged_recvs;
 
-  sstmac::sw::SingleProgressQueue<sumi::Message> progress;
+  sstmac::sw::SingleProgressQueue<SST::Iris::sumi::Message> progress;
 
   void finishMatch(void* buf, uint32_t size, FabricMessage* fmsg);
 
@@ -600,7 +602,7 @@ struct RecvQueue {
 
   void postRecv(uint32_t size, void* buf, uint64_t tag, uint64_t tag_ignore, bool tagged);
 
-  void incoming(sumi::Message* msg);
+  void incoming(SST::Iris::sumi::Message* msg);
 
 };
 

@@ -13,9 +13,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef sstmac_software_process_OPERATING_SYSTEM_FWD_H
-#define sstmac_software_process_OPERATING_SYSTEM_FWD_H
-
 namespace SST {
 namespace Hg {
 
@@ -23,5 +20,3 @@ class OperatingSystem;
 
 }
 }
-
-#endif // OPERATING_SYSTEM_FWD_H

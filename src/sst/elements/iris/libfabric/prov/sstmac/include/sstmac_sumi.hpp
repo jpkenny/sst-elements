@@ -47,7 +47,7 @@
 #include <sumi/transport.h>
 #include <sumi/sim_transport.h>
 
-class FabricMessage : public sumi::Message {
+class FabricMessage : public SST::Iris::sumi::Message {
  public:
   constexpr static uint64_t no_tag = std::numeric_limits<uint64_t>::max();
   constexpr static uint64_t no_imm_data = std::numeric_limits<uint64_t>::max();
@@ -55,7 +55,7 @@ class FabricMessage : public sumi::Message {
   template <class... Args>
   FabricMessage(uint64_t tag, uint64_t flags, uint64_t imm_data, void* ctx,
                 Args&&... args) :
-    sumi::Message(std::forward<Args>(args)...),
+    SST::Iris::sumi::Message(std::forward<Args>(args)...),
     tag_(tag),
     flags_(flags),
     imm_data_(imm_data),
@@ -86,7 +86,7 @@ class FabricMessage : public sumi::Message {
   void* context_;
 };
 
-class FabricTransport : public sumi::SimTransport {
+class FabricTransport : public SST::Iris::sumi::SimTransport {
 
  public:
   SST_ELI_REGISTER_DERIVED(
@@ -99,15 +99,15 @@ class FabricTransport : public sumi::SimTransport {
 
   public:
     FabricTransport(SST::Params& params,
-                    sstmac::sw::App* parent,
+                    SST::Hg::App* parent,
                     SST::Component* comp) :
-      sumi::SimTransport(params, parent, comp),
+      SST::Iris::sumi::SimTransport(params, parent, comp),
       inited_(false)
   {
   }
 
   void init() override {
-    sumi::SimTransport::init();
+	  SST::Iris::sumi::SimTransport::init();
     inited_ = true;
   }
 

@@ -69,7 +69,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <sst/core/eli/elementbuilder.h>
 #include <mercury/common/util.h>
 
-#include <sumi/null_buffer.h>
+#include <mercury/common/null_buffer.h>
 
 #include <unordered_map>
 #include <queue>

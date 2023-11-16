@@ -156,7 +156,7 @@ static ssize_t sstmaci_cq_read(bool blocking,
   size_t done = 0;
   while (done < count){
     double timeout_s = (blocking && timeout > 0) ? timeout*1e-3 : -1;
-    sumi::Message* msg = rq->progress.front(blocking, timeout_s);
+    SST::Iris::sumi::Message* msg = rq->progress.front(blocking, timeout_s);
     if (!msg){
       break;
     }
@@ -312,9 +312,9 @@ void RecvQueue::postRecv(uint32_t size, void* buf, uint64_t tag, uint64_t tag_ig
   }
 }
 
-void RecvQueue::incoming(sumi::Message* msg){
+void RecvQueue::incoming(SST::Iris::sumi::Message* msg){
   FabricMessage* fmsg = static_cast<FabricMessage*>(msg);
-  if (fmsg->sstmac::hw::NetworkMessage::type() == sstmac::hw::NetworkMessage::posted_send){
+  if (fmsg->SST::Hg::NetworkMessage::type() == SST::Hg::NetworkMessage::posted_send){
     if (fmsg->flags() & FI_TAGGED){
       matchTaggedRecv(fmsg);
     } else {
