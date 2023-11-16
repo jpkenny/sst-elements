@@ -48,8 +48,8 @@ Out* __safe_cast__(const char*  /*objname*/,
   Out* out = dynamic_cast<Out*>(in);
   if (!out) {
     sst_hg_abort_printf("%s: failed to cast object at %s:%d\n%s",
-                     error_msg, file, line,
-                     in ? toString(in).c_str() : "null");
+                     error_msg, file, line, "null");
+                     //in ? toString(in).c_str() : "null");
   }
   return out;
 }

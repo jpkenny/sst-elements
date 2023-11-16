@@ -94,7 +94,6 @@ WilkeAllreduceActor::initDag()
   VirtualRankMap rank_map(dom_nproc_, virtual_nproc);
   int my_roles[2];
   int num_roles = rank_map.realToVirtual(dom_me_, my_roles);
-
   int num_doubling_rounds = log2nproc;
 
   output.output("Rank %s configured allreduce for tag=%d for nproc=%d(%d) virtualized to n=%d over %d rounds",

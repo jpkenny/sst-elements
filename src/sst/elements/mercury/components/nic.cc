@@ -70,6 +70,8 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #define DEFAULT_NEGLIGIBLE_SIZE 256
 
+static std::string _tick_spacing_string_("1ps");
+
 namespace SST {
 namespace Hg {
 
@@ -83,9 +85,11 @@ NicEvent::serialize_order(serializer &ser)
 }
 
 NIC::NIC(uint32_t id, SST::Params& params, Node* parent) :
-  ConnectableSubcomponent(id, "nic", parent), 
+  SST::Hg::SubComponent(id),
+//NIC::NIC(uint32_t id, SST::Params& params, Node* parent) :
+//    ConnectableSubcomponent(id, "nic", parent),
   parent_(parent), 
-  my_addr_(parent->addr()),
+  my_addr_(parent->addr()-1),
 //  logp_link_(nullptr),
 //  spy_bytes_(nullptr),
 //  xmit_flows_(nullptr),
@@ -107,25 +111,23 @@ NIC::NIC(uint32_t id, SST::Params& params, Node* parent) :
   int slot_id = 0;
   /** All bandwidth and other parameters get pulled in
       through params now, not through initialize */
-  link_control_ = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>(
-                               params.find<std::string>("module"),
-                               "LinkControl", slot_id,
-                               SST::ComponentInfo::SHARE_PORTS | SST::ComponentInfo::INSERT_STATS,
-                               params, vns_);
+//  link_control_ = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>(
+//                               "merlin.linkcontrol",
+//                               "LinkControl", slot_id,
+//                               SST::ComponentInfo::SHARE_PORTS | SST::ComponentInfo::INSERT_STATS,
+//                               params, vns_);
 
-  pending_.resize(vns_);
-  ack_queue_.resize(vns_);
-  mtu_ = params.find<SST::UnitAlgebra>("mtu").getRoundedValue();
+  //out_->debug(CALL_INFO, 1, 0, "loading hg.NIC\n");
+//  link_control_ = loadUserSubComponent<SST::Interfaces::SimpleNetwork>("link_control_slot", SST::ComponentInfo::SHARE_PORTS,1);
+//  assert(link_control_);
 
-  auto recv_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC>(this,&SST::Hg::NIC::incomingPacket);
-  auto send_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC>(this,&SST::Hg::NIC::incomingCredit);
-
-  if (params.contains("test_size")){
-    test_size_ = params.find<SST::UnitAlgebra>("test_size").getRoundedValue();
-  }
-
-  link_control_->setNotifyOnReceive(recv_notify);
-  link_control_->setNotifyOnSend(send_notify);
+  //FIXME
+  //pending_.resize(vns_);
+  //ack_queue_.resize(vns_);
+  // mtu_ = params.find<SST::UnitAlgebra>("mtu").getRoundedValue();
+  pending_.resize(1);
+  ack_queue_.resize(1);
+  mtu_ = 4096;
 }
 
 std::string
@@ -140,6 +142,12 @@ NIC::sendManagerMsg(NetworkMessage *msg) {
 
 void
 NIC::init(unsigned int phase) {
+  if (phase == 0) {
+    auto recv_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC>(this,&SST::Hg::NIC::incomingPacket);
+    auto send_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC>(this,&SST::Hg::NIC::incomingCredit);
+    link_control_->setNotifyOnReceive(recv_notify);
+    link_control_->setNotifyOnSend(send_notify);
+  }
   link_control_->init(phase);
 }
 
@@ -254,6 +262,7 @@ NIC::sendWhatYouCan(int vn) {
 
 bool
 NIC::sendWhatYouCan(int vn, Pending& p) {
+  //if (!p.bytesLeft) sst_hg_abort_printf("zero send abort\n");
   uint64_t next_bytes = std::min(uint64_t(mtu_), p.bytesLeft);
   uint32_t next_bits = next_bytes * 8; //this is fine for 32-bits
   while (link_control_->spaceToSend(vn, next_bits)){
@@ -375,9 +384,10 @@ NIC::recvMessage(NetworkMessage* netmsg)
 
   switch (netmsg->type()) {
     case NetworkMessage::rdma_get_request: {
-      netmsg->nicReverse(NetworkMessage::rdma_get_payload);
-      netmsg->putOnWire();
-      internodeSend(netmsg);
+    sst_hg_abort_printf("case NetworkMessage::rdma_get_request unimplemented\n");
+//      netmsg->nicReverse(NetworkMessage::rdma_get_payload);
+//      netmsg->putOnWire();
+//      internodeSend(netmsg);
       break;
     }
     case NetworkMessage::nvram_get_request: {
@@ -391,9 +401,7 @@ NIC::recvMessage(NetworkMessage* netmsg)
     case NetworkMessage::rdma_get_sent_ack:
     case NetworkMessage::payload_sent_ack:
     case NetworkMessage::rdma_put_sent_ack: {
-      sst_hg_abort_printf("case NetworkMessage::rdma_put_sent_ack unimplemented\n");
-//      //node_link_->send(netmsg);
-//      parent_->handle(netmsg);
+      parent_->handle(netmsg);
       break;
     }
     case NetworkMessage::rdma_get_nack:
@@ -402,10 +410,8 @@ NIC::recvMessage(NetworkMessage* netmsg)
     case NetworkMessage::nvram_get_payload:
     case NetworkMessage::smsg_send:
     case NetworkMessage::posted_send: {
-      sst_hg_abort_printf("case NetworkMessage::posted_send unimplemented\n");
-//      netmsg->takeOffWire();
-//      parent_->handle(netmsg);
-//      //node_link_->send(netmsg);
+      netmsg->takeOffWire();
+      parent_->handle(netmsg);
       break;
     }
     default: {

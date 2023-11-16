@@ -67,20 +67,13 @@ class EventLink {
 
   using ptr = std::unique_ptr<EventLink>;
 
-  virtual ~EventLink();
+  virtual ~EventLink() {}
 
-  std::string toString() const {
-    return "self link: " + name_;
-  }
+  std::string toString() const;
 
-  void send(TimeDelta delay, Event* ev){
-    //the link should have a time converter built-in?
-    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
-  }
+  void send(TimeDelta delay, Event* ev);
 
-  void send(Event* ev){
-    send(selflat_, ev);
-  }
+  void send(Event* ev);
 
  private:
   SST::Link* link_;

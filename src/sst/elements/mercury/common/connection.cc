@@ -65,6 +65,7 @@ ConnectableSubcomponent::initInputLink(int src_outport, int dst_inport)
     sst_hg_abort_printf("cannot find input link for port %s on connectable component %s",
                       name.c_str(), getName().c_str());
   }
+  EventLink *idk = new EventLink(name, TimeDelta(), link);
   EventLink::ptr ev_link{new EventLink(name, TimeDelta(), link)};
   connectInput(src_outport, dst_inport, std::move(ev_link));
 }

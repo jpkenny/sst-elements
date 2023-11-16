@@ -12,6 +12,7 @@ AM_LIBTOOLFLAGS = --tag=CXX
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libhg.la libsystemapi.la testme.la
 libhg_la_SOURCES = \
+  common/event_link.cc \
   common/component.cc \
   common/hg_string.cc \
   common/mercury.cc \
@@ -90,6 +91,7 @@ nobase_library_include_HEADERS = \
   common/events.h \
   common/hg_printf.h \
   common/errors.h \
+  common/event_handler.h \
   common/factory.h \
   common/node_address.h \
   common/serializable.h \
@@ -108,7 +110,6 @@ nobase_library_include_HEADERS = \
   common/sim_thread_lock.h \
   common/timestamp.h \
   common/unusedvariablemacro.h \
-  components/operating_system_fwd.h \
   components/nic.h \
   components/nic_fwd.h \
   components/node.h \

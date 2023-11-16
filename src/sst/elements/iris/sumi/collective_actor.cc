@@ -325,7 +325,8 @@ DagCollectiveActor::addDependencyToMap(uint32_t id, Action* ac)
 void
 DagCollectiveActor::addCommDependency(Action* precursor, Action *ac)
 {
-  int physical_rank =  comm_->commToGlobalRank(ac->partner);
+  //int physical_rank =  comm_->commToGlobalRank(ac->partner);
+  int physical_rank =  ac->partner;
 
   if (physical_rank == Communicator::unresolved_rank){
     //uh oh - need to wait on this
@@ -528,10 +529,6 @@ DagCollectiveActor::commActionDone(Action::type_t ty, int round, int partner)
 
   active_map::iterator it = active_comms_.find(id);
   if (it == active_comms_.end()){
-    for (it=active_comms_.begin(); it != active_comms_.end(); ++it){
-      std::cerr << "Have action id " << it->first
-        << " to partner " << it->second->partner << std::endl;
-    }
     sst_hg_abort_printf("Rank %d=%d invalid action %s for round %d, partner %d",
      my_api_->rank(), dom_me_, Action::tostr(ty), round, partner);
   }

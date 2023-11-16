@@ -54,12 +54,13 @@ public:
                           )
 
   SST_ELI_DOCUMENT_PORTS(
-      {"network", "Internode connection network", {}},
-
+      {"network", "Dummy network port to connect nodes for testing", {} },
   )
 
   SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-      {"os_slot", "The operating system", "hg.operating_system"}
+      {"os_slot", "The operating system", "hg.operating_system"},
+      {"nic_slot", "The nic", "hg.nic"},
+      {"link_control_slot", "Slot for a link control", "SST::Interfaces::SimpleNetwork" }
       )
 
   Node(SST::ComponentId_t id, SST::Params &params);
@@ -71,7 +72,10 @@ public:
     return my_addr_;
   }
 
+  void init(unsigned int phase) override;
+
   void setup() override;
+
   void endSim() {
     primaryComponentOKToEndSim();
   }
@@ -91,6 +95,7 @@ private:
 
   SST::Hg::NIC* nic_;
   SST::Hg::OperatingSystem* os_;
+  SST::Interfaces::SimpleNetwork* link_control_;
   SST::Link* netLink_;
   std::unique_ptr<SST::Output> out_;
   NodeId my_addr_;

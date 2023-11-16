@@ -46,6 +46,7 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #include <output.h>
 #include <mercury/common/factory.h>
+#include <sst/core/eli/elementbuilder.h>
 //#include <sprockit/debug.h>
 #include <sst/core/params.h>
 #include <sumi/message.h>

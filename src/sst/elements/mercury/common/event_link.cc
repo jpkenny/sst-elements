@@ -44,13 +44,26 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #pragma once
 
-#include <memory>
+#include <mercury/common/event_link.h>
 
-namespace SST::Iris::sumi {
+#define connect_str_case(x) case x: return #x
 
-class Message;
+namespace SST {
+namespace Hg {
 
-class ProtocolMessage;
 
+std::string EventLink::toString() const {
+    return "self link: " + name_;
 }
 
+void EventLink::send(TimeDelta delay, Event* ev){
+    //the link should have a time converter built-in?
+    link_->send(SST::SimTime_t((delay + selflat_).ticks()), ev);
+}
+
+void EventLink::send(Event* ev){
+    send(selflat_, ev);
+}
+
+} // end of namespace Hg
+} // end of namespace SST
