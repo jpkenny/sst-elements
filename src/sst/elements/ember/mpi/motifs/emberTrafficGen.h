@@ -83,16 +83,20 @@ public:
 
     // extended patterns
     bool generate_random( std::queue<EmberEvent*>& evQ);
-    void recv_data();
-    void send_data();
-    void wait_for_any();
     void recv_stopping();
     void recv_allstopped();
+    void recv_data();
+    void accumulate_data();
+    void send_data();
+    void wait_for_any();
+    bool finish();
+    void finalize();
     bool check_stop();
 
 private:
     std::string m_pattern;
-
+    int m_rank;
+    int m_commSize;
     uint32_t m_messageSize;
     uint32_t m_maxMessageSize;
     void* m_sendBuf;
@@ -108,11 +112,13 @@ private:
 
     // extended patterns
     enum {DATA, STOPPING, ALLSTOPPED};
+    enum {STOP_REQUEST, RECV_REQUEST, SEND_REQUEST};
     std::queue<EmberEvent*>* evQ_;
     bool m_dataSendActive;
     bool m_dataRecvActive;
     bool m_needToWait;
     bool m_stopped;
+    bool m_finishing;
     unsigned int m_generateLoopIndex;
     unsigned int m_iterations;
     unsigned int m_currentIteration;
@@ -120,12 +126,15 @@ private:
     Hermes::MemAddr m_rankBytes;
     Hermes::MemAddr m_totalBytes;
     Hermes::MemAddr m_allStopped;
-    MessageRequest* m_dataSendRequest;
-    MessageRequest* m_dataRecvRequest;
-    MessageRequest m_stopRequest;
-    MessageRequest* m_allRequests;
+    Hermes::MemAddr m_rankSends;
+    Hermes::MemAddr m_reducedSends;
+//    MessageRequest* m_dataSendRequest;
+//    MessageRequest* m_dataRecvRequest;
+//    MessageRequest m_stopRequest;
+//    MessageRequest* m_allRequests;
+    MessageRequest m_requests[3];
+    MessageRequest m_sendStopRequest;
     MessageResponse m_anyResponse;
-    uint32_t m_rank;
     uint32_t m_hotSpots;
     uint32_t m_hotSpotsRatio;
     std::vector<uint32_t> m_hotRanks;
@@ -139,6 +148,8 @@ private:
     uint64_t m_currentTime;
     uint64_t m_stopTime;
     uint64_t m_stopTimeActual;
+    uint64_t m_numRecv;
+    uint32_t m_numFinalWaits;
     int m_requestIndex;
     double  m_meanMessageSize;
     double  m_stddevMessageSize;

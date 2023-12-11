@@ -27,7 +27,7 @@ using namespace SST::Ember;
 EmberTrafficGenGenerator::EmberTrafficGenGenerator(SST::ComponentId_t id,
                                                     Params& params) :
     EmberMessagePassingGenerator(id, params, "TrafficGen"),
-    m_generateLoopIndex(0), m_needToWait(false), m_currentTime(0), m_stopped(false), m_numStopped(0),
+    m_generateLoopIndex(0), m_needToWait(false), m_currentTime(0), m_stopped(false), m_finishing(false), m_numStopped(0),
     m_rankBytes(0), m_totalBytes(0), m_requestIndex(-1), m_allRequests(nullptr),
     m_dataSendActive(false), m_dataRecvActive(false), m_dataRecvRequest(nullptr), m_dataSendRequest(nullptr)
 {
@@ -52,9 +52,10 @@ EmberTrafficGenGenerator::EmberTrafficGenGenerator(SST::ComponentId_t id,
     }
     else {
         m_debug = params.find<int>("arg.debugLevel",0);
+        m_messageSize = params.find("arg.messageSize", std::numeric_limits<uint32_t>::max());
         m_meanMessageSize = params.find("arg.messageSizeMean", 1024);
         m_stddevMessageSize = params.find("arg.messageSizeStdDev", 1024);
-        m_computeDelay = params.find("arg.computeDelay", 100);
+        m_computeDelay = params.find("arg.computeDelayNano", 1000);
         m_hotSpots = params.find<unsigned int>("arg.hotSpots",0);
         m_hotSpotsRatio = params.find<unsigned int>("arg.hotSpotsRatio",99);
         m_iterations = params.find<unsigned int>("arg.stopIterations", std::numeric_limits<unsigned int>::max());
@@ -80,6 +81,7 @@ void EmberTrafficGenGenerator::configure()
     }
 
     m_rank = rank();
+    m_commSize = size();
 
     m_distMessageSize = new SSTGaussianDistribution(
                 m_meanMessageSize, m_stddevMessageSize, new RNG::MarsagliaRNG( 11 + rank(), RAND_MAX / (rank() + 1) ) );
@@ -87,7 +89,7 @@ void EmberTrafficGenGenerator::configure()
     std::srand(1); // want same hotRanks on every node
     if (m_hotSpots) {
         while (m_hotRanks_set.size() < m_hotSpots) {
-            uint32_t rank = std::rand() % size();
+            uint32_t rank = std::rand() % m_commSize;
             m_hotRanks_set.insert( rank );
         }
         std::copy(m_hotRanks_set.begin(), m_hotRanks_set.end(), std::back_inserter(m_hotRanks));
@@ -99,11 +101,13 @@ void EmberTrafficGenGenerator::configure()
     memSetBacked();
     m_rankBytes = memAlloc(sizeofDataType(UINT64_T));
     m_totalBytes = memAlloc(sizeofDataType(UINT64_T));
+    m_rankSends = memAlloc(m_commSize * sizeofDataType(UINT64_T));
+    m_reducedSends = memAlloc(m_commSize * sizeofDataType(UINT64_T));
 }
 
 void EmberTrafficGenGenerator::configure_plusOne()
 {
-    assert( 2 == size() );
+    assert( 2 == m_commSize);
 
     m_random = new SSTGaussianDistribution( m_mean, m_stddev,
                         //new RNG::MarsagliaRNG( 11 + rank(), 79  ) );
@@ -150,17 +154,30 @@ bool EmberTrafficGenGenerator::generate_random( std::queue<EmberEvent*>& evQ)
 
     if(m_stopped) {
         if (m_rank == 0) {
-            if (m_iterations != std::numeric_limits<unsigned int>::max())
-                m_stopTime = m_currentTime;
+            m_stopTime = m_currentTime;
             uint64_t bytes = m_totalBytes.at<uint64_t>(0);
             std::cerr << "Total observed bandwidth: " << (double) bytes / (double) m_stopTime  << " GB/s\n";
         }
-        enQ_cancel( evQ, *m_dataRecvRequest);
         return true;
     }
 
     if (m_debug > 2) std::cerr << "rank " << m_rank << " entering loop " << m_generateLoopIndex
                                << " (t=" << m_currentTime / 1000.0 <<"us)" << std::endl;
+
+    // need to keep receiving until m_numFinalWaits reaches zero
+    if (m_finishing) {
+        accumulate_data();
+        --m_numFinalWaits;
+        if(m_numFinalWaits) {
+            recv_data();
+            MPI_Wait(&m_requests[RECV_REQUEST], &m_anyStatus);
+            return false;
+        }
+        else {
+            finalize();
+            return false;
+        }
+    }
 
     if (m_generateLoopIndex == 0) {
         enQ_getTime( evQ, &m_startTime );
@@ -183,65 +200,62 @@ bool EmberTrafficGenGenerator::generate_random( std::queue<EmberEvent*>& evQ)
         return false;
     }
 
-    // setup request indexes
-    int data_send_index = -1;
-    int data_recv_index = -1;
-    int stopping_index = 0;
-    std::string reqType[3];
-    if (m_dataRecvActive) { data_recv_index = 0; reqType[data_recv_index] = "data receive"; }
-    if (m_dataSendActive) { data_send_index = data_recv_index + 1; reqType[data_send_index] = "data send"; }
-    if (data_send_index >= 0) stopping_index = data_send_index + 1;
-    else if (data_recv_index >= 0) stopping_index = data_recv_index + 1;
-    reqType[stopping_index] = "stopping";
+//    // setup request indexes
+//    int data_send_index = -1;
+//    int data_recv_index = -1;
+//    int stopping_index = 0;
+//    std::string reqType[3];
+//    if (m_dataRecvActive) { data_recv_index = 0; reqType[data_recv_index] = "data receive"; }
+//    if (m_dataSendActive) { data_send_index = data_recv_index + 1; reqType[data_send_index] = "data send"; }
+//    if (data_send_index >= 0) stopping_index = data_send_index + 1;
+//    else if (data_recv_index >= 0) stopping_index = data_recv_index + 1;
+//    reqType[stopping_index] = "stopping";
     if (m_debug > 2) std::cerr << "rank " << m_rank << " got completed request: " << reqType[m_requestIndex] << std::endl;
 
     // Time to stop?
     // All nonzero ranks send STOPPING messages to rank zero when they meet their stopping criteria
     // Once zero has received all expected STOPPING messages and stopped itself, it sends ALLSTOPPED messages to all ranks
     // Upon ALLSTOPPED we reduce the total bytes sent/received, report results, and end the motif.
-    if (m_requestIndex == stopping_index) {
+    if (m_requestIndex == STOP_REQUEST) {
         m_requestIndex = -1;
         if (m_rank == 0) {
-            if (m_numStopped < size() - 1) ++m_numStopped;
+            if (m_numStopped < m_commSize - 1) ++m_numStopped;
             if (m_debug > 0) std::cerr << "rank " << m_rank << " received stop message " << m_numStopped
                                        << " from " << m_anyResponse.src << std::endl;
             if (!check_stop()) {
                 recv_stopping();
                 m_needToWait = true;
+                ++m_generateLoopIndex;
+                return false;
             }
         }
         else {
             if (m_debug > 1) std::cerr << "rank " << m_rank << " stopping with bytes " << m_rankBytes.at<uint64_t>(0) << std::endl;
             m_stopped = true;
-            enQ_reduce( evQ, m_rankBytes, m_totalBytes, 1, UINT64_T, Hermes::MP::SUM, 0, GroupWorld );
-        }
-        return false;
-    }
-
-    if (m_requestIndex == data_recv_index) {
-        m_requestIndex = -1;
-        m_dataRecvActive = false;
-        if (m_debug > 0) std::cerr << "rank " << m_rank << " received " << m_anyResponse.count << " from " << m_anyResponse.src << std::endl;
-        m_currentTime = getCurrentSimTimeNano();
-        if (m_currentTime < m_stopTime) {
-            m_dataSize = m_anyResponse.count;
-            if (m_debug > 2) std::cerr << "rank " << m_rank << " accumulating " << m_dataSize << " bytes at time " << m_currentTime << std::endl;
-            uint64_t* bytes = (uint64_t*) m_rankBytes.getBacking();
-            *bytes += m_dataSize;
-            uint64_t delay = m_dataSize * m_computeDelay;
-            if (m_debug > 0) std::cerr << "rank " << m_rank <<  " computing for " << delay << std::endl;
-            if (m_currentIteration <= m_iterations) {
-                enQ_compute( evQ, delay);
-                if (m_debug > 0) std::cerr << "rank " << m_rank <<  " computing for " << delay << std::endl;
+            //enQ_reduce( evQ, m_rankBytes, m_totalBytes, 1, UINT64_T, Hermes::MP::SUM, 0, GroupWorld );
+            if (finish()) {
+                finalize();
+                return false;
             }
         }
+        m_needToWait = false;
+        ++m_generateLoopIndex;
+        return true;
+    }
+
+    if (m_requestIndex == RECV_REQUEST) {
+        m_requestIndex = -1;
+        ++m_numRecv;
+        m_dataRecvActive = false;
+
+        accumulate_data();
+
         recv_data();
     }
-    else if (m_requestIndex == data_send_index) {
+    else if (m_requestIndex == SEND_REQUEST) {
         m_requestIndex = -1;
         m_dataSendActive = false;
-        if (m_currentTime < m_stopTime && m_currentIteration <= m_iterations) {
-            ++m_currentIteration;
+        if (m_currentTime < m_stopTime && m_currentIteration < m_iterations) {
             send_data();
         }
         else if (m_rank != 0) {
@@ -249,10 +263,11 @@ bool EmberTrafficGenGenerator::generate_random( std::queue<EmberEvent*>& evQ)
             enQ_send(evQ, nullptr, 1, CHAR, 0, STOPPING, GroupWorld);
         }
         else {
-            ++m_generateLoopIndex;
-            if (!check_stop())
+            if (!check_stop()) {
                 wait_for_any();
-            return false;
+                ++m_generateLoopIndex;
+                return false;
+            }
         }
     }
 
@@ -261,27 +276,45 @@ bool EmberTrafficGenGenerator::generate_random( std::queue<EmberEvent*>& evQ)
     return false;
 }
 
-void EmberTrafficGenGenerator::recv_data() {
-    std::queue<EmberEvent*>& evQ = *evQ_;
-    if (m_debug > 2) std::cerr << "rank " << m_rank << " start a datareq recv\n";
-    if (m_dataRecvRequest) delete m_dataRecvRequest;
-    m_dataRecvRequest = new MessageRequest;
-    enQ_irecv( evQ, m_recvBuf, m_maxMessageSize, UINT64_T, Hermes::MP::AnySrc, DATA, GroupWorld, m_dataRecvRequest );
-    m_dataRecvActive = true;
-}
-
 void EmberTrafficGenGenerator::recv_stopping() {
     std::queue<EmberEvent*>& evQ = *evQ_;
-    enQ_irecv( evQ, nullptr, 1, CHAR, Hermes::MP::AnySrc, STOPPING, GroupWorld, &m_stopRequest);
+    enQ_irecv( evQ, nullptr, 1, CHAR, Hermes::MP::AnySrc, STOPPING, GroupWorld, &m_requests[STOP_REQUEST]);
 }
 
 void EmberTrafficGenGenerator::recv_allstopped() {
     std::queue<EmberEvent*>& evQ = *evQ_;
-    enQ_irecv( evQ, nullptr, 1, CHAR, 0, ALLSTOPPED, GroupWorld, &m_stopRequest);
+    enQ_irecv( evQ, nullptr, 1, CHAR, 0, ALLSTOPPED, GroupWorld, &m_requests[STOP_REQUEST]);
+}
+
+void EmberTrafficGenGenerator::recv_data() {
+    std::queue<EmberEvent*>& evQ = *evQ_;
+    if (m_debug > 2) std::cerr << "rank " << m_rank << " start a datareq recv\n";
+    //if (m_dataRecvRequest) delete m_dataRecvRequest;
+    //m_dataRecvRequest = new MessageRequest;
+    enQ_irecv( evQ, m_recvBuf, m_maxMessageSize, UINT64_T, Hermes::MP::AnySrc, DATA, GroupWorld, &m_requests[RECV_REQUEST]);
+    m_dataRecvActive = true;
+}
+
+void EmberTrafficGenGenerator::accumulate_data() {
+  if (m_debug > 0) std::cerr << "rank " << m_rank << " received " << m_anyResponse.count << " from " << m_anyResponse.src << std::endl;
+  m_currentTime = getCurrentSimTimeNano();
+  if (m_currentTime < m_stopTime) {
+    int count = m_anyResponse.count;
+    if (m_debug > 2) std::cerr << "rank " << m_rank << " accumulating " << count << " bytes at time " << m_currentTime << std::endl;
+    uint64_t* bytes = (uint64_t*) m_rankBytes.getBacking();
+    *bytes += count;
+    if (m_debug > 0) std::cerr << "rank " << m_rank <<  " computing for " << delay << std::endl;
+    if (m_currentIteration <= m_iterations) {
+      enQ_compute( evQ, m_computeDelay);
+      if (m_debug > 0) std::cerr << "rank " << m_rank <<  " computing for " << m_computeDelay << std::endl;
+    }
+  }
 }
 
 void EmberTrafficGenGenerator::send_data() {
     std::queue<EmberEvent*>& evQ = *evQ_;
+
+    ++m_currentIteration;
 
     // determine rank to send data to
     uint32_t partner = (uint32_t) m_rank;
@@ -290,7 +323,7 @@ void EmberTrafficGenGenerator::send_data() {
     }
     else {
         while (partner == m_rank)
-            partner = std::rand() % size();
+            partner = std::rand() % m_commSize;
     }
     if (m_hotSpots) {
         if (m_hotCounter) --m_hotCounter;
@@ -298,36 +331,67 @@ void EmberTrafficGenGenerator::send_data() {
     }
 
     // determine size of data
-    m_dataSize = int( abs( m_distMessageSize->getNextDouble() ) );
-    if (m_dataSize < 1) m_dataSize = 1;
-    if (m_dataSize > m_maxMessageSize) m_dataSize = m_maxMessageSize;
 
+    if (m_messageSize == std::numeric_limits<uint32_t>::max()) {
+      m_dataSize = int( abs( m_distMessageSize->getNextDouble() ) );
+      if (m_dataSize < 1) m_dataSize = 1;
+      if (m_dataSize > m_maxMessageSize) m_dataSize = m_maxMessageSize;
+    }
+    else m_dataSize = m_messageSize;
     if (m_debug > 1) std::cerr << "rank " << m_rank << " sending data (size=" << m_dataSize << ") to rank " << partner << std::endl;
-    if (m_dataSendRequest) delete m_dataSendRequest;
-    m_dataSendRequest = new MessageRequest;
-    enQ_isend( evQ, m_sendBuf, m_dataSize, UINT64_T, partner, DATA, GroupWorld, m_dataSendRequest);
+    enQ_isend( evQ, m_sendBuf, m_dataSize, UINT64_T, partner, DATA, GroupWorld, m_requests[SEND_REQUEST);
     m_dataSendActive = true;
 }
 
 void EmberTrafficGenGenerator::wait_for_any() {
     std::queue<EmberEvent*>& evQ = *evQ_;
-    uint64_t size = m_dataSendActive + m_dataRecvActive + 1;
-    if (m_debug > 2) std::cerr << "rank " << m_rank <<  " enqueing waitany with size " << size << std::endl;
-    if (m_allRequests) delete m_allRequests;
-    m_allRequests = new MessageRequest[size];
-    uint64_t index=0;
-    if (m_dataRecvActive) {
-        if (m_debug > 3) std::cerr << "copy dataRecvRequest " << m_dataRecvRequest << " to " << index << std::endl;
-        m_allRequests[index] = *m_dataRecvRequest;
-        ++index;
+//    uint64_t size = m_dataSendActive + m_dataRecvActive + 1;
+//    if (m_debug > 2) std::cerr << "rank " << m_rank <<  " enqueing waitany with size " << size << std::endl;
+//    if (m_allRequests) delete m_allRequests;
+//    m_allRequests = new MessageRequest[size];
+//    uint64_t index=0;
+//    if (m_dataRecvActive) {
+//        if (m_debug > 3) std::cerr << "copy dataRecvRequest " << m_dataRecvRequest << " to " << index << std::endl;
+//        m_allRequests[index] = *m_dataRecvRequest;
+//        ++index;
+//    }
+//    if (m_dataSendActive) {
+//        if (m_debug > 3) std::cerr << "copy dataSendRequest " << m_dataSendRequest << " to " << index << std::endl;
+//        m_allRequests[index] = *m_dataSendRequest;
+//        ++index;
+//    }
+//    m_allRequests[index] = m_stopRequest;
+//    enQ_waitany(evQ, size, m_allRequests, &m_requestIndex, &m_anyResponse);
+    int size = 2;
+    if(m_dataSendActive) ++size;
+    if (m_debug > 2)
+        std::cerr << "rank " << m_rank <<  " waitany with size " << size << std::endl;
+    enQ_waitany(evQ, size, m_requests, &m_requestIndex, &m_anyResponse);
+}
+
+bool EmberTrafficGenGenerator::finish() {
+    m_finishing = true;
+
+    // Make sure we recv all of the data
+    enQ_allreduce(&m_rankSends, m_reducedSends, m_commSize, UINT64_T, Hermes::MP::SUM, GroupWorld);
+    int numSendToMe = m_reducedSends.data[m_rank];
+    if (m_debug > 2)
+        std::cerr << "rank " << m_rank << " received " << m_numRecv << " of " << numSendToMe << " expected messages\n";
+    m_numFinalWaits = numSendToMe - m_numRecv;
+    if (m_numFinalWaits) {
+        --m_numFinalWaits;
+        MPI_Wait(&m_requests[RECV_REQUEST], &m_anyStatus);
+        return false;
     }
-    if (m_dataSendActive) {
-        if (m_debug > 3) std::cerr << "copy dataSendRequest " << m_dataSendRequest << " to " << index << std::endl;
-        m_allRequests[index] = *m_dataSendRequest;
-        ++index;
-    }
-    m_allRequests[index] = m_stopRequest;
-    enQ_waitany(evQ, size, m_allRequests, &m_requestIndex, &m_anyResponse);
+    enQ_cancel(&m_requests[RECV_REQUEST]);
+    return true;
+
+}
+
+void EmberTrafficGenGenerator::finalize() {
+    std::queue<EmberEvent*>& evQ = *evQ_;
+    enQ_reduce( evQ, m_rankBytes, m_totalBytes, 1, UINT64_T, Hermes::MP::SUM, 0, GroupWorld );
+    m_stopped = true;
 }
 
 bool EmberTrafficGenGenerator::check_stop() {
@@ -340,8 +404,12 @@ bool EmberTrafficGenGenerator::check_stop() {
         for (int i=1; i < size(); ++i) {
             enQ_send(evQ, m_allStopped, 1, CHAR, i, ALLSTOPPED, GroupWorld);
         }
-        enQ_reduce( evQ, m_rankBytes, m_totalBytes, 1, UINT64_T, Hermes::MP::SUM, 0, GroupWorld );
-        return true;
+        //enQ_reduce( evQ, m_rankBytes, m_totalBytes, 1, UINT64_T, Hermes::MP::SUM, 0, GroupWorld );
+        //return true;
+        if (finish()) {
+            finalize();
+            return false;
+        }
     }
     else {
         if (m_debug > 1) std::cerr << "rank " << m_rank << " not stopping yet\n";
