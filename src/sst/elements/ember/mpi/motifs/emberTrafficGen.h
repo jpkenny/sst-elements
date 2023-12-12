@@ -90,7 +90,8 @@ public:
     void send_data();
     void delay();
     void wait_for_any();
-    bool check_finish();
+    void check_finish();
+    bool start_final_waits();
     void finalize();
     bool check_stop();
 
@@ -120,6 +121,7 @@ private:
     bool m_needToWait;
     bool m_stopped;
     bool m_finishing;
+    bool m_finalWaiting;
     unsigned int m_generateLoopIndex;
     unsigned int m_iterations;
     unsigned int m_currentIteration;
@@ -129,6 +131,8 @@ private:
     Hermes::MemAddr m_allStopped;
     Hermes::MemAddr m_rankSends;
     Hermes::MemAddr m_reducedSends;
+//    void* m_rankSends;
+//    void* m_reducedSends;
 //    MessageRequest* m_dataSendRequest;
 //    MessageRequest* m_dataRecvRequest;
 //    MessageRequest m_stopRequest;
