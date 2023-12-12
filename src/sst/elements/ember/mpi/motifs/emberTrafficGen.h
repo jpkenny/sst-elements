@@ -88,8 +88,9 @@ public:
     void recv_data();
     void accumulate_data();
     void send_data();
+    void delay();
     void wait_for_any();
-    bool finish();
+    bool check_finish();
     void finalize();
     bool check_stop();
 
@@ -143,7 +144,7 @@ private:
     uint32_t m_hotCounterInitial;
     uint32_t m_debug;
     uint64_t m_dataSize;
-    uint64_t m_computeDelay;
+    uint64_t m_delay;
     uint64_t m_startTime;
     uint64_t m_currentTime;
     uint64_t m_stopTime;
