@@ -92,8 +92,9 @@ public:
     void wait_for_any();
     void check_finish();
     bool start_final_waits();
-    void finalize();
+    void get_total_bytes();
     bool check_stop();
+    bool check_termination();
 
 private:
     std::string m_pattern;
