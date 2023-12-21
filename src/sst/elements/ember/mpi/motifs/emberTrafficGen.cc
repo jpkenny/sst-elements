@@ -27,7 +27,7 @@ using namespace SST::Ember;
 EmberTrafficGenGenerator::EmberTrafficGenGenerator(SST::ComponentId_t id,
                                                     Params& params) :
     EmberMessagePassingGenerator(id, params, "TrafficGen"),
-    m_generateLoopIndex(0), m_needToWait(false), m_currentTime(0), m_stopped(false), m_finishing(false), m_finalWaiting(false), m_numStopped(0),
+    m_generateLoopIndex(0), m_needToWait(false), m_currentTime(0), m_finished(false), m_finishing(false), m_finalRecvs(false), m_numStopped(0),
     m_rankBytes(0), m_totalBytes(0), m_requestIndex(-1), m_dataSendActive(false), m_dataRecvActive(false)
 {
     m_pattern = params.find<std::string>("arg.pattern", "plusOne");
@@ -158,7 +158,7 @@ bool EmberTrafficGenGenerator::generate_random( std::queue<EmberEvent*>& evQ)
                                << " (t=" << m_currentTime / 1000.0 <<"us)" << std::endl;
 
     // Follow the termination path once ALLSTOPPED messages have gone out
-    if (m_finishing || m_finalWaiting || m_stopped)
+    if (m_finishing || m_finalRecvs || m_finished)
         return check_termination();
 
     // Begin standard loop
@@ -338,9 +338,9 @@ bool EmberTrafficGenGenerator::start_final_waits() {
     uint64_t numSendToMe = m_reducedSends.at<uint64_t>(m_rank);
     if (m_debug > 2)
         std::cerr << "rank " << m_rank << " received " << m_numRecv << " of " << numSendToMe << " expected messages\n";
-    m_numFinalWaits = numSendToMe - m_numRecv;
-    if (m_numFinalWaits) {
-        m_finalWaiting = true;
+    m_numFinalRecvs = numSendToMe - m_numRecv;
+    if (m_numFinalRecvs) {
+        m_finalRecvs = true;
         if (m_debug > 2) std::cerr << "rank " << m_rank << " enqueueing first final wait\n";
         enQ_wait(evQ, &m_requests[RECV_REQUEST], &m_anyResponse);
         return true;
@@ -379,35 +379,34 @@ bool EmberTrafficGenGenerator::check_termination() {
     // 1) determine outstanding sends to our rank and start
     if (m_finishing) {
       if (start_final_waits()) {
-        m_finalWaiting = true;
         return false;
       }
       else {
         enQ_cancel(evQ, m_requests[RECV_REQUEST]);
-        m_stopped = true;
+        m_finished = true;
         get_total_bytes();
       }
       return false;
     }
     // 2)
-    if (m_finalWaiting == true) {
+    if (m_finalRecvs == true) {
       if (m_debug > 2) std::cerr << "rank " << m_rank << " performing final waits\n";
       accumulate_data();
-      --m_numFinalWaits;
-      if (m_debug > 2) std::cerr << "rank " << m_rank << " m_numFinalWaits " << m_numFinalWaits << std::endl;
-      if(m_numFinalWaits) {
+      --m_numFinalRecvs;
+      if (m_debug > 2) std::cerr << "rank " << m_rank << " m_numFinalRecvs " << m_numFinalRecvs << std::endl;
+      if(m_numFinalRecvs) {
         recv_data();
         enQ_wait(evQ, &m_requests[RECV_REQUEST], &m_anyResponse);
         return false;
       }
       else {
-        m_stopped = true;
-        m_finalWaiting = false;
+        m_finished = true;
+        m_finalRecvs = false;
         get_total_bytes();
         return false;
       }
     }
-    if(m_stopped) {
+    if(m_finished) {
       if (m_rank == 0) {
         m_stopTime = m_currentTime;
         uint64_t bytes = m_totalBytes.at<uint64_t>(0);

@@ -120,9 +120,9 @@ private:
     bool m_dataSendActive;
     bool m_dataRecvActive;
     bool m_needToWait;
-    bool m_stopped;
     bool m_finishing;
-    bool m_finalWaiting;
+    bool m_finalRecvs;
+    bool m_finished;
     unsigned int m_generateLoopIndex;
     unsigned int m_iterations;
     unsigned int m_currentIteration;
@@ -132,12 +132,6 @@ private:
     Hermes::MemAddr m_allStopped;
     Hermes::MemAddr m_rankSends;
     Hermes::MemAddr m_reducedSends;
-//    void* m_rankSends;
-//    void* m_reducedSends;
-//    MessageRequest* m_dataSendRequest;
-//    MessageRequest* m_dataRecvRequest;
-//    MessageRequest m_stopRequest;
-//    MessageRequest* m_allRequests;
     MessageRequest m_requests[3];
     MessageRequest m_sendStopRequest;
     MessageResponse m_anyResponse;
@@ -155,7 +149,7 @@ private:
     uint64_t m_stopTime;
     uint64_t m_stopTimeActual;
     uint64_t m_numRecv;
-    uint32_t m_numFinalWaits;
+    uint32_t m_numFinalRecvs;
     int m_requestIndex;
     double  m_meanMessageSize;
     double  m_stddevMessageSize;
