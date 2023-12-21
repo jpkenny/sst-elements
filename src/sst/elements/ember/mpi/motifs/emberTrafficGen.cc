@@ -27,7 +27,8 @@ using namespace SST::Ember;
 EmberTrafficGenGenerator::EmberTrafficGenGenerator(SST::ComponentId_t id,
                                                     Params& params) :
     EmberMessagePassingGenerator(id, params, "TrafficGen"),
-    m_generateLoopIndex(0), m_needToWait(false), m_currentTime(0), m_finished(false), m_finishing(false), m_finalRecvs(false), m_numStopped(0),
+    m_generateLoopIndex(0), m_needToWait(false), m_currentTime(0), m_numStopped(0), m_numRecv(0),
+    m_finishing(false), m_finalRecvs(false), m_finished(false),
     m_rankBytes(0), m_totalBytes(0), m_requestIndex(-1), m_dataSendActive(false)
 {
     m_pattern = params.find<std::string>("arg.pattern", "plusOne");
@@ -243,9 +244,13 @@ bool EmberTrafficGenGenerator::generate_random( std::queue<EmberEvent*>& evQ)
         else {
             if (!check_stop()) {
                 wait_for_any();
-                ++m_generateLoopIndex;
-                return false;
             }
+            else {
+                  m_finishing = true;
+                  check_finish();
+            }
+            ++m_generateLoopIndex;
+            return false;
         }
     }
 
@@ -339,9 +344,8 @@ bool EmberTrafficGenGenerator::check_stop() {
     if (m_numStopped == m_commSize - 1 && (m_currentTime >= m_stopTime || m_currentIteration >= m_iterations)){
         if (m_debug > 1) std::cerr << "rank " << m_rank << " all ranks complete\n"
                                    << "rank " << m_rank << " stopping with bytes " << m_rankBytes.at<uint64_t>(0) << std::endl;
-        m_needToWait = false;
         m_stopTimeActual = getCurrentSimTimeNano();
-        for (int i=1; i < size(); ++i) {
+        for (int i=1; i < m_commSize; ++i) {
             enQ_send(evQ, nullptr, 1, CHAR, i, ALLSTOPPED, GroupWorld);
         }
         return true;
@@ -353,7 +357,7 @@ bool EmberTrafficGenGenerator::check_stop() {
 void EmberTrafficGenGenerator::check_finish() {
     std::queue<EmberEvent*>& evQ = *evQ_;
     if (m_debug > 2)
-        std::cerr << "rank " << m_rank <<  " performing finishing allreduce " << std::endl;
+        std::cerr << "rank " << m_rank <<  " performing finishing allreduce" << std::endl;
     enQ_allreduce(evQ, m_rankSends, m_reducedSends, m_commSize, UINT64_T, Hermes::MP::SUM, GroupWorld);
 }
 
