@@ -117,7 +117,6 @@ private:
     enum {STOP_REQUEST, RECV_REQUEST, SEND_REQUEST};
     std::queue<EmberEvent*>* evQ_;
     bool m_dataSendActive;
-    bool m_dataRecvActive;
     bool m_needToWait;
     bool m_finishing;
     bool m_finalRecvs;
