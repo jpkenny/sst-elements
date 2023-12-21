@@ -86,14 +86,14 @@ public:
     void recv_stopping();
     void recv_allstopped();
     void recv_data();
-    void accumulate_data();
     void send_data();
+    void accumulate_data();
     void delay();
     void wait_for_any();
-    void check_finish();
-    bool start_final_waits();
     void get_total_bytes();
     bool check_stop();
+    void check_finish();
+    bool start_final_recvs();
     bool check_termination();
 
 private:
@@ -122,24 +122,19 @@ private:
     bool m_finishing;
     bool m_finalRecvs;
     bool m_finished;
+    int m_requestIndex;
     unsigned int m_generateLoopIndex;
     unsigned int m_iterations;
     unsigned int m_currentIteration;
     unsigned int m_numStopped;
     unsigned int m_numFinalRecvs;
+    unsigned int m_debug;
     Hermes::MemAddr m_rankBytes;
     Hermes::MemAddr m_totalBytes;
     Hermes::MemAddr m_rankSends;
     Hermes::MemAddr m_reducedSends;
     MessageRequest m_requests[3];
     MessageResponse m_anyResponse;
-    uint32_t m_hotSpots;
-    uint32_t m_hotSpotsRatio;
-    std::vector<uint32_t> m_hotRanks;
-    std::set<uint32_t> m_hotRanks_set;
-    uint32_t m_hotCounter;
-    uint32_t m_hotCounterInitial;
-    uint32_t m_debug;
     uint64_t m_dataSize;
     uint64_t m_delay;
     uint64_t m_startTime;
@@ -147,7 +142,12 @@ private:
     uint64_t m_stopTime;
     uint64_t m_stopTimeActual;
     uint64_t m_numRecv;
-    int m_requestIndex;
+    unsigned int m_hotSpots;
+    unsigned int m_hotSpotsRatio;
+    unsigned int m_hotCounter;
+    unsigned int m_hotCounterInitial;
+    std::vector<unsigned int> m_hotRanks;
+    std::set<unsigned int> m_hotRanks_set;
     double  m_meanMessageSize;
     double  m_stddevMessageSize;
     SSTGaussianDistribution* m_distMessageSize;

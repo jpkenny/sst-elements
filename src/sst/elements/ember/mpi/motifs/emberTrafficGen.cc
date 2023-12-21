@@ -265,21 +265,6 @@ void EmberTrafficGenGenerator::recv_data() {
     m_dataRecvActive = true;
 }
 
-void EmberTrafficGenGenerator::accumulate_data() {
-    std::queue<EmberEvent*>& evQ = *evQ_;
-    if (m_debug > 0) std::cerr << "rank " << m_rank << " received " << m_anyResponse.count << " from " << m_anyResponse.src << std::endl;
-    int count = m_anyResponse.count;
-    if (m_debug > 2) std::cerr << "DEBUG RECEIVE: rank " << m_rank << " accumulating " << count << " t=" << double(m_currentTime) / double(1e9) << std::endl;
-    uint64_t* bytes = (uint64_t*) m_rankBytes.getBacking();
-    *bytes += count;
-}
-
-void EmberTrafficGenGenerator::delay() {
-    std::queue<EmberEvent*>& evQ = *evQ_;
-    if (m_debug > 0) std::cerr << "rank " << m_rank <<  " delaying for " << m_delay << std::endl;
-    enQ_compute( evQ, m_delay);
-}
-
 void EmberTrafficGenGenerator::send_data() {
     std::queue<EmberEvent*>& evQ = *evQ_;
 
@@ -315,6 +300,21 @@ void EmberTrafficGenGenerator::send_data() {
     m_dataSendActive = true;
 }
 
+void EmberTrafficGenGenerator::accumulate_data() {
+    std::queue<EmberEvent*>& evQ = *evQ_;
+    if (m_debug > 0) std::cerr << "rank " << m_rank << " received " << m_anyResponse.count << " from " << m_anyResponse.src << std::endl;
+    int count = m_anyResponse.count;
+    if (m_debug > 2) std::cerr << "DEBUG RECEIVE: rank " << m_rank << " accumulating " << count << " t=" << double(m_currentTime) / double(1e9) << std::endl;
+    uint64_t* bytes = (uint64_t*) m_rankBytes.getBacking();
+    *bytes += count;
+}
+
+void EmberTrafficGenGenerator::delay() {
+    std::queue<EmberEvent*>& evQ = *evQ_;
+    if (m_debug > 0) std::cerr << "rank " << m_rank <<  " delaying for " << m_delay << std::endl;
+    enQ_compute( evQ, m_delay);
+}
+
 void EmberTrafficGenGenerator::wait_for_any() {
     std::queue<EmberEvent*>& evQ = *evQ_;
     int size = 2;
@@ -322,31 +322,6 @@ void EmberTrafficGenGenerator::wait_for_any() {
     if (m_debug > 2)
         std::cerr << "DEBUG WAIT: rank " << m_rank <<  " waitany with size " << size << " t=" << double(m_currentTime) / double(1e9) << std::endl;
     enQ_waitany(evQ, size, m_requests, &m_requestIndex, &m_anyResponse);
-}
-
-void EmberTrafficGenGenerator::check_finish() {
-    std::queue<EmberEvent*>& evQ = *evQ_;
-    if (m_debug > 2)
-        std::cerr << "rank " << m_rank <<  " performing finishing allreduce " << std::endl;
-    m_finishing = true;
-    enQ_allreduce(evQ, m_rankSends, m_reducedSends, m_commSize, UINT64_T, Hermes::MP::SUM, GroupWorld);
-}
-
-bool EmberTrafficGenGenerator::start_final_waits() {
-    std::queue<EmberEvent*>& evQ = *evQ_;
-    m_finishing = false;
-    uint64_t numSendToMe = m_reducedSends.at<uint64_t>(m_rank);
-    if (m_debug > 2)
-        std::cerr << "rank " << m_rank << " received " << m_numRecv << " of " << numSendToMe << " expected messages\n";
-    m_numFinalRecvs = numSendToMe - m_numRecv;
-    if (m_numFinalRecvs) {
-        m_finalRecvs = true;
-        if (m_debug > 2) std::cerr << "rank " << m_rank << " enqueueing first final wait\n";
-        enQ_wait(evQ, &m_requests[RECV_REQUEST], &m_anyResponse);
-        return true;
-    }
-    if (m_debug > 2) std::cerr << "rank " << m_rank << " no final waits necessary\n";
-    return false;
 }
 
 void EmberTrafficGenGenerator::get_total_bytes() {
@@ -372,13 +347,38 @@ bool EmberTrafficGenGenerator::check_stop() {
     return false;
 }
 
+void EmberTrafficGenGenerator::check_finish() {
+    std::queue<EmberEvent*>& evQ = *evQ_;
+    if (m_debug > 2)
+        std::cerr << "rank " << m_rank <<  " performing finishing allreduce " << std::endl;
+    m_finishing = true;
+    enQ_allreduce(evQ, m_rankSends, m_reducedSends, m_commSize, UINT64_T, Hermes::MP::SUM, GroupWorld);
+}
+
+bool EmberTrafficGenGenerator::start_final_recvs() {
+    std::queue<EmberEvent*>& evQ = *evQ_;
+    m_finishing = false;
+    uint64_t numSendToMe = m_reducedSends.at<uint64_t>(m_rank);
+    if (m_debug > 2)
+        std::cerr << "rank " << m_rank << " received " << m_numRecv << " of " << numSendToMe << " expected messages\n";
+    m_numFinalRecvs = numSendToMe - m_numRecv;
+    if (m_numFinalRecvs) {
+        m_finalRecvs = true;
+        if (m_debug > 2) std::cerr << "rank " << m_rank << " enqueueing first final wait\n";
+        enQ_wait(evQ, &m_requests[RECV_REQUEST], &m_anyResponse);
+        return true;
+    }
+    if (m_debug > 2) std::cerr << "rank " << m_rank << " no final waits necessary\n";
+    return false;
+}
+
 bool EmberTrafficGenGenerator::check_termination() {
     std::queue<EmberEvent*>& evQ = *evQ_;
 
     // Termination is much cleaner in the reference MPI code. Here we have three different termination states that we need to go through.
-    // 1) determine outstanding sends to our rank and start
+    // 1) determine outstanding sends to our rank and start a recv if necessary.
     if (m_finishing) {
-      if (start_final_waits()) {
+      if (start_final_recvs()) {
         return false;
       }
       else {
@@ -388,7 +388,7 @@ bool EmberTrafficGenGenerator::check_termination() {
       }
       return false;
     }
-    // 2)
+    // 2) Keep receiving/waiting until the counter hits zero
     if (m_finalRecvs == true) {
       if (m_debug > 2) std::cerr << "rank " << m_rank << " performing final waits\n";
       accumulate_data();
@@ -406,6 +406,7 @@ bool EmberTrafficGenGenerator::check_termination() {
         return false;
       }
     }
+    // 3) The actual end of the simulation.
     if(m_finished) {
       if (m_rank == 0) {
         m_stopTime = m_currentTime;
