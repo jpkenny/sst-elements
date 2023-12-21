@@ -362,7 +362,7 @@ bool EmberTrafficGenGenerator::check_stop() {
         m_needToWait = false;
         m_stopTimeActual = getCurrentSimTimeNano();
         for (int i=1; i < size(); ++i) {
-            enQ_send(evQ, m_allStopped, 1, CHAR, i, ALLSTOPPED, GroupWorld);
+            enQ_send(evQ, nullptr, 1, CHAR, i, ALLSTOPPED, GroupWorld);
         }
         //enQ_reduce( evQ, m_rankBytes, m_totalBytes, 1, UINT64_T, Hermes::MP::SUM, 0, GroupWorld );
         //return true;

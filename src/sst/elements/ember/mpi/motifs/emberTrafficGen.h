@@ -107,7 +107,6 @@ private:
     MessageRequest m_req;
 
     // original "plusOne" pattern
-    //    MessageResponse m_resp;
     double  m_startDelay;
     double  m_mean;
     double  m_stddev;
@@ -127,13 +126,12 @@ private:
     unsigned int m_iterations;
     unsigned int m_currentIteration;
     unsigned int m_numStopped;
+    unsigned int m_numFinalRecvs;
     Hermes::MemAddr m_rankBytes;
     Hermes::MemAddr m_totalBytes;
-    Hermes::MemAddr m_allStopped;
     Hermes::MemAddr m_rankSends;
     Hermes::MemAddr m_reducedSends;
     MessageRequest m_requests[3];
-    MessageRequest m_sendStopRequest;
     MessageResponse m_anyResponse;
     uint32_t m_hotSpots;
     uint32_t m_hotSpotsRatio;
@@ -149,7 +147,6 @@ private:
     uint64_t m_stopTime;
     uint64_t m_stopTimeActual;
     uint64_t m_numRecv;
-    uint32_t m_numFinalRecvs;
     int m_requestIndex;
     double  m_meanMessageSize;
     double  m_stddevMessageSize;
