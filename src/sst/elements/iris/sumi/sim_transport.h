@@ -63,6 +63,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <iris/sumi/comm_functions.h>
 #include <iris/sumi/options.h>
 #include <iris/sumi/communicator_fwd.h>
+#include <iris/sumi/rank_mapper.h>
 
 #include <mercury/common/errors.h>
 #include <mercury/common/factory.h>
@@ -121,9 +122,7 @@ class SimTransport : public Transport, public SST::Hg::API {
   Output output;
 
   SST::Hg::NodeId rankToNode(int rank) const override {
-    // FIXME
-    //return rank_mapper_->rankToNode(rank);
-    return SST::Hg::NodeId(rank);
+    return rank_mapper_->rankToNode(rank);
   }
 
   /**
@@ -303,7 +302,7 @@ class SimTransport : public Transport, public SST::Hg::API {
 
   SST::Hg::App* parent_app_;
 
-  //SST::Hg::TaskMapping::ptr rank_mapper_;
+  SST::Iris::sumi::RankMapping::ptr rank_mapper_;
 
   DefaultProgressQueue default_progress_queue_;
 
