@@ -39,12 +39,10 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "sst/elements/iris/sumi/mapper.h"
+#include <iris/sumi/rank_mapper.h>
 #include "common/errors.h"
 #include <mutex>
 #include <string>
-
-SST::Iris::sumi::RankMapping foo;
 
 namespace SST::Iris::sumi {
 
