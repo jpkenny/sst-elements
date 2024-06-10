@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
+#include <iris/sumi/rank_mapper.h>
 #include <output.h>
 #include <cstring>
 #include <iris/sumi/transport.h>
@@ -253,9 +254,8 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Compo
   pin_delay_ = rdma_pin_latency_.ticks() || rdma_page_delay_.ticks();
   page_size_ = params.find<SST::UnitAlgebra>("rdma_page_size", "4096").getRoundedValue();
 
-//  rank_mapper_ = sstmac::sw::TaskMapping::globalMapping(sid().app_);
-//  nproc_ = rank_mapper_->nproc();
-  nproc_ = 2;
+  rank_mapper_ = RankMapping::globalMapping(sid().app_);
+  nproc_ = rank_mapper_->nproc();
 
   auto qos_params = params.get_scoped_params("qos");
   auto qos_name = qos_params.find<std::string>("name", "null");
@@ -354,9 +354,7 @@ SimTransport::nidlist() const
   //just cast an int* - it's fine
   //the types are the same size and the bits can be
   //interpreted correctly
-  //return (int*) rank_mapper_->rankToNode().data();
-  sst_hg_abort_printf("nidlist unimplemented\n");
-  return nullptr;
+  return (int*) rank_mapper_->rankToNode().data();
 }
 
 void
