@@ -22,6 +22,7 @@
 //#include <mercury/common/factory.h>
 #include <sst/core/eli/elementbuilder.h>
 #include <mercury/components/node_fwd.h>
+#include <mercury/common/unique_id.h>
 #include <mercury/operating_system/threading/threading_interface.h>
 #include <mercury/operating_system/launch/app_launcher_fwd.h>
 #include <mercury/operating_system/launch/app_launch_request.h>
@@ -129,6 +130,10 @@ public:
     return staticOsThreadContext();
   }
 
+  UniqueEventId allocateUniqueId() {
+    return next_outgoing_id_++;
+  }
+
  private:
 
   void initThreading(SST::Params& params);
@@ -164,6 +169,7 @@ public:
   std::map<std::string, std::list<Request*>> pending_library_request_;
 
   NodeId my_addr_;
+  UniqueEventId next_outgoing_id_;
 
 //  int next_condition_;
 //  int next_mutex_;

@@ -224,7 +224,6 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Compo
   //the server is what takes on the specified libname
   completion_queues_(1),
 //  spy_bytes_(nullptr),
-  parent_app_(parent),
   default_progress_queue_(parent->os()),
   nic_ioctl_(parent->os()->nicDataIoctl()),
   qos_analysis_(nullptr),
@@ -235,7 +234,7 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Compo
                                     &default_progress_queue_, 0, std::placeholders::_1);
   null_completion_notify_ = std::bind(&SimTransport::drop, this, std::placeholders::_1);
   rank_ = sid().task_;
-  auto* server_lib = parent_->os()->lib(server_libname_);
+  auto* server_lib = parent->os()->lib(server_libname_);
   SumiServer* server;
   // only do one server per app per node
   if (server_lib == nullptr) {
@@ -289,7 +288,7 @@ SimTransport::init()
 //    engine_->barrier(-1, Message::default_cq);
 //    engine_->blockUntilNext(Message::default_cq);
 
-    SumiServer* server = safe_cast(SumiServer, parent_->os()->lib(server_libname_));
+    SumiServer* server = safe_cast(SumiServer, api_parent_app_->os()->lib(server_libname_));
     auto& map = server->getProcs(sid().app_);
     if (map.size() > 1){ //enable smp optimizations
       for (auto& pair : map){
@@ -308,7 +307,7 @@ SimTransport::finish()
 
 SimTransport::~SimTransport()
 {
-  SumiServer* server = safe_cast(SumiServer, parent_->os()->lib(server_libname_));
+  SumiServer* server = safe_cast(SumiServer, api_parent_app_->os()->lib(server_libname_));
   bool del = server->unregisterProc(rank_, this);
   if (del) delete server;
 
@@ -333,13 +332,13 @@ SimTransport::memcopy(void* dst, void* src, uint64_t bytes)
   if (isNonNullBuffer(dst) && isNonNullBuffer(src)){
     ::memcpy(dst, src, bytes);
   }
-  //parent_->computeBlockMemcpy(bytes);
+  //api_parent_app_->computeBlockMemcpy(bytes);
 }
 
 void
 SimTransport::memcopyDelay(uint64_t bytes)
 {
-  //parent_->computeBlockMemcpy(bytes);
+  //api_parent_app_->computeBlockMemcpy(bytes);
 }
 
 void
@@ -360,7 +359,7 @@ SimTransport::nidlist() const
 void
 SimTransport::compute(SST::Hg::TimeDelta t)
 {
-  //parent_->compute(t);
+  //api_parent_app_->compute(t);
 }
 
 
@@ -370,7 +369,7 @@ SimTransport::send(Message* m)
 //  int qos = qos_analysis_->selectQoS(m);
 //  m->setQoS(qos);
 //  if (!m->started()){
-//    m->setTimeStarted(parent_app_->now());
+//    m->setTimeStarted(api_parent_app_->now());
 //  }
 
 //  if (spy_bytes_){
@@ -400,21 +399,21 @@ SimTransport::send(Message* m)
         }
       } else {
         if (post_header_delay_.ticks()) {
-          //parent_->compute(post_header_delay_);
+          //api_parent_app_->compute(post_header_delay_);
         }
         nic_ioctl_(m);
       }
       break;
     case SST::Hg::NetworkMessage::posted_send:
       if (post_header_delay_.ticks()) {
-        //parent_->compute(post_header_delay_);
+        //api_parent_app_->compute(post_header_delay_);
       }
       nic_ioctl_(m);
       break;
     case SST::Hg::NetworkMessage::rdma_get_request:
     case SST::Hg::NetworkMessage::rdma_put_payload:
       if (post_rdma_delay_.ticks()) {
-        //parent_->compute(post_rdma_delay_);
+        //api_parent_app_->compute(post_rdma_delay_);
       }
       nic_ioctl_(m);
       break;
@@ -476,9 +475,7 @@ SimTransport::rdmaPutResponse(Message* m, uint64_t payload_bytes,
 uint64_t
 SimTransport::allocateFlowId()
 {
-  //return parent_->os()->node()->allocateUniqueId();
-  // FIXME
-  return 0;
+  return api_parent_app_->os()->allocateUniqueId();
 }
 
 void
@@ -486,7 +483,7 @@ SimTransport::incomingMessage(Message *msg)
 {
 //#if SSTMAC_COMM_DELAY_STATS
 //  if (msg){
-//    msg->setTimeArrived(parent_app_->now());
+//    msg->setTimeArrived(api_parent_app_->now());
 //  }
 //#endif
   msg->writeSyncValue();
@@ -509,9 +506,7 @@ SimTransport::incomingMessage(Message *msg)
 SST::Hg::Timestamp
 SimTransport::now() const
 {
-  //return parent_app_->now();
-  //FIXME
-  return SST::Hg::Timestamp(0);
+  return api_parent_app_->now();
 }
 
 void*
