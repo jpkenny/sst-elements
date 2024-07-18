@@ -2,7 +2,7 @@
 #
 #
 
-comp_LTLIBRARIES = libmask_mpi.la sendrecv.la
+comp_LTLIBRARIES = libmask_mpi.la sendrecv.la alltoall.la
 
 compdir = $(pkglibdir)
 
@@ -80,6 +80,7 @@ library_include_HEADERS = \
   unusedvariablemacro.h
 
 sendrecv_la_SOURCES = tests/sendrecv.cc
+alltoall_la_SOURCES = tests/alltoall.cc
 
 EXTRA_DIST = \
  tests/testsuite_default_mask_mpi.py \
@@ -89,6 +90,7 @@ EXTRA_DIST = \
 
 libmask_mpi_la_LDFLAGS = -module -avoid-version
 sendrecv_la_LDFLAGS = -module -avoid-version
+alltoall_la_LDFLAGS = -module -avoid-version
 
 install-exec-hook: 
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     mask-mpi=$(abs_srcdir)
