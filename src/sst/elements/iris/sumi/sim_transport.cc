@@ -43,6 +43,7 @@ Questions? Contact sst-macro-help@sandia.gov
 */
 
 #include <iris/sumi/rank_mapper.h>
+#include <memory>
 #include <output.h>
 #include <cstring>
 #include <iris/sumi/transport.h>
@@ -253,6 +254,15 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Compo
   pin_delay_ = rdma_pin_latency_.ticks() || rdma_page_delay_.ticks();
   page_size_ = params.find<SST::UnitAlgebra>("rdma_page_size", "4096").getRoundedValue();
 
+  static int wait;
+  wait = 0;
+  while (wait) {
+    continue;
+  }
+  auto bar = std::make_shared<RankMapping>(sid().app_);
+  RankMapping::addGlobalMapping(sid().app_, "foo", bar);
+
+  output.output("%d", sid().app_);
   rank_mapper_ = RankMapping::globalMapping(sid().app_);
   nproc_ = rank_mapper_->nproc();
 
