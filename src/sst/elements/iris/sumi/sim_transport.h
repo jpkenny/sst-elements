@@ -53,6 +53,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mercury/operating_system/process/progress_queue.h>
 #include <mercury/hardware/network/network_message_fwd.h>
 #include <mercury/components/node_fwd.h>
+#include <mercury/components/operating_system.h>
 
 #include <iris/sumi/message_fwd.h>
 #include <iris/sumi/collective.h>
@@ -122,7 +123,9 @@ class SimTransport : public Transport, public SST::Hg::API {
   Output output;
 
   SST::Hg::NodeId rankToNode(int rank) const override {
-    return rank_mapper_->rankToNode(rank);
+    //return SST::Hg::NodeId(rank);
+    //return rank_mapper_->rankToNode(rank);
+    return os_->rankToNode(rank);
   }
 
   /**
@@ -302,7 +305,7 @@ class SimTransport : public Transport, public SST::Hg::API {
 
   SST::Hg::App* parent_app_;
 
-  SST::Iris::sumi::RankMapping::ptr rank_mapper_;
+  //SST::Iris::sumi::RankMapping::ptr rank_mapper_;
 
   DefaultProgressQueue default_progress_queue_;
 
@@ -314,6 +317,8 @@ class SimTransport : public Transport, public SST::Hg::API {
   bool pragma_block_set_;
 
   double pragma_timeout_;
+
+  SST::Hg::OperatingSystem* os_;
 
   void drop(Message*){}
 };

@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#define ssthg_app_name sendrecv
+#define ssthg_app_name alltoall
 
 #include <stddef.h>
 #include <stdio.h>

@@ -35,7 +35,7 @@ if __name__ == "__main__":
     topo.link_latency = "20ns"
     topo.num_ports = 32
 
-    ep = HgJob(0,2)
+    ep = HgJob(0,8)
 
     system = System()
     system.setTopology(topo)

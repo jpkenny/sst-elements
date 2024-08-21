@@ -238,6 +238,16 @@ public:
     compute_sched_->releaseCores(ncore,thr);
   }
 
+//  NodeId rankToNode(int rank) {
+//    return NodeId( rank_mapper_->mapRank(rank) );
+//  }
+
+//  int32_t nranks() {
+//    return rank_mapper_->getWorldSize();
+//  }
+
+//  SST::Ember::EmberRankMap*	rank_mapper_;
+
 //
 // LIBRARIES
 //

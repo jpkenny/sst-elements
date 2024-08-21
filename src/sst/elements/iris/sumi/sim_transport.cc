@@ -229,7 +229,8 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Compo
   nic_ioctl_(parent->os()->nicDataIoctl()),
   qos_analysis_(nullptr),
   pragma_block_set_(false),
-  pragma_timeout_(-1)
+  pragma_timeout_(-1),
+  os_(parent->os())
 {
   completion_queues_[0] = std::bind(&DefaultProgressQueue::incoming,
                                     &default_progress_queue_, 0, std::placeholders::_1);
@@ -263,8 +264,10 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Compo
   RankMapping::addGlobalMapping(sid().app_, "foo", bar);
 
   output.output("%d", sid().app_);
-  rank_mapper_ = RankMapping::globalMapping(sid().app_);
-  nproc_ = rank_mapper_->nproc();
+  // rank_mapper_ = RankMapping::globalMapping(sid().app_);
+  // nproc_ = rank_mapper_->nproc();
+  nproc_ = 2;
+  //nproc_ = os_->nranks();
 
   auto qos_params = params.get_scoped_params("qos");
   auto qos_name = qos_params.find<std::string>("name", "null");
@@ -363,7 +366,8 @@ SimTransport::nidlist() const
   //just cast an int* - it's fine
   //the types are the same size and the bits can be
   //interpreted correctly
-  return (int*) rank_mapper_->rankToNode().data();
+  //return (int*) rank_mapper_->rankToNode().data();
+  return nullptr;
 }
 
 void
