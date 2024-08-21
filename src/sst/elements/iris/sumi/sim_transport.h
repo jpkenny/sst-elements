@@ -123,9 +123,9 @@ class SimTransport : public Transport, public SST::Hg::API {
   Output output;
 
   SST::Hg::NodeId rankToNode(int rank) const override {
-    //return SST::Hg::NodeId(rank);
+    return SST::Hg::NodeId(rank);
     //return rank_mapper_->rankToNode(rank);
-    return os_->rankToNode(rank);
+    //return os_->rankToNode(rank);
   }
 
   /**
