@@ -119,7 +119,6 @@ class SumiServer :
 
   void registerProc(int rank, SimTransport* proc){
     int app_id = proc->sid().app_;
-    output.output("SumiServer registering rank %d for app %d", rank, app_id);
     SimTransport*& slot = procs_[app_id][rank];
     if (slot){
       sst_hg_abort_printf("SumiServer: already registered rank %d for app %d on node %d",
@@ -235,7 +234,8 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Compo
   completion_queues_[0] = std::bind(&DefaultProgressQueue::incoming,
                                     &default_progress_queue_, 0, std::placeholders::_1);
   null_completion_notify_ = std::bind(&SimTransport::drop, this, std::placeholders::_1);
-  rank_ = sid().task_;
+  //rank_ = sid().task_;
+  rank_ = os_->addr();
   auto* server_lib = parent->os()->lib(server_libname_);
   SumiServer* server;
   // only do one server per app per node
@@ -264,10 +264,7 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Compo
   RankMapping::addGlobalMapping(sid().app_, "foo", bar);
 
   output.output("%d", sid().app_);
-  // rank_mapper_ = RankMapping::globalMapping(sid().app_);
-  // nproc_ = rank_mapper_->nproc();
-  nproc_ = 2;
-  //nproc_ = os_->nranks();
+  nproc_ = os_->nranks();
 
   auto qos_params = params.get_scoped_params("qos");
   auto qos_name = qos_params.find<std::string>("name", "null");
@@ -275,7 +272,7 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Compo
 
   server->registerProc(rank_, this);
 
-//  if (!engine_) engine_ = new CollectiveEngine(params, this);
+  if (!engine_) engine_ = new CollectiveEngine(params, this);
 
   smp_optimize_ = params.find<bool>("smp_optimize", false);
 }
@@ -298,8 +295,8 @@ void
 SimTransport::init()
 {
   if (smp_optimize_){
-//    engine_->barrier(-1, Message::default_cq);
-//    engine_->blockUntilNext(Message::default_cq);
+   engine_->barrier(-1, Message::default_cq);
+   engine_->blockUntilNext(Message::default_cq);
 
     SumiServer* server = safe_cast(SumiServer, api_parent_app_->os()->lib(server_libname_));
     auto& map = server->getProcs(sid().app_);
@@ -324,7 +321,7 @@ SimTransport::~SimTransport()
   bool del = server->unregisterProc(rank_, this);
   if (del) delete server;
 
-  //if (engine_) delete engine_;
+  if (engine_) delete engine_;
 
   //if (spy_bytes_) delete spy_bytes_;
   //if (spy_num_messages_) delete spy_num_messages_;

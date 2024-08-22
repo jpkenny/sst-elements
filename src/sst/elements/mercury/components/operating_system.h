@@ -149,6 +149,7 @@ public:
   /// to this context on every context switch.
   ThreadContext *des_context_;
 
+  int nranks_;
   Node* node_;
   Thread* active_thread_;
   Thread* blocked_thread_;
@@ -242,9 +243,13 @@ public:
 //    return NodeId( rank_mapper_->mapRank(rank) );
 //  }
 
-//  int32_t nranks() {
-//    return rank_mapper_->getWorldSize();
-//  }
+  void set_nranks(int32_t ranks) {
+    nranks_ = ranks;
+  }
+
+  int32_t nranks() {
+    return nranks_;
+  }
 
 //  SST::Ember::EmberRankMap*	rank_mapper_;
 
