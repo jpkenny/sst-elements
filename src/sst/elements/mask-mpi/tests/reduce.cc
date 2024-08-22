@@ -44,9 +44,7 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #define ssthg_app_name reduce
 
-#include <stddef.h>
 #include <stdio.h>
-#include <iostream>
 
 #include <mask_mpi.h>
 #include <mercury/common/skeleton.h>
@@ -54,42 +52,27 @@ Questions? Contact sst-macro-help@sandia.gov
 int main(int argc, char* argv[])
 {
     MPI_Init(&argc, &argv);
- 
-    // Get number of processes and check that 8 processes are used
-    int size;
+    int size, rank;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    if(size != 8)
-    {
-        printf("This application is meant to be run with 8 MPI processes.\n");
-        MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+ 
+    int* values = new int[size];
+    for(int i = 0; i < size; i++) {
+      if(i <= rank)
+        values[i] = 0;
+      else
+        values[i] = 1;
     }
  
-    // Get my rank
-    int my_rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
- 
-    // Define my value
-    int values[8];
-    for(int i = 0; i < 8; i++)
-    {
-        values[i] = my_rank;
-    }
-    printf("Process %d, my value = %d\n", my_rank, values[my_rank]);
-    for (int i = 0; i < 8; i++) {
-        printf("%d ", values[i]);
-    }
-    printf("\n");
-
-    MPI_Barrier(MPI_COMM_WORLD);
- 
-    int recv_values[8];
-    MPI_Reduce(values, recv_values, 8, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-    if (my_rank == 0) {
-      if (recv_values[0] == recv_values[7] && recv_values[0] == 28)
-        printf("SUCCESS! %d\n",recv_values[0]);
+    int* recv_values = new int[size];
+    MPI_Reduce(values, recv_values, size, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    if(rank == 0) {
+      for(int i = 0; i < size; ++i) {
+        printf("recv_values[%d]=%d\n",i, recv_values[i]);
+      }
     }
 
     MPI_Finalize();
  
-    return EXIT_SUCCESS;
+    return 0;
 }
