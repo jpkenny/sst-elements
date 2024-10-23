@@ -198,7 +198,7 @@ NIC::incomingPacket(int vn){
       if (flow == nullptr) sst_hg_abort_printf("couldn't get a flow\n");
       auto* msg = static_cast<NetworkMessage*>(flow);
       if (msg == nullptr) sst_hg_abort_printf("couldn't cast flow to message\n");
-      printf("fully received message %s\n", msg->toString().c_str());
+      //printf("fully received message %s\n", msg->toString().c_str());
       recvMessage(msg);
     }
     req = link_control_->recv(vn);
@@ -311,9 +311,9 @@ NIC::sendWhatYouCan(int vn, Pending& p) {
     req->size_in_bits = next_bits;
     req->vn = 0;
 
-    printf("injecting request of size %" PRIu64 " on vn %d: head? %d tail? %d -> %s\n",
-              next_bytes, vn, req->head, req->tail,
-              p.payload->toString().c_str());
+    // printf("injecting request of size %" PRIu64 " on vn %d: head? %d tail? %d -> %s\n",
+    //           next_bytes, vn, req->head, req->tail,
+    //           p.payload->toString().c_str());
     link_control_->send(req, vn);
 
     next_bytes = std::min(uint64_t(mtu_), p.bytesLeft);
@@ -399,11 +399,11 @@ NIC::injectSend(NetworkMessage* netmsg)
 void
 NIC::recvMessage(NetworkMessage* netmsg)
 {
-  printf("handling %s:%lu of type %s from node %d while running\n",
-         netmsg->toString().c_str(),
-         (unsigned long) netmsg->flowId(),
-         NetworkMessage::tostr(netmsg->type()),
-         int(netmsg->fromaddr()));
+  // printf("handling %s:%lu of type %s from node %d while running\n",
+  //        netmsg->toString().c_str(),
+  //        (unsigned long) netmsg->flowId(),
+  //        NetworkMessage::tostr(netmsg->type()),
+  //        int(netmsg->fromaddr()));
 
   switch (netmsg->type()) {
     case NetworkMessage::rdma_get_request: {

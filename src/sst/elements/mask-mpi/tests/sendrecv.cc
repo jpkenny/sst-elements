@@ -58,8 +58,7 @@ int main(int argc, char** argv)
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int nelems = 4096; 
-//  int nelems = 128;
+  int nelems = 8;
 #define VALIDATE_BUFFERS
 #ifdef VALIDATE_BUFFERS
   int buf[nelems];

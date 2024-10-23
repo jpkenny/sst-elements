@@ -489,7 +489,6 @@ uint64_t
 SimTransport::allocateFlowId()
 {
   auto id = api_parent_app_->os()->allocateUniqueId().msg_num;
-  std::cerr << "allocated flow id " << id << std::endl;
   return id;
   //return api_parent_app_->os()->allocateUniqueId();
 }
