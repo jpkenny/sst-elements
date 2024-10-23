@@ -180,26 +180,49 @@ bool
 NIC::incomingPacket(int vn){
   auto* req = link_control_->recv(vn);
   while (req){
-    //printf("incoming flow %d\n",req->flow_id);
-    MyRequest* myreq = static_cast<MyRequest*>(req);
-    auto bytes = myreq->size_in_bits/8;
-    auto* payload = myreq->takePayload();
-    //MessageEvent* ev = payload ? static_cast<MessageEvent*>(payload) : nullptr;
-    auto* incoming_msg = payload ? static_cast<NetworkMessage*>(payload) : nullptr;
-    //Flow* flow = cq_.recv(myreq->flow_id, bytes, ev ? ev->msg() : nullptr);
-    Flow* flow = cq_.recv(myreq->flow_id, bytes, incoming_msg);
-    printf("Rank %d receiving packet of size %d for flow %lu on vn %d: %s\n",
-           my_addr_,(myreq->size_in_bits/8), (uint64_t) myreq->flow_id, vn, (flow ? flow->toString().c_str() : "no flow"));
-    if (flow){
+
+    auto bytes = req->size_in_bits/8;
+    auto* payload = req->takePayload();
+
+    uint64_t flow_id;
+    auto* tracker = dynamic_cast<FlowTracker*>(payload);
+    if (tracker != nullptr) {
+      flow_id = tracker->id();
+      Flow* flow = cq_.recv(flow_id, bytes, nullptr);
+    }
+
+    if (req->tail) {
+      auto* incoming_msg = payload ? static_cast<NetworkMessage*>(payload) : nullptr;
+      if (incoming_msg == nullptr) sst_hg_abort_printf("couldn't cast event to NetworkMessage\n");
+      Flow* flow = cq_.recv(incoming_msg->flowId(), bytes, incoming_msg);
+      if (flow == nullptr) sst_hg_abort_printf("couldn't get a flow\n");
       auto* msg = static_cast<NetworkMessage*>(flow);
+      if (msg == nullptr) sst_hg_abort_printf("couldn't cast flow to message\n");
       printf("fully received message %s\n", msg->toString().c_str());
       recvMessage(msg);
     }
-    delete myreq;
-    //if (ev) delete ev;
-    //FIXME: need to figure out ownership and who deletes what here
-    //if (incoming_msg) delete incoming_msg;
     req = link_control_->recv(vn);
+
+    // //printf("incoming flow %d\n",req->flow_id);
+    // MyRequest* myreq = static_cast<MyRequest*>(req);
+    // auto bytes = myreq->size_in_bits/8;
+    // auto* payload = myreq->takePayload();
+    // //MessageEvent* ev = payload ? static_cast<MessageEvent*>(payload) : nullptr;
+    // auto* incoming_msg = payload ? static_cast<NetworkMessage*>(payload) : nullptr;
+    // //Flow* flow = cq_.recv(myreq->flow_id, bytes, ev ? ev->msg() : nullptr);
+    // Flow* flow = cq_.recv(myreq->flow_id, bytes, incoming_msg);
+    // printf("Rank %d receiving packet of size %d for flow %lu on vn %d: %s\n",
+    //        my_addr_,(myreq->size_in_bits/8), (uint64_t) myreq->flow_id, vn, (flow ? flow->toString().c_str() : "no flow"));
+    // if (flow){
+    //   auto* msg = static_cast<NetworkMessage*>(flow);
+    //   printf("fully received message %s\n", msg->toString().c_str());
+    //   recvMessage(msg);
+    // }
+    // delete myreq;
+    // //if (ev) delete ev;
+    // //FIXME: need to figure out ownership and who deletes what here
+    // //if (incoming_msg) delete incoming_msg;
+    // req = link_control_->recv(vn);
   }
   return true; //keep me active
 }
@@ -257,23 +280,31 @@ NIC::sendWhatYouCan(int vn, Pending& p) {
   uint64_t next_bytes = std::min(uint64_t(mtu_), p.bytesLeft);
   uint32_t next_bits = next_bytes * 8; //this is fine for 32-bits
   while (link_control_->spaceToSend(vn, next_bits)){
-    auto* req = new MyRequest;
+
+    // auto* req = new MyRequest;
+    // req->head = p.bytesLeft == p.payload->byteLength();
+    // p.bytesLeft -= next_bytes;
+    // req->tail = p.bytesLeft == 0;
+    // req->flow_id = p.payload->flowId();
+    // req->start = now();
+    auto* req = new SST::Interfaces::SimpleNetwork::Request;
     req->head = p.bytesLeft == p.payload->byteLength();
     p.bytesLeft -= next_bytes;
     req->tail = p.bytesLeft == 0;
-    req->flow_id = p.payload->flowId();
-    req->start = now();
+    //req->start = now();
+
     if (req->tail){
       if (p.payload->needsAck()){
         ack_queue_[vn].push(p.payload->cloneInjectionAck());
       } else {
         ack_queue_[vn].push(nullptr);
       }
-      //req->givePayload(new MessageEvent(p.payload));
       req->givePayload(p.payload);
-    } else {
+    } else {     
+      // Use a lightweight event to track flows
+      FlowTracker* flow_tracker = new FlowTracker(p.payload->flowId());
+      req->givePayload(flow_tracker);
       ack_queue_[vn].push(nullptr);
-      req->givePayload(nullptr);
     }
     req->src = p.payload->fromaddr();
     req->dest = p.payload->toaddr();

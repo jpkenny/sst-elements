@@ -119,8 +119,14 @@ void ReorderLinkControl::finish(void)
 // Returns true if there is space in the output buffer and false
 // otherwise.
 bool ReorderLinkControl::send(SimpleNetwork::Request* req, int vn) {
-    if ( vn >= vns ) return false;
-    if ( !link_control->spaceToSend(vn, req->size_in_bits) ) return false;
+    if ( vn >= vns ) {
+      printf("not sending because of vns\n");
+      return false;
+    }
+    if ( !link_control->spaceToSend(vn, req->size_in_bits) ) {
+       printf("no space to send\n");
+       return false;
+    }
     ReorderRequest* my_req = new ReorderRequest(req);
     delete req;
 
@@ -128,11 +134,13 @@ bool ReorderLinkControl::send(SimpleNetwork::Request* req, int vn) {
 
     // See if we already have reorder_info for this dest
     if ( reorder_info.find(my_req->dest) == reorder_info.end() ) {
+        printf("creating reorder info for dest %d\n",my_req->dest);
         ReorderInfo* info = new ReorderInfo();
         reorder_info[my_req->dest] = info;
     }
     ReorderInfo* info = reorder_info[my_req->dest];
     my_req->seq = info->send++;
+    printf("ReorderLinkControl set seq number %d for dest %d\n",my_req->seq,my_req->dest);
 
     // // To test, just going to switch order
     // uint32_t my_seq = info->send % 2 == 0 ? info->send + 1 : info->send - 1;

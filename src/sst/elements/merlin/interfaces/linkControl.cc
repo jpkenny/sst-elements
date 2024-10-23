@@ -450,6 +450,7 @@ bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
     // ev->request->vn = vn;
 
     ev->setInjectionTime(getCurrentSimTimeNano());
+    printf("link control sending\n");
     out_handle.queue.push(ev);
     if ( waiting && !have_packets ) {
         output_timing->send(1,nullptr);
@@ -478,6 +479,7 @@ bool LinkControl::spaceToSend(int vn, int bits) {
 // Returns nullptr if no event in input_buf[vn]. Otherwise, returns
 // the next event.
 SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
+    printf("link control recv'ing\n");
     if ( input_queues[vn].size() == 0 ) return nullptr;
 
     RtrEvent* event = input_queues[vn].front();
