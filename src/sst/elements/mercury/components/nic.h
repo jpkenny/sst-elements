@@ -124,10 +124,6 @@ class NIC : public SST::Hg::SubComponent
     SST::Hg::NIC
   )
 
-//  SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-//      {"link_control_slot", "Slot for a link control", "SST::Interfaces::SimpleNetwork" }
-//  )
-
   typedef enum {
     Injection,
     LogP

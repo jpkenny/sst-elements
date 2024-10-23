@@ -109,25 +109,10 @@ NIC::NIC(uint32_t id, SST::Params& params, Node* parent) :
 //  xmit_flows_ = registerStatistic<uint64_t>(params, "xmit_flows", subname);
 
   int slot_id = 0;
-  /** All bandwidth and other parameters get pulled in
-      through params now, not through initialize */
-//  link_control_ = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>(
-//                               "merlin.linkcontrol",
-//                               "LinkControl", slot_id,
-//                               SST::ComponentInfo::SHARE_PORTS | SST::ComponentInfo::INSERT_STATS,
-//                               params, vns_);
 
-  //out_->debug(CALL_INFO, 1, 0, "loading hg.NIC\n");
-//  link_control_ = loadUserSubComponent<SST::Interfaces::SimpleNetwork>("link_control_slot", SST::ComponentInfo::SHARE_PORTS,1);
-//  assert(link_control_);
-
-  //FIXME
-  //pending_.resize(vns_);
-  //ack_queue_.resize(vns_);
-  // mtu_ = params.find<SST::UnitAlgebra>("mtu").getRoundedValue();
   pending_.resize(1);
   ack_queue_.resize(1);
-  mtu_ = 4096;
+  mtu_ = 2048;
 }
 
 std::string
@@ -195,6 +180,7 @@ bool
 NIC::incomingPacket(int vn){
   auto* req = link_control_->recv(vn);
   while (req){
+    //printf("incoming flow %d\n",req->flow_id);
     MyRequest* myreq = static_cast<MyRequest*>(req);
     auto bytes = myreq->size_in_bits/8;
     auto* payload = myreq->takePayload();
@@ -202,11 +188,11 @@ NIC::incomingPacket(int vn){
     auto* incoming_msg = payload ? static_cast<NetworkMessage*>(payload) : nullptr;
     //Flow* flow = cq_.recv(myreq->flow_id, bytes, ev ? ev->msg() : nullptr);
     Flow* flow = cq_.recv(myreq->flow_id, bytes, incoming_msg);
-    //printf("Rank %d receiving packet of size %d for flow %lu on vn %d: %s",
-    //        my_addr_,(myreq->size_in_bits/8), (uint64_t) myreq->flow_id, vn, (flow ? flow->toString().c_str() : "no flow"));
+    printf("Rank %d receiving packet of size %d for flow %lu on vn %d: %s\n",
+           my_addr_,(myreq->size_in_bits/8), (uint64_t) myreq->flow_id, vn, (flow ? flow->toString().c_str() : "no flow"));
     if (flow){
       auto* msg = static_cast<NetworkMessage*>(flow);
-//      nic_debug("fully received message %s", msg->toString().c_str());
+      printf("fully received message %s\n", msg->toString().c_str());
       recvMessage(msg);
     }
     delete myreq;
@@ -267,6 +253,7 @@ NIC::sendWhatYouCan(int vn) {
 bool
 NIC::sendWhatYouCan(int vn, Pending& p) {
   //if (!p.bytesLeft) sst_hg_abort_printf("zero send abort\n");
+  int seqnum = 0;
   uint64_t next_bytes = std::min(uint64_t(mtu_), p.bytesLeft);
   uint32_t next_bits = next_bytes * 8; //this is fine for 32-bits
   while (link_control_->spaceToSend(vn, next_bits)){
@@ -293,9 +280,9 @@ NIC::sendWhatYouCan(int vn, Pending& p) {
     req->size_in_bits = next_bits;
     req->vn = 0;
 
-//    nic_debug("injecting request of size %d on vn %d: head? %d tail? %d -> %s",
-//               next_bytes, vn, req->head, req->tail,
-//               p.payload->toString().c_str());
+    printf("injecting request of size %" PRIu64 " on vn %d: head? %d tail? %d -> %s\n",
+              next_bytes, vn, req->head, req->tail,
+              p.payload->toString().c_str());
     link_control_->send(req, vn);
 
     next_bytes = std::min(uint64_t(mtu_), p.bytesLeft);
@@ -381,18 +368,18 @@ NIC::injectSend(NetworkMessage* netmsg)
 void
 NIC::recvMessage(NetworkMessage* netmsg)
 {
-//  nic_debug("handling %s:%lu of type %s from node %d while running",
-//    netmsg->toString().c_str(),
-//    netmsg->flowId(),
-//    NetworkMessage::tostr(netmsg->type()),
-//    int(netmsg->fromaddr()));
+  printf("handling %s:%lu of type %s from node %d while running\n",
+         netmsg->toString().c_str(),
+         (unsigned long) netmsg->flowId(),
+         NetworkMessage::tostr(netmsg->type()),
+         int(netmsg->fromaddr()));
 
   switch (netmsg->type()) {
     case NetworkMessage::rdma_get_request: {
-    sst_hg_abort_printf("case NetworkMessage::rdma_get_request unimplemented\n");
-//      netmsg->nicReverse(NetworkMessage::rdma_get_payload);
-//      netmsg->putOnWire();
-//      internodeSend(netmsg);
+    // sst_hg_abort_printf("case NetworkMessage::rdma_get_request unimplemented\n");
+     netmsg->nicReverse(NetworkMessage::rdma_get_payload);
+     netmsg->putOnWire();
+     internodeSend(netmsg);
       break;
     }
     case NetworkMessage::nvram_get_request: {

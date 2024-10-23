@@ -92,6 +92,7 @@ NetworkMessage::takeBufferOffWire(void *buf, uint64_t sz)
 void
 NetworkMessage::takeOffWire()
 {
+  printf("take off wire\n");
   switch (type_){
     case rdma_get_payload:
       takeBufferOffWire(local_buffer_, payload_bytes_);
