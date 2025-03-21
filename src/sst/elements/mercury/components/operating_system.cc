@@ -73,7 +73,8 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
   node_(parent),
   des_context_(nullptr),
   next_condition_(0),
-  next_mutex_(0)
+  next_mutex_(0),
+  params_(params)
 {
   TimeDelta::initStamps(TimeDelta::ASEC_PER_TICK);
 
@@ -116,13 +117,8 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
   selfEventLink_->setDefaultTimeBase(time_converter_);
 
   out_->debug(CALL_INFO, 1, 0, "adding launch requests\n");
-  app_launcher_ = new AppLauncher(this);
-  addLaunchRequests(params);
-
-  // compute_sched_ = SST::Hg::create<ComputeScheduler>(
-  //       "hg", params.find<std::string>("compute_scheduler", "simple"),
-  //       params, this, node_ ? node_->ncores() : 1, node_ ? node_->nsockets()
-  //       : 1);
+  app_launcher_ = new AppLauncher(this,1);
+  addLaunchRequests(params_);
 
   StackAlloc::init(params);
   initThreading(params);
@@ -146,8 +142,16 @@ OperatingSystem::~OperatingSystem()
 }
 
 void
+OperatingSystem::init(unsigned int phase) {
+  //SubComponent::init(phase);
+  //out_->debug(CALL_INFO, 1, 0, "adding launch requests\n");
+  //app_launcher_ = new AppLauncher(this,1);
+  //addLaunchRequests(params_);
+}
+
+void
 OperatingSystem::setup() {
-  SubComponent::setup();
+  //SubComponent::setup();
   for (auto r : requests_)
     selfEventLink_->send(r);
 }

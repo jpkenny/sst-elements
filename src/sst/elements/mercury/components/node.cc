@@ -44,9 +44,6 @@ Node::Node(ComponentId_t id, Params &params)
     // (unused but needs to be there or multithread termination breaks)
     netLink_ = configureLink("network");
   }
-
-  unsigned int nranks = params.find<unsigned int>("nranks", -1);
-  os_->set_nranks(nranks);
 }
 
 } // namespace Hg

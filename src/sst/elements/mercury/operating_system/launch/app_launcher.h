@@ -25,15 +25,13 @@
 namespace SST {
 namespace Hg {
 
-static int app_rank_;
-
 /**
  * A launcher that can be cooperatively scheduled by a very naive scheduler.
  */
 class AppLauncher
 {
  public:
-  AppLauncher(OperatingSystem* os);
+  AppLauncher(OperatingSystem* os, int npernode);
 
   ~AppLauncher() {}
 
@@ -44,7 +42,8 @@ class AppLauncher
  protected:
   bool is_completed_;
 
-  std::unordered_map<AppId, int> num_apps_launched_;
+  int npernode_;
+  std::unordered_map<AppId, int> local_offset_;
   OperatingSystem* os_;
 };
 

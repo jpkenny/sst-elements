@@ -32,6 +32,9 @@ NodeBase::NodeBase(ComponentId_t id, Params &params)
   unsigned int verbose = params.find<unsigned int>("verbose",0);
   out_ = std::unique_ptr<SST::Output>(new SST::Output(sprintf("Node%d:",my_addr_), verbose, 0, Output::STDOUT));
 
+  nranks_ = params.find<int>("nranks", -1);
+  npernode_ = params.find<int>("npernode", 1);
+
   // Tell the simulation not to end until we're ready
   registerAsPrimaryComponent();
   primaryComponentDoNotEndSim();
@@ -40,7 +43,9 @@ NodeBase::NodeBase(ComponentId_t id, Params &params)
 void
 NodeBase::init(unsigned int phase)
 {
-  SST::Component::init(phase);
+  //SST::Component::init(phase);
+  os_->set_nranks(nranks_);
+  os_->set_npernode(npernode_);
   os_->init(phase);
   if (nic_) nic_->init(phase);
 }
@@ -48,7 +53,7 @@ NodeBase::init(unsigned int phase)
 void
 NodeBase::setup()
 {
-  SST::Component::setup();
+  //SST::Component::setup();
   os_->setup();
   if (nic_) nic_->setup();
 }

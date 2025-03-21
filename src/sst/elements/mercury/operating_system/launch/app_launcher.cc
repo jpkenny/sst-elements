@@ -25,8 +25,8 @@ namespace Hg {
 extern template class  HgBase<SST::Component>;
 extern template class  HgBase<SST::SubComponent>;
 
-AppLauncher::AppLauncher(OperatingSystem* os) :
-  os_(os)
+AppLauncher::AppLauncher(OperatingSystem* os, int npernode) :
+  os_(os), npernode_(npernode)
 {
 }
 
@@ -34,7 +34,14 @@ void
 AppLauncher::incomingRequest(AppLaunchRequest* req)
 {
   Params app_params = req->params();
-  SoftwareId sid(req->aid(), os_->addr()-1);
+
+  if (local_offset_.find(req->aid()) == local_offset_.end() ) {
+    local_offset_[req->aid()] = 0;
+  }
+  int taskid = os_->addr() * npernode_ + local_offset_[req->aid()];
+  SoftwareId sid(req->aid(), taskid);
+  ++local_offset_[req->aid()];
+
   std::string app_name;
   if (app_params.count("label")) {
       app_name = app_params.find<std::string>("label","");

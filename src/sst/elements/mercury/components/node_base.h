@@ -84,6 +84,8 @@ protected:
   SST::Link* netLink_;
   std::unique_ptr<SST::Output> out_;
   NodeId my_addr_;
+  int nranks_;
+  int npernode_;
 };
 
 } // namespace Hg

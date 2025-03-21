@@ -50,6 +50,8 @@ public:
 
   ~OperatingSystem();
 
+  void init(unsigned int phase) override;
+
   void setup() override;
 
   void handleEvent(SST::Event *ev) override;
@@ -147,6 +149,7 @@ protected:
 
   unsigned int verbose_;
   int nranks_;
+  int npernode_;
   Thread* blocked_thread_;
   int next_condition_;
   int next_mutex_;
@@ -215,12 +218,20 @@ protected:
 
   condition_t* getCondition(int id) override;
 
-  void set_nranks(int32_t ranks) override {
+  void set_nranks(int ranks) override {
     nranks_ = ranks;
   }
 
-  int32_t nranks() override {
+  int nranks() override {
     return nranks_;
+  }
+
+  void set_npernode(int npernode) override {
+    npernode_ = npernode;
+  }
+
+  int npernode() override {
+    return npernode_;
   }
 
 //
