@@ -13,10 +13,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <sst/core/factory.h>
 #include <mercury/components/operating_system.h>
 
 #include <mercury/common/events.h>
-#include <mercury/common/factory.h>
 #include <mercury/common/request.h>
 #include <mercury/components/node.h>
 #include <mercury/components/node_CL.h>
@@ -152,8 +152,8 @@ OperatingSystem::initThreading(SST::Params& params)
       return; //already done
     }
 
-  des_context_ = create<ThreadContext>(
-        "hg", params.find<std::string>("context", ThreadContext::defaultThreading()));
+  auto factory = Factory::getFactory();
+  des_context_ = factory->Create<ThreadContext>("hg.fcontext");
 
   des_context_->initContext();
 
