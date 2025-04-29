@@ -18,7 +18,7 @@
 import sys
 import sst
 from sst.merlin.base import *
-from sst.merlin import *
+# from sst.merlin import *
 
 class HgJob(Job):
     def __init__(self, job_id, numNodes, numCores = 1, nicsPerNode = 1):
