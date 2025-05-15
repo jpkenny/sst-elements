@@ -99,6 +99,9 @@ library_includedir=$(includedir)/sst/elements/mercury
 
 nobase_library_include_HEADERS = \
   common/component.h \
+  common/appHolderComponent.h \
+  common/holderComponent.h \
+  common/holderComponentAPI.h \
   common/connection.h \
   common/connection_fwd.h \
   common/event_link.h \

@@ -29,7 +29,9 @@
 #include <sst/core/params.h>
 #include <stdlib.h>
 #include <sys/mman.h>
-
+#include <sst/core/component.h> // or
+#include <sst/core/subcomponent.h> // or
+#include <sst/core/componentExtension.h>
 extern "C" {
 void* sst_hg_nullptr = nullptr;
 void* sst_hg_nullptr_send = nullptr;
@@ -82,7 +84,18 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
     RankInfo num_ranks = getNumRanks();
     active_os_.resize(num_ranks.thread);
   }
+std::string name = params_.find<std::string>("app1.name");
+  std::vector<std::string> libs;
+  holder = loadAnonymousSubComponent<holderSubComponentAPI>(name, "holder", 0, 0, params);
+  params.find_array<std::string>("app1.libraries", libs);
+  for (const std::string& lib : libs) {
+    size_t startPos = lib.find("lib");
+    startPos += 3; 
+    size_t endPos = lib.find(".so", startPos);
 
+   std::string myLib = lib.substr(startPos, endPos - startPos);
+  holder = loadAnonymousSubComponent<holderSubComponentAPI>(myLib, "holder", 0, 0, params);
+  }
   my_addr_ = node_->addr();
   next_outgoing_id_.src_node = my_addr_;
   next_outgoing_id_.msg_num = 0;
