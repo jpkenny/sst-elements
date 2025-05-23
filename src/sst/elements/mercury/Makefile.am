@@ -210,9 +210,9 @@ EXTRA_DIST += $(deprecated_EXTRA_DIST)
 endif
 
 
-libhg_la_LDFLAGS = -module -avoid-version
-libsystemlibrary_la_LDFLAGS = -module -avoid-version
-libcomputelibrary_la_LDFLAGS = -module -avoid-version
+libhg_la_LDFLAGS = -module -avoid-version -shared
+libsystemlibrary_la_LDFLAGS = -module -avoid-version -shared
+libcomputelibrary_la_LDFLAGS = -module -avoid-version -shared
 ostest_la_LDFLAGS = -module -avoid-version
 
 install-exec-hook:

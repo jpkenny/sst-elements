@@ -11,8 +11,8 @@ public:
      
     SST_ELI_REGISTER_SUBCOMPONENT_API(holderSubComponentAPI)
  
-    holderSubComponentAPI(SST::ComponentId_t id, SST::Params& params) : SST::SubComponent(id) { }
-    virtual ~holderSubComponentAPI() { }
+    holderSubComponentAPI(SST::ComponentId_t id, SST::Params& params);
+    virtual ~holderSubComponentAPI();
 
 };
 #endif //LIB_MERCURY_HOLDER_API
